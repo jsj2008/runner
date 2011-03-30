@@ -3,6 +3,7 @@
 #include "matrix.h"
 #include "assets.h"
 #include "camera.h"
+#include "mesh.h"
 
 static GLfloat skybox_vertices[] =
 {
@@ -209,6 +210,26 @@ GLuint load_program(const char* vs_fname, const char* ps_fname)
    return program;
 }
 
+
+GLuint create_texture(const char* fname)
+{
+   tex2d_t t;
+   if (tex2d_load_from_png(&t, fname) != 0)
+   {
+      LOGE("Unable to load texture from %s", fname);
+      return 0;
+   }
+
+   GLuint texId = gl_load_texture(&t);
+   if (texId == 0)
+   {
+      LOGE("Unable to load texture to GPU");
+      return 0;
+   }
+
+   return texId;
+}
+
 void resize(int width, int height)
 {
    LOGI("resize %dx%d", width, height);
@@ -225,13 +246,13 @@ void resize(int width, int height)
    gvSkyboxTexCoord = glGetAttribLocation(gSkyboxProgram, "aTexCoord");
    gvSkyboxColor = glGetAttribLocation(gSkyboxProgram, "aColor");
    gvSkyboxSampler = glGetUniformLocation(gSkyboxProgram, "uTex");
-   gvSkyboxTextureId = createTexture("assets/textures/skybox.png", NULL, NULL);
+   gvSkyboxTextureId = create_texture("assets/textures/skybox.png");
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-   gvTextureId = createTexture("assets/textures/marble.png", NULL, NULL);
+   gvTextureId = create_texture("assets/textures/marble.png");
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
