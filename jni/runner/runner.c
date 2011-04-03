@@ -4,6 +4,7 @@
 #include "assets.h"
 #include "camera.h"
 #include "mesh.h"
+#include "hlmdl.h"
 
 static GLfloat skybox_vertices[] =
 {
@@ -153,6 +154,7 @@ GLuint gSkyboxProgram = 0;
 
 mat4f_t gModel;
 cam_t camera;
+mesh_t mesh;
 
 vec4f_t* vec4(float x, float y, float z, float w)
 {
@@ -184,8 +186,12 @@ void init(const char* apkPath)
    glEnable(GL_TEXTURE_2D);
    glCullFace(GL_BACK);
    glFrontFace(GL_CCW);
-}
 
+   if (mesh_load_from_mdl("assets/models/tree.mdl", &mesh) != 0)
+   {
+      LOGE("Unable to load model\n");
+   }
+}
 
 GLuint load_program(const char* vs_fname, const char* ps_fname)
 {
@@ -278,13 +284,39 @@ void resize(int width, int height)
    checkGLError("glDepthRange");
 
    cam_init(&camera, 45.0f, (float)width/(float)height, 0.1f, 1000.0f);
-   cam_set_pos(&camera, vec4(0.0f, 0.0f, 3.0f, 0.0f));
+   cam_set_pos(&camera, vec4(0.0f, 0.0f, 50.0f, 0.0f));
    cam_set_up(&camera, vec4(0.0f, 1.0f, 0.0f, 0.0f));
    cam_look_at(&camera, vec4(0.0f, 0.0f, 0.0f, 0.0f));
    cam_update(&camera);
 }
 
 float gAngle = 0.0f;
+
+void draw_mesh(cam_t* c, mesh_t* m)
+{
+   mat4f_t mv;
+   mat4f_t mvp;
+   mat4_mult(&mv, &c->view, &gModel);
+   mat4_mult(&mvp, &c->proj, &mv);
+
+   glUseProgram(gModelProgram);
+   glUniformMatrix4fv(gvMVP, 1, GL_FALSE, mat4_data(&mvp));
+
+   glVertexAttribPointer(gvPosHandle, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), &m->vertices[0].pos);
+   glVertexAttribPointer(gvTexCoordHandle, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), &m->vertices[0].tex_coord);
+   glVertexAttribPointer(gvNormalHandle, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), &m->vertices[0].normal);
+
+   glEnableVertexAttribArray(gvPosHandle);
+   glDisableVertexAttribArray(gvTexCoordHandle);
+   glEnableVertexAttribArray(gvNormalHandle);
+
+   glActiveTexture(GL_TEXTURE0);
+   glBindTexture(GL_TEXTURE_2D, gvTextureId);
+   glUniform1i(gvSampler, 0);
+
+   glCullFace(GL_FRONT);
+   glDrawElements(GL_TRIANGLES, m->nindices, GL_UNSIGNED_INT, m->indices);
+}
 
 void update()
 {
@@ -299,6 +331,7 @@ void update()
    mat4_mult(&mv, &camera.view, &gModel);
    mat4_mult(&mvp, &camera.proj, &mv);
 
+   glCullFace(GL_BACK);
    glDepthFunc(GL_ALWAYS);
    glUseProgram(gSkyboxProgram);
 
@@ -322,6 +355,8 @@ void update()
    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, skybox_indices);
    glDepthFunc(GL_LESS);
 
+   draw_mesh(&camera, &mesh);
+   return;
 
    glUseProgram(gModelProgram);
    checkGLError("glUseProgram");
@@ -367,16 +402,18 @@ void scroll(long delta_time, float delta_x, float delta_y)
    static float speed = 1;
 
    float interval = (float)delta_time / 1000.0f;
-   float coef = interval * speed;
+   float coef = 1.0f;//interval * speed;
 
-   cam_slide(&camera, vec4(-coef * delta_x, coef * delta_y, 0.0f, 0.0f));
+   //cam_slide(&camera, vec4(-coef * delta_x, coef * delta_y, 0.0f, 0.0f));
+   cam_slide(&camera, vec4(0.0f, 0.0f, coef * delta_y, 0.0f));
    cam_update(&camera);
-
+/*
    int i = 0;
    for (i = 0; i < 4; ++i)
    {
       skybox_tex_coords[i*2] += interval * delta_x * 0.1;
       skybox_tex_coords[i*2+1] -= interval * delta_y * 0.1;
    }
+*/
 }
 

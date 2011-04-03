@@ -128,7 +128,7 @@ GLuint createShaderProgram(const char* vertexShaderSrc, const char* pixelShaderS
    return program;
 }
 
-GLuint gl_load_texture(tex2d_t* t) 
+GLuint gl_load_texture(tex2d_t* t)
 {
    GLuint id = 0;
 
