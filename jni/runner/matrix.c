@@ -162,10 +162,10 @@ void matShow(mat4f_t* m)
 
 void mat4_show(mat4f_t* m)
 {
-   LOGI("%.2f %.2f %.2f %.2f", m->m11, m->m21, m->m31, m->m41);
-   LOGI("%.2f %.2f %.2f %.2f", m->m12, m->m22, m->m32, m->m42);
-   LOGI("%.2f %.2f %.2f %.2f", m->m13, m->m23, m->m33, m->m43);
-   LOGI("%.2f %.2f %.2f %.2f", m->m14, m->m24, m->m34, m->m44);
+   LOGI("%.2f %.2f %.2f %.2f", m->m11, m->m12, m->m13, m->m14);
+   LOGI("%.2f %.2f %.2f %.2f", m->m21, m->m22, m->m23, m->m24);
+   LOGI("%.2f %.2f %.2f %.2f", m->m31, m->m32, m->m33, m->m34);
+   LOGI("%.2f %.2f %.2f %.2f", m->m41, m->m42, m->m43, m->m44);
 }
 
 void mat4_set_translation(mat4f_t* m, float x, float y, float z)
@@ -292,5 +292,48 @@ void mat4_mult(mat4f_t* m, const mat4f_t* a, const mat4f_t* b)
 float* mat4_data(mat4f_t* m)
 {
    return (float*)m->m;
+}
+
+void mat4_from_quaternion(mat4f_t* m, const vec4f_t* q)
+{
+   float xx = q->x * q->x;
+   float xy = q->x * q->y;
+   float xz = q->x * q->z;
+   float xw = q->x * q->w;
+
+   float yy = q->y * q->y;
+   float yz = q->y * q->z;
+   float yw = q->y * q->w;
+
+   float zz = q->z * q->z;
+   float zw = q->z * q->w;
+
+   m->m11 = 1.0f - 2.0f * (yy + zz);
+   m->m12 = 2.0f * (xy + zw);
+   m->m13 = 2.0f * (xz - yw);
+   m->m14 = 0.0f;
+
+   m->m21 = 2.0f * (xy - zw);
+   m->m22 = 1.0f - 2.0f * (xx + zz);
+   m->m23 = 2.0f * (yz + xw);
+   m->m24 = 0.0f;
+
+   m->m31 = 2.0f * (xz + yw);
+   m->m32 = 2.0f * (yz - xw);
+   m->m33 = 1.0f - 2.0f * (xx + yy);
+   m->m34 = 0.0f;
+
+   m->m41 = 0.0f;
+   m->m42 = 0.0f;
+   m->m43 = 0.0f;
+   m->m44 = 1.0f;
+}
+
+void mat4_mult_vector(vec4f_t* r, const mat4f_t* m, const vec4f_t* a)
+{
+   r->x = m->m11 * a->x + m->m12 * a->y + m->m13 * a->z + m->m14 * a->w;
+   r->y = m->m21 * a->x + m->m22 * a->y + m->m23 * a->z + m->m24 * a->w;
+   r->z = m->m31 * a->x + m->m32 * a->y + m->m33 * a->z + m->m34 * a->w;
+   r->w = m->m41 * a->x + m->m42 * a->y + m->m43 * a->z + m->m44 * a->w;
 }
 

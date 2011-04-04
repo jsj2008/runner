@@ -28,10 +28,12 @@ void mat4_set_identity(mat4f_t* m);
 void mat4_set_xrotation(mat4f_t* m, float angle);
 void mat4_transpose(mat4f_t* m);
 void mat4_mult(mat4f_t* m, const mat4f_t* a, const mat4f_t* b);
+void mat4_mult_vector(vec4f_t* r, const mat4f_t* m, const vec4f_t* a);
 void mat4_set_translation(mat4f_t* m, float x, float y, float z);
 void mat4_show(mat4f_t* m);
 void mat4_set_frustum(mat4f_t* m, float left, float right, float bottom, float top, float znear, float zfar);
 void mat4_set_perspective(mat4f_t* m, float fovy, float aspect, float znear, float zfar);
 void mat4_set_lookat(mat4f_t* m, const vec4f_t* eye, const vec4f_t* at, const vec4f_t* up);
 float* mat4_data(mat4f_t* m);
+void mat4_from_quaternion(mat4f_t* m, const vec4f_t* q);
 

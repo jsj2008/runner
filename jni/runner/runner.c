@@ -187,7 +187,7 @@ void init(const char* apkPath)
    glCullFace(GL_BACK);
    glFrontFace(GL_CCW);
 
-   if (mesh_load_from_mdl("assets/models/tree.mdl", &mesh) != 0)
+   if (mesh_load_from_mdl("assets/models/big_rock.mdl", &mesh) != 0)
    {
       LOGE("Unable to load model\n");
    }

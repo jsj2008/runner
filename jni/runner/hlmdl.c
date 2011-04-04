@@ -171,24 +171,34 @@ void print_header_info(const mdl_header_t* h)
    }
 }
 
-long add_vertex(const short* t, vertex_t* buf, long* nverts, const vec3_t* v, const vec3_t* n)
+#define MAX_BONES 256
+static mat4f_t bone_transforms[MAX_BONES];
+
+long add_vertex(const short* t, vertex_t* buf, long* nverts, const vec3_t* v, const vec3_t* n, const unsigned char* vert_info, const mdl_bone_t* bones)
 {
    short vi = t[0];
    short ni = t[1];
    short tu = t[2];
    short tv = t[3];
 
+   unsigned char bi = vert_info[vi];
+
    vertex_t vert;
-   vert.pos.x = v[vi][0];
-   vert.pos.y = v[vi][1];
-   vert.pos.z = v[vi][2];
-   vert.pos.w = 0.0f;
    vert.normal.x = n[ni][0];
    vert.normal.y = n[ni][1];
    vert.normal.z = n[ni][2];
    vert.normal.w = 0.0f;
    vert.tex_coord[0] = 256/(float)tu;
    vert.tex_coord[1] = 256/(float)tv;
+
+   vec4f_t pos;
+   pos.x = v[vi][0];
+   pos.y = v[vi][1];
+   pos.z = v[vi][2];
+   pos.w = 0.0f;
+   mat4_mult_vector(&vert.pos, &bone_transforms[bi], &pos);
+
+   LOGI("Vector %.2f %.2f %.2f %.2f transformed to %.2f %.2f %.2f %.2f using bone #%04d", pos.x, pos.y, pos.z, pos.w, vert.pos.x, vert.pos.y, vert.pos.z, vert.pos.w, bi);
 
    long index = -1;
    long i = 0;
@@ -255,6 +265,50 @@ int mesh_load_from_mdl(const char* fname, mesh_t* m)
          const vec3_t* v = (const vec3_t*)(buf + mdl->vertex_offset);
          const vec3_t* n = (const vec3_t*)(buf + mdl->normal_offset);
 
+         const unsigned char* vi = (const unsigned char*)(buf + mdl->vertex_info_offset);
+         const mdl_bone_t* bones = (const mdl_bone_t*)(buf + header->bone_offset);
+
+
+         // calculate bones transforms
+         for (j = 0; j < header->nbones; ++j)
+         {
+            LOGI("Bone #%04ld: %s parent: #%04ld pos: %.2f %.2f %.2f angles: %.2f %.2f %.2f scale: [%.2f %.2f %.2f] [%.2f %.2f %.2f]\n", j, bones->name, bones->parent, bones->value[0], bones->value[1], bones->value[2], bones->value[3], bones->value[4], bones->value[5], bones->scale[0], bones->scale[1], bones->scale[2], bones->scale[3], bones->scale[4], bones->scale[5]);
+
+            vec4f_t pos;
+            pos.x = bones->value[0];
+            pos.y = bones->value[1];
+            pos.z = bones->value[2];
+            pos.w = 1.0f; 
+
+            vec4f_t angles;
+            angles.x = bones->value[3];
+            angles.y = bones->value[4];
+            angles.z = bones->value[5];
+
+            vec4f_t quat;
+            quat_from_angles(&quat, &angles);
+
+            LOGI("Quaternion: %.2f %.2f %.2f %.2f", quat.x, quat.y, quat.z, quat.w);
+
+            mat4f_t transform;
+            mat4_from_quaternion(&transform, &quat);
+            transform.m41 = pos.x;
+            transform.m42 = pos.y;
+            transform.m43 = pos.z;
+
+            if (bones->parent == -1)
+            {
+               bone_transforms[j] = transform;
+            }
+            else
+            {
+               mat4_mult(&bone_transforms[j], &bone_transforms[bones->parent], &transform);
+            }
+
+            mat4_show(&bone_transforms[j]);
+            ++bones;
+         }
+
          vertex_t verts_buf[8192];
          int indices_buf[16386];
          long vert_index = 0;
@@ -275,14 +329,14 @@ int mesh_load_from_mdl(const char* fname, mesh_t* m)
                   // GL_TRIANGLE_FAN
                   ntris = -ntris;
 
-                  long first = add_vertex(t, verts_buf, &vert_index, v, n);
+                  long first = add_vertex(t, verts_buf, &vert_index, v, n, vi, bones);
                   t += 4;
-                  long prev = add_vertex(t, verts_buf, &vert_index, v, n);
+                  long prev = add_vertex(t, verts_buf, &vert_index, v, n, vi, bones);
                   t += 4;
 
                   for (k = 2; k < ntris; ++k, t += 4)
                   {
-                     long current = add_vertex(t, verts_buf, &vert_index, v, n);
+                     long current = add_vertex(t, verts_buf, &vert_index, v, n, vi, bones);
                      indices_buf[ind_index++] = first;
                      indices_buf[ind_index++] = prev;
                      indices_buf[ind_index++] = current;
@@ -293,15 +347,15 @@ int mesh_load_from_mdl(const char* fname, mesh_t* m)
                else
                {
                   // GL_TRIANGLE_STRIP
-                  long n0 = add_vertex(t, verts_buf, &vert_index, v, n);
+                  long n0 = add_vertex(t, verts_buf, &vert_index, v, n, vi, bones);
                   t += 4;
-                  long n1 = add_vertex(t, verts_buf, &vert_index, v, n);
+                  long n1 = add_vertex(t, verts_buf, &vert_index, v, n, vi, bones);
                   t += 4;
 
                   int odd = 1;
                   for (k = 2; k < ntris; ++k, t += 4)
                   {
-                     long n2 = add_vertex(t, verts_buf, &vert_index, v, n);
+                     long n2 = add_vertex(t, verts_buf, &vert_index, v, n, vi, bones);
                      if (odd == 1)
                      {
                         indices_buf[ind_index++] = n0;

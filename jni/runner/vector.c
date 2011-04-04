@@ -39,3 +39,25 @@ vec4f_t* vec4_cross(vec4f_t* r, const vec4f_t* a, const vec4f_t* b)
    return r;
 }
 
+vec4f_t* quat_from_angles(vec4f_t* r, const vec4f_t* a)
+{
+   float ax = a->x * 0.5f;
+   float sin0 = sin(ax);
+   float cos0 = cos(ax);
+
+   float ay = a->y * 0.5f;
+   float sin1 = sin(ay);
+   float cos1 = cos(ay);
+
+   float az = a->z * 0.5f;
+   float sin2 = sin(az);
+   float cos2 = cos(az);
+
+   r->x = sin0 * cos1 * cos2 - cos0 * sin1 * sin2;
+   r->y = cos0 * sin1 * cos2 + sin0 * cos1 * sin2;
+   r->z = cos0 * cos1 * sin2 - sin0 * sin1 * cos2;
+   r->w = cos0 * cos1 * cos2 + sin0 * sin1 * sin2;
+
+   return r;
+}
+
