@@ -5,7 +5,7 @@ vec4f_t* vec4_normalize(vec4f_t* v)
 {
    float len = sqrt(v->x*v->x + v->y*v->y + v->z*v->z);
    if (len < 1E-6)
-      return;
+      return v;
 
    v->x /= len;
    v->y /= len;

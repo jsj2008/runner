@@ -226,7 +226,7 @@ int mesh_load_from_mdl(const char* fname, mesh_t* m)
 {
    LOGI("Loading model from %s\n", fname);
 
-   int size = 0;
+   long size = 0;
    char* buf = readFile(fname, &size);
    if (buf == NULL)
    {
@@ -234,7 +234,7 @@ int mesh_load_from_mdl(const char* fname, mesh_t* m)
       return -1;
    }
 
-   LOGI("read %d bytes from %s\n", size, fname);
+   LOGI("read %ld bytes from %s\n", size, fname);
 
    mdl_header_t* header = (mdl_header_t*)buf;
    //print_header_info(header);

@@ -37,7 +37,7 @@ int setAPKPath(const char* path)
    return 0;
 }
 
-char* readFile(const char* fname, int* size)
+char* readFile(const char* fname, long* psize)
 {
    struct zip_stat s;
    if (zip_stat(gArchive, fname, 0, &s) != 0)
@@ -58,9 +58,9 @@ char* readFile(const char* fname, int* size)
    if (read >= 0)
    {
       LOGI("Read %d bytes", read);
-      if (size != NULL)
+      if (psize != NULL)
       {
-         (*size) = s.size;
+         (*psize) = s.size;
       }
    }
    else
