@@ -195,7 +195,7 @@ void init(const char* apkPath)
 
 GLuint load_program(const char* vs_fname, const char* ps_fname)
 {
-   int size = 0;
+   long size = 0;
 
    char* vertexShader = readFile(vs_fname, &size);
    vertexShader[size - 1] = '\0';

@@ -56,6 +56,61 @@ typedef struct mdl_seq_header_t
    long length;
 } mdl_seq_header_t;
 
+typedef struct mdl_seq_desc_t
+{
+   char name[32];
+   float fps;
+   int flags;
+   int activity;
+   int actweight;
+   int nevents;
+   int event_offset;
+   int nframes;
+   int npivots;
+   int pivot_offset;
+   int motion_type;
+   int motion_bone;
+   vec3_t linear_movement;
+   int automoveposindex;
+   int automoveangleindex;
+   vec3_t bbox_min;
+   vec3_t bbox_max;
+   int nblends;
+   int anim_offset;
+   int blend_type[2];
+   float blend_start[2];
+   float blend_end[2];
+   int blend_parent;
+   int seq_group;
+   int entry_node;
+   int exit_node;
+   int node_flags;
+   int seq_next;
+} mdl_seq_desc_t;
+
+typedef struct mdl_seq_group_t
+{
+   char name[32];
+   char fname[64];
+   void* cache;
+   int data;
+} mdl_seq_group_t;
+
+typedef struct mdl_anim_t
+{
+   unsigned short offset[6];
+} mdl_anim_t;
+
+typedef union mdl_animvalue_t
+{
+   struct
+   {
+      unsigned char valid;
+      unsigned char total;
+   } num;
+   short value;
+} mdl_animvalue_t;
+
 typedef struct mdl_bone_t
 {
    char name[32];
@@ -108,6 +163,20 @@ typedef struct mdl_mesh_t
    long nnormals;
    long normal_offset;
 } mdl_mesh_t;
+
+mdl_anim_t* get_anim(const mdl_header_t* h, const mdl_seq_desc_t* seq)
+{
+   mdl_seq_group_t* g = (mdl_seq_group_t*)((char*)h + h->sequencegroup_offset) + seq->seq_group;
+   if (seq->seq_group == 0)
+   {
+      return (mdl_anim_t*)((char*)h + g->data + seq->anim_offset);
+   }
+   else
+   {
+      LOGE("Not implemented yet");
+      return NULL;
+   }
+}
 
 void print_header_info(const mdl_header_t* h)
 {
@@ -198,7 +267,7 @@ long add_vertex(const short* t, vertex_t* buf, long* nverts, const vec3_t* v, co
    pos.w = 0.0f;
    mat4_mult_vector(&vert.pos, &bone_transforms[bi], &pos);
 
-   LOGI("Vector %.2f %.2f %.2f %.2f transformed to %.2f %.2f %.2f %.2f using bone #%04d", pos.x, pos.y, pos.z, pos.w, vert.pos.x, vert.pos.y, vert.pos.z, vert.pos.w, bi);
+   //LOGI("Vector %.2f %.2f %.2f %.2f transformed to %.2f %.2f %.2f %.2f using bone #%04d", pos.x, pos.y, pos.z, pos.w, vert.pos.x, vert.pos.y, vert.pos.z, vert.pos.w, bi);
 
    long index = -1;
    long i = 0;
@@ -220,6 +289,39 @@ long add_vertex(const short* t, vertex_t* buf, long* nverts, const vec3_t* v, co
    }
 
    return index;
+}
+
+void get_anim_values(const mdl_anim_t* anim, int frame, short values[6])
+{
+   int i = 0;
+   for (i = 0; i < 6; ++i)
+   {
+      if (anim->offset[i] != 0)
+      {
+         mdl_animvalue_t* av = (mdl_animvalue_t*)((char*)anim + anim->offset[i]);
+
+         int k = frame;
+
+         while (av->num.total <= k)
+         {
+            k -= av->num.total;
+            av += av->num.valid + 1;
+         }
+         //LOGI("#%d[%d]: AnimValue: %d [%d %d]", i, k, av->value, (int)av->num.valid, (int)av->num.total);
+         if (av->num.valid > k)
+         {
+            values[i] = av[k + 1].value;
+         }
+         else
+         {
+            values[i] = av[av->num.valid].value;
+         }
+      }
+      else
+      {
+         values[i] = 0;
+      }
+   }
 }
 
 int mesh_load_from_mdl(const char* fname, mesh_t* m)
@@ -268,33 +370,44 @@ int mesh_load_from_mdl(const char* fname, mesh_t* m)
          const unsigned char* vi = (const unsigned char*)(buf + mdl->vertex_info_offset);
          const mdl_bone_t* bones = (const mdl_bone_t*)(buf + header->bone_offset);
 
+         int seq_index = 0;
+         mdl_seq_desc_t* seq = (mdl_seq_desc_t*)(buf + header->sequence_offset) + seq_index;
+         mdl_anim_t* anim = get_anim(header, seq);
+
+         //LOGI("Anim: [%d %d %d] [%d %d %d]", anim->offset[0], anim->offset[1], anim->offset[2], anim->offset[3], anim->offset[4], anim->offset[5]);
+
 
          // calculate bones transforms
          for (j = 0; j < header->nbones; ++j)
          {
-            LOGI("Bone #%04ld: %s parent: #%04ld pos: %.2f %.2f %.2f angles: %.2f %.2f %.2f scale: [%.2f %.2f %.2f] [%.2f %.2f %.2f]\n", j, bones->name, bones->parent, bones->value[0], bones->value[1], bones->value[2], bones->value[3], bones->value[4], bones->value[5], bones->scale[0], bones->scale[1], bones->scale[2], bones->scale[3], bones->scale[4], bones->scale[5]);
+            LOGI("Bone #%04ld: %s parent: #%04ld pos: %.2f %.2f %.2f angles: %.2f %.2f %.2f scale: [%.2f %.2f %.2f] [%.2f %.2f %.2f]", j, bones->name, bones->parent, bones->value[0], bones->value[1], bones->value[2], bones->value[3], bones->value[4], bones->value[5], bones->scale[0], bones->scale[1], bones->scale[2], bones->scale[3], bones->scale[4], bones->scale[5]);
+
+            short values[6] = {0};
+            get_anim_values(anim++, 0, values);
 
             vec4f_t pos;
-            pos.x = bones->value[0];
-            pos.y = bones->value[1];
-            pos.z = bones->value[2];
-            pos.w = 1.0f; 
+            pos.x = bones->value[0] + values[0] * bones->scale[0];
+            pos.y = bones->value[1] + values[1] * bones->scale[2];
+            pos.z = bones->value[2] + values[2] * bones->scale[2];
+            pos.w = 1.0f;
 
             vec4f_t angles;
-            angles.x = bones->value[3];
-            angles.y = bones->value[4];
-            angles.z = bones->value[5];
+            angles.x = bones->value[3] + values[3] * bones->scale[3];
+            angles.y = bones->value[4] + values[4] * bones->scale[4];
+            angles.z = bones->value[5] + values[5] * bones->scale[5];
+
+            LOGI("Angles: %.2f %.2f %.2f\n", angles.x, angles.y, angles.z);
 
             vec4f_t quat;
             quat_from_angles(&quat, &angles);
 
-            LOGI("Quaternion: %.2f %.2f %.2f %.2f", quat.x, quat.y, quat.z, quat.w);
 
             mat4f_t transform;
             mat4_from_quaternion(&transform, &quat);
-            transform.m41 = pos.x;
-            transform.m42 = pos.y;
-            transform.m43 = pos.z;
+            transform.m14 = pos.x;
+            transform.m24 = pos.y;
+            transform.m34 = pos.z;
+            transform.m44 = 1.0f;
 
             if (bones->parent == -1)
             {
@@ -305,7 +418,12 @@ int mesh_load_from_mdl(const char* fname, mesh_t* m)
                mat4_mult(&bone_transforms[j], &bone_transforms[bones->parent], &transform);
             }
 
+            LOGI("Pos: %.2f %.2f %.2f", pos.x, pos.y, pos.z);
+            LOGI("Quat: %.2f %.2f %.2f %.2f", quat.x, quat.y, quat.z, quat.w);
+            mat4_show(&transform);
+            LOGI("");
             mat4_show(&bone_transforms[j]);
+            LOGI("");
             ++bones;
          }
 

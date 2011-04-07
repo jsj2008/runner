@@ -22,7 +22,7 @@ int tex2d_load_from_png(tex2d_t* t, const char* fname)
 {
    memset(t, 0, sizeof(tex2d_t));
 
-   int size = 0;
+   long size = 0;
    char* data = readFile(fname, &size);
    if (data == NULL)
       return -1;
