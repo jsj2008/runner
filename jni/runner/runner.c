@@ -5,6 +5,7 @@
 #include "camera.h"
 #include "model.h"
 #include "hlmdl.h"
+#include "shader.h"
 
 static GLfloat skybox_vertices[] =
 {
@@ -155,6 +156,8 @@ GLuint gSkyboxProgram = 0;
 mat4f_t gModel;
 cam_t camera;
 model_t* mdl = NULL;
+shader_t model_shader;
+shader_t skybox_shader;
 
 vec4f_t* vec4(float x, float y, float z, float w)
 {
@@ -193,30 +196,6 @@ void init(const char* apkPath)
    }
 }
 
-GLuint load_program(const char* vs_fname, const char* ps_fname)
-{
-   long size = 0;
-
-   char* vertexShader = readFile(vs_fname, &size);
-   vertexShader[size - 1] = '\0';
-
-   char* pixelShader = readFile(ps_fname, &size);
-   pixelShader[size - 1] = '\0';
-
-   GLuint program = createShaderProgram(vertexShader, pixelShader);
-
-   free(vertexShader);
-   free(pixelShader);
-
-   if (program == 0)
-   {
-      LOGE("Unable to create program");
-   }
-
-   return program;
-}
-
-
 GLuint create_texture(const char* fname)
 {
    tex2d_t t;
@@ -240,12 +219,10 @@ void resize(int width, int height)
 {
    LOGI("resize %dx%d", width, height);
 
-   gModelProgram = load_program("assets/shaders/test.vs", "assets/shaders/test.ps");
-   if (gModelProgram == 0)
+   if (shader_load(&model_shader, "assets/shaders/test") == 0)
       return;
 
-   gSkyboxProgram = load_program("assets/shaders/skybox.vs", "assets/shaders/skybox.ps");
-   if (gSkyboxProgram == 0)
+   if (shader_load(&skybox_shader, "assets/shaders/skybox") == 0)
       return;
 
    gvSkyboxPos = glGetAttribLocation(gSkyboxProgram, "aPos");
@@ -299,20 +276,16 @@ void draw_mesh(cam_t* c, mesh_t* m)
    mat4_mult(&mv, &c->view, &gModel);
    mat4_mult(&mvp, &c->proj, &mv);
 
-   glUseProgram(gModelProgram);
-   glUniformMatrix4fv(gvMVP, 1, GL_FALSE, mat4_data(&mvp));
+   int sampler_id = 0;
+   shader_use(&model_shader);
+   shader_set_uniform_matrices(&model_shader, "uMVP", 1, mat4_data(&mvp));
+   shader_set_attrib_vertices(&model_shader, "aPos", 3, GL_FLOAT, sizeof(vertex_t), &m->vertices[0].pos);
+   shader_set_attrib_vertices(&model_shader, "aTexCoord", 2, GL_FLOAT, sizeof(vertex_t), &m->vertices[0].tex_coord);
+   shader_set_attrib_vertices(&model_shader, "aNormal", 3, GL_FLOAT, sizeof(vertex_t), &m->vertices[0].normal);
+   shader_set_uniform_integers(&model_shader, "uTex", 1, &sampler_id);
 
-   glVertexAttribPointer(gvPosHandle, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), &m->vertices[0].pos);
-   glVertexAttribPointer(gvTexCoordHandle, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), &m->vertices[0].tex_coord);
-   glVertexAttribPointer(gvNormalHandle, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), &m->vertices[0].normal);
-
-   glEnableVertexAttribArray(gvPosHandle);
-   glDisableVertexAttribArray(gvTexCoordHandle);
-   glEnableVertexAttribArray(gvNormalHandle);
-
-   glActiveTexture(GL_TEXTURE0);
+   glActiveTexture(GL_TEXTURE0 + sampler_id);
    glBindTexture(GL_TEXTURE_2D, gvTextureId);
-   glUniform1i(gvSampler, 0);
 
    glCullFace(GL_FRONT);
    glDrawElements(GL_TRIANGLES, m->nindices, GL_UNSIGNED_INT, m->indices);
@@ -335,13 +308,13 @@ void update()
    glDepthFunc(GL_ALWAYS);
    glUseProgram(gSkyboxProgram);
 
-   glVertexAttribPointer(gvSkyboxPos, 3, GL_FLOAT, GL_FALSE, 0, skybox_vertices);
-   glVertexAttribPointer(gvSkyboxTexCoord, 2, GL_FLOAT, GL_FALSE, 0, skybox_tex_coords);
-   glVertexAttribPointer(gvSkyboxColor, 3, GL_FLOAT, GL_FALSE, 0, skybox_colors);
+   int sampler_id = 0;
 
-   glEnableVertexAttribArray(gvSkyboxPos);
-   glEnableVertexAttribArray(gvSkyboxTexCoord);
-   glEnableVertexAttribArray(gvSkyboxColor);
+   shader_use(&skybox_shader);
+   shader_set_attrib_vertices(&skybox_shader, "aPos", 3, GL_FLOAT, 0, skybox_vertices);
+   shader_set_attrib_vertices(&skybox_shader, "aTexCoord", 2, GL_FLOAT, 0, skybox_tex_coords);
+   shader_set_attrib_vertices(&skybox_shader, "aColor", 3, GL_FLOAT, 0, skybox_colors);
+   shader_set_uniform_integers(&skybox_shader, "uTex", 1, &sampler_id);
 
    glActiveTexture(GL_TEXTURE0);
    checkGLError("glActiveTexture");
@@ -349,47 +322,24 @@ void update()
    glBindTexture(GL_TEXTURE_2D, gvSkyboxTextureId);
    checkGLError("glBindTexture");
 
-   glUniform1i(gvSkyboxSampler, 0);
-   checkGLError("glUniform1i");
-
    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, skybox_indices);
    glDepthFunc(GL_LESS);
 
    model_render(mdl, &camera);
    return;
 
-   glUseProgram(gModelProgram);
-   checkGLError("glUseProgram");
+   shader_use(&model_shader);
+   shader_set_uniform_matrices(&model_shader, "uMVP", 1, mat4_data(&mvp));
+   shader_set_attrib_vertices(&skybox_shader, "aPos", 3, GL_FLOAT, 0, vertices);
+   shader_set_attrib_vertices(&skybox_shader, "aTexCoord", 2, GL_FLOAT, 0, texCoords);
+   shader_set_attrib_vertices(&skybox_shader, "aNormal", 3, GL_FLOAT, 0, normals);
+   shader_set_uniform_integers(&skybox_shader, "uTex", 1, &sampler_id);
 
-   glUniformMatrix4fv(gvMVP, 1, GL_FALSE, mat4_data(&mvp));
-   checkGLError("glUniformMatrix4fv");
-
-   glVertexAttribPointer(gvPosHandle, 3, GL_FLOAT, GL_FALSE, 0, vertices);
-   checkGLError("glVertexAttribPointer");
-
-   glVertexAttribPointer(gvTexCoordHandle, 2, GL_FLOAT, GL_FALSE, 0, texCoords);
-   checkGLError("glVertexAttribPointer");
-
-   glVertexAttribPointer(gvNormalHandle, 3, GL_FLOAT, GL_FALSE, 0, normals);
-   checkGLError("glVertexAttribPointer");
-
-   glEnableVertexAttribArray(gvPosHandle);
-   checkGLError("glEnableVertexAttribArray");
-
-   glEnableVertexAttribArray(gvTexCoordHandle);
-   checkGLError("glEnableVertexAttribArray");
-
-   glEnableVertexAttribArray(gvNormalHandle);
-   checkGLError("glEnableVertexAttribArray");
-
-   glActiveTexture(GL_TEXTURE0);
+   glActiveTexture(GL_TEXTURE0 + sampler_id);
    checkGLError("glActiveTexture");
 
    glBindTexture(GL_TEXTURE_2D, gvTextureId);
    checkGLError("glBindTexture");
-
-   glUniform1i(gvSampler, 0);
-   checkGLError("glUniform1i");
 
    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, indices);
    checkGLError("glDrawElements");
