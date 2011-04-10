@@ -36,4 +36,5 @@ void mat4_set_perspective(mat4f_t* m, float fovy, float aspect, float znear, flo
 void mat4_set_lookat(mat4f_t* m, const vec4f_t* eye, const vec4f_t* at, const vec4f_t* up);
 float* mat4_data(mat4f_t* m);
 void mat4_from_quaternion(mat4f_t* m, const vec4f_t* q);
+void quat_mult(vec4f_t* r, const vec4f_t* a, const vec4f_t* b);
 

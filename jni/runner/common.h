@@ -1,6 +1,8 @@
 #pragma once
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <jni.h>
 #include <android/log.h>
 

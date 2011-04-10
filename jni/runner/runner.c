@@ -3,7 +3,7 @@
 #include "matrix.h"
 #include "assets.h"
 #include "camera.h"
-#include "mesh.h"
+#include "model.h"
 #include "hlmdl.h"
 
 static GLfloat skybox_vertices[] =
@@ -154,7 +154,7 @@ GLuint gSkyboxProgram = 0;
 
 mat4f_t gModel;
 cam_t camera;
-mesh_t mesh;
+model_t* mdl = NULL;
 
 vec4f_t* vec4(float x, float y, float z, float w)
 {
@@ -187,7 +187,7 @@ void init(const char* apkPath)
    glCullFace(GL_BACK);
    glFrontFace(GL_CCW);
 
-   if (mesh_load_from_mdl("assets/models/big_rock.mdl", &mesh) != 0)
+   if (model_load(&mdl, "assets/models/big_rock.mdl") != 0)
    {
       LOGE("Unable to load model\n");
    }
@@ -355,7 +355,7 @@ void update()
    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, skybox_indices);
    glDepthFunc(GL_LESS);
 
-   draw_mesh(&camera, &mesh);
+   model_render(mdl, &camera);
    return;
 
    glUseProgram(gModelProgram);
@@ -407,13 +407,13 @@ void scroll(long delta_time, float delta_x, float delta_y)
    //cam_slide(&camera, vec4(-coef * delta_x, coef * delta_y, 0.0f, 0.0f));
    cam_slide(&camera, vec4(0.0f, 0.0f, coef * delta_y, 0.0f));
    cam_update(&camera);
-/*
-   int i = 0;
-   for (i = 0; i < 4; ++i)
-   {
-      skybox_tex_coords[i*2] += interval * delta_x * 0.1;
-      skybox_tex_coords[i*2+1] -= interval * delta_y * 0.1;
-   }
-*/
+   /*
+      int i = 0;
+      for (i = 0; i < 4; ++i)
+      {
+         skybox_tex_coords[i*2] += interval * delta_x * 0.1;
+         skybox_tex_coords[i*2+1] -= interval * delta_y * 0.1;
+      }
+   */
 }
 

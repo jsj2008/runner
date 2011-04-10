@@ -61,3 +61,30 @@ vec4f_t* quat_from_angles(vec4f_t* r, const vec4f_t* a)
    return r;
 }
 
+vec4f_t* quat_to_angles(vec4f_t* r, const vec4f_t* q)
+{
+   float test = q->x*q->y + q->z*q->w;
+   if (test > 0.499)   // singularity at north pole
+   {
+      r->y = 2 * atan2(q->x,q->w);
+      r->z = M_PI/2;
+      r->x = 0;
+      return r;
+   }
+   if (test < -0.499)   // singularity at south pole
+   {
+      r->y = -2 * atan2(q->x,q->w);
+      r->z = - M_PI/2;
+      r->x = 0;
+      return r;
+   }
+   float sqx = q->x*q->x;
+   float sqy = q->y*q->y;
+   float sqz = q->z*q->z;
+   r->y = atan2(2*q->y*q->w-2*q->x*q->z , 1 - 2*sqy - 2*sqz);
+   r->z = asin(2*test);
+   r->x = atan2(2*q->x*q->w-2*q->y*q->z , 1 - 2*sqx - 2*sqz);
+
+   return r;
+}
+

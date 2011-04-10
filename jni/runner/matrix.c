@@ -337,3 +337,11 @@ void mat4_mult_vector(vec4f_t* r, const mat4f_t* m, const vec4f_t* a)
    r->w = m->m41 * a->x + m->m42 * a->y + m->m43 * a->z + m->m44 * a->w;
 }
 
+void quat_mult(vec4f_t* r, const vec4f_t* a, const vec4f_t* b)
+{
+   (*r).w = a->w*b->w - a->x*b->x - a->y*b->y - a->z*b->z;
+   (*r).x = a->w*b->x + a->x*b->w + a->y*b->z - a->z*b->y;
+   (*r).y = a->w*b->y - a->x*b->z + a->y*b->w + a->z*b->x;
+   (*r).z = a->w*b->z + a->x*b->y - a->y*b->x + a->z*b->w;
+}
+

@@ -1,6 +1,4 @@
 #pragma once
 
-#include "mesh.h"
-
-int mesh_load_from_mdl(const char* fname, mesh_t* m);
+int hlmdl_convert(const char* from, const char* to);
 
