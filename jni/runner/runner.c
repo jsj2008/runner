@@ -1,7 +1,7 @@
 #include "common.h"
 #include "gl.h"
 #include "matrix.h"
-#include "assets.h"
+#include "stream.h"
 #include "camera.h"
 #include "model.h"
 #include "hlmdl.h"
@@ -137,21 +137,8 @@ static GLubyte indices[] =
 };
 
 GLuint gFrames = 0;
-GLuint gModelProgram = 0;
-GLuint gvPosHandle = 0;
-GLuint gvTexCoordHandle = 0;
-GLuint gvNormalHandle = 0;
-GLuint gvSampler = 0;
-GLuint gvMVP = 0;
 GLuint gvTextureId = 0;
-
-GLuint gvSkyboxPos = 0;
-GLuint gvSkyboxTexCoord = 0;
-GLuint gvSkyboxColor = 0;
-GLuint gvSkyboxSampler = 0;
 GLuint gvSkyboxTextureId = 0;
-GLuint gSkyboxProgram = 0;
-
 
 mat4f_t gModel;
 cam_t camera;
@@ -172,7 +159,7 @@ void init(const char* apkPath)
 {
    LOGI("init");
 
-   if (setAPKPath(apkPath) != 0)
+   if (stream_set_root(apkPath) != 0)
    {
       LOGE("Error setting APK path");
       return;
@@ -225,10 +212,6 @@ void resize(int width, int height)
    if (shader_load(&skybox_shader, "assets/shaders/skybox") == 0)
       return;
 
-   gvSkyboxPos = glGetAttribLocation(gSkyboxProgram, "aPos");
-   gvSkyboxTexCoord = glGetAttribLocation(gSkyboxProgram, "aTexCoord");
-   gvSkyboxColor = glGetAttribLocation(gSkyboxProgram, "aColor");
-   gvSkyboxSampler = glGetUniformLocation(gSkyboxProgram, "uTex");
    gvSkyboxTextureId = create_texture("assets/textures/skybox.png");
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -238,21 +221,6 @@ void resize(int width, int height)
    gvTextureId = create_texture("assets/textures/marble.png");
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-   gvPosHandle = glGetAttribLocation(gModelProgram, "aPos");
-   checkGLError("glGetAttribLocation");
-
-   gvTexCoordHandle = glGetAttribLocation(gModelProgram, "aTexCoord");
-   checkGLError("glGetAttribLocation");
-
-   gvNormalHandle = glGetAttribLocation(gModelProgram, "aNormal");
-   checkGLError("glGetAttribLocation");
-
-   gvSampler = glGetUniformLocation(gModelProgram, "uTex");
-   checkGLError("glGetUniformLocation");
-
-   gvMVP = glGetUniformLocation(gModelProgram, "uMVP");
-   checkGLError("glGetUniformLocation");
 
    glViewport(0, 0, width, height);
    checkGLError("glViewport");
@@ -293,9 +261,6 @@ void draw_mesh(cam_t* c, mesh_t* m)
 
 void update()
 {
-   if (gModelProgram == 0 || gSkyboxProgram == 0)
-      return;
-
    gAngle += 2.0f;
    mat4_set_xrotation(&gModel, DEG2RAD(gAngle));
 
@@ -306,7 +271,6 @@ void update()
 
    glCullFace(GL_BACK);
    glDepthFunc(GL_ALWAYS);
-   glUseProgram(gSkyboxProgram);
 
    int sampler_id = 0;
 
@@ -326,23 +290,6 @@ void update()
    glDepthFunc(GL_LESS);
 
    model_render(mdl, &camera);
-   return;
-
-   shader_use(&model_shader);
-   shader_set_uniform_matrices(&model_shader, "uMVP", 1, mat4_data(&mvp));
-   shader_set_attrib_vertices(&skybox_shader, "aPos", 3, GL_FLOAT, 0, vertices);
-   shader_set_attrib_vertices(&skybox_shader, "aTexCoord", 2, GL_FLOAT, 0, texCoords);
-   shader_set_attrib_vertices(&skybox_shader, "aNormal", 3, GL_FLOAT, 0, normals);
-   shader_set_uniform_integers(&skybox_shader, "uTex", 1, &sampler_id);
-
-   glActiveTexture(GL_TEXTURE0 + sampler_id);
-   checkGLError("glActiveTexture");
-
-   glBindTexture(GL_TEXTURE_2D, gvTextureId);
-   checkGLError("glBindTexture");
-
-   glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, indices);
-   checkGLError("glDrawElements");
 
    ++gFrames;
 }

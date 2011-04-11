@@ -1,6 +1,7 @@
 #include "model.h"
 #include "common.h"
-#include "gl.h"
+#include "shader.h"
+#include "stream.h"
 
 typedef struct model_header_t
 {
@@ -10,17 +11,16 @@ typedef struct model_header_t
    long data_size;
 } model_header_t;
 
-#define WRITE(n)     { header.data_size += fwrite(&n, 1, sizeof(n), f); }
-#define WRITEA(n, c) { header.data_size += fwrite(&n[0], 1, c * sizeof(n[0]), f); }
+#define WRITE(n)     { header.data_size += stream_write(f, &n, sizeof(n)); }
+#define WRITEA(n, c) { header.data_size += stream_write(f, &n[0], c * sizeof(n[0])); }
 
 int model_save(const model_t* model, const char* fname)
 {
    LOGI("Saving model %s to %s", model->name, fname);
 
-   FILE* f = fopen(fname, "wb");
-   if (f == NULL)
+   stream_t* f = NULL;
+   if (stream_open_writer(&f, fname) != 0)
    {
-      LOGE("Unable to create file: %s", fname);
       return -1;
    }
 
@@ -35,7 +35,7 @@ int model_save(const model_t* model, const char* fname)
    long i = 0;
 
    // write model info
-   fseek(f, header.data_offset, SEEK_SET);
+   stream_seek(f, header.data_offset, SEEK_SET);
 
    model_t mdl = (*model);
    mdl.bones = (bone_t*)(sizeof(model_t));
@@ -90,10 +90,10 @@ int model_save(const model_t* model, const char* fname)
    }
 
    // write header
-   fseek(f, 0, SEEK_SET);
+   stream_seek(f, 0, SEEK_SET);
    WRITE(header);
 
-   fclose(f);
+   stream_close(f);
    return 0;
 }
 
@@ -107,39 +107,37 @@ int model_load(model_t** m, const char* fname)
       return -1;
    }
 
-   FILE* f = fopen(fname, "rb");
-   if (f == NULL)
+   stream_t* f = NULL;
+   if (stream_open_reader(&f, fname) != 0)
    {
-      LOGE("Unable to open file: %s", fname);
       return -1;
    }
 
    // read header
    model_header_t header;
-   fread(&header, 1, sizeof(model_header_t), f);
+   stream_read(f, &header, sizeof(model_header_t));
    if (memcmp(header.magic, "RNNRMDL_", sizeof(header.magic)) != 0)
    {
       LOGE("Invalid file signature: %s", header.magic);
-      fclose(f);
+      stream_close(f);
       return -1;
    }
 
-   fseek(f, 0, SEEK_END);
-   long size = ftell(f);
+   long size = stream_size(f);
 
    if (header.data_offset + header.data_size > size)
    {
       LOGE("Invalid file size [offset: %ld size: %ld filesize: %ld]", header.data_offset, header.data_size, size);
-      fclose(f);
+      stream_close(f);
       return -1;
    }
 
    LOGI("Header: offset=%ld size=%ld", header.data_offset, header.data_size);
 
-   fseek(f, header.data_offset, SEEK_SET);
+   stream_seek(f, header.data_offset, SEEK_SET);
    char* buf = malloc(header.data_size);
-   fread(buf, 1, header.data_size, f);
-   fclose(f);
+   stream_read(f, buf, header.data_size);
+   stream_close(f);
 
    model_t* mdl = (model_t*)buf;
    mdl->bones = (bone_t*)(buf + (long)mdl->bones);
@@ -187,16 +185,16 @@ void model_free(const model_t* model)
 #define MAX_BONES 256
 #define MAX_VERTICES 4096
 
-extern GLuint gModelProgram;
-extern GLuint gvPosHandle;
-extern GLuint gvTexCoordHandle;
-extern GLuint gvNormalHandle;
-extern GLuint gvSampler;
-extern GLuint gvMVP;
+extern shader_t model_shader;
 extern GLuint gvTextureId;
 
 void model_render(const model_t* model, const cam_t* camera)
 {
+   mat4f_t mv;
+   mat4f_t mvp;
+   mat4_mult(&mv, &camera->view, &model->transform);
+   mat4_mult(&mvp, &camera->proj, &mv);
+
    mat4f_t bone_transforms[MAX_BONES];
    vertex_t vertices[MAX_VERTICES];
    long i = 0;
@@ -259,17 +257,17 @@ void model_render(const model_t* model, const cam_t* camera)
          mat4_mult_vector(&vertices[j].pos, &bone_transforms[mesh->vertices[j].bone[0]], &vertices[j].pos);
       }
 
-      glVertexAttribPointer(gvPosHandle, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), &vertices[0].pos);
-      glVertexAttribPointer(gvTexCoordHandle, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), &vertices[0].tex_coord);
-      glVertexAttribPointer(gvNormalHandle, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), &vertices[0].normal);
+      int sampler_id = 0;
 
-      glEnableVertexAttribArray(gvPosHandle);
-      glEnableVertexAttribArray(gvTexCoordHandle);
-      glEnableVertexAttribArray(gvNormalHandle);
+      shader_use(&model_shader);
+      shader_set_uniform_matrices(&model_shader, "uMVP", 1, mat4_data(&mvp));
+      shader_set_attrib_vertices(&model_shader, "aPos", 3, GL_FLOAT, sizeof(vertex_t), &vertices[0].pos);
+      shader_set_attrib_vertices(&model_shader, "aTexCoord", 2, GL_FLOAT, sizeof(vertex_t), &vertices[0].tex_coord);
+      shader_set_attrib_vertices(&model_shader, "aNormal", 3, GL_FLOAT, sizeof(vertex_t), &vertices[0].normal);
+      shader_set_uniform_integers(&model_shader, "uTex", 1, &sampler_id);
 
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, gvTextureId);
-      glUniform1i(gvSampler, 0);
 
       glCullFace(GL_FRONT);
       glDrawElements(GL_TRIANGLES, mesh->nindices, GL_UNSIGNED_INT, mesh->indices);

@@ -1,7 +1,7 @@
 #include "hlmdl.h"
 #include "common.h"
 #include "model.h"
-#include "assets.h"
+#include "stream.h"
 
 typedef float vec3_t[3];
 typedef float vec4_t[3];
@@ -328,7 +328,7 @@ mdl_header_t* read_hlmdl(const char* fname)
    LOGI("Loading hl model from %s", fname);
 
    long size = 0;
-   char* buf = readFile(fname, &size);
+   char* buf = stream_read_file(fname, &size);
    if (buf == NULL)
    {
       LOGE("Unable to read model from %s", fname);

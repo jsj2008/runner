@@ -1,5 +1,5 @@
 #include "tex2d.h"
-#include "assets.h"
+#include "stream.h"
 #include <png.h>
 
 typedef struct png_read_data_t
@@ -23,7 +23,7 @@ int tex2d_load_from_png(tex2d_t* t, const char* fname)
    memset(t, 0, sizeof(tex2d_t));
 
    long size = 0;
-   char* data = readFile(fname, &size);
+   char* data = (char*)stream_read_file(fname, &size);
    if (data == NULL)
       return -1;
 

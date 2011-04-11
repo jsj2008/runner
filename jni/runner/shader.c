@@ -1,5 +1,6 @@
 #include "shader.h"
-#include "assets.h"
+#include "stream.h"
+#include "gl.h"
 
 static GLuint load_shader_from_string(GLenum type, const char* src)
 {
@@ -45,7 +46,7 @@ static GLuint load_shader_from_string(GLenum type, const char* src)
 static GLuint load_shader_from_file(GLenum type, const char* fname)
 {
    long size = 0;
-   char* buf = readFile(fname, &size);
+   char* buf = (char*)stream_read_file(fname, &size);
    if (buf == NULL)
    {
       return 0;

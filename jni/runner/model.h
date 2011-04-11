@@ -23,8 +23,6 @@ typedef struct mesh_t
    char name[64];
    char shader[64];
 
-   mat4f_t transform;
-
    long ntextures;
    long nvertices;
    long nindices;
@@ -54,6 +52,8 @@ typedef struct anim_t
 typedef struct model_t
 {
    char name[64];
+
+   mat4f_t transform;
 
    long nbones;
    long nanims;
