@@ -33,46 +33,34 @@ void mat4_set_xrotation(mat4f_t* m, float angle)
    m->m32 = sx;
    m->m33 = cx;
 }
-/*
-void matSetRotationX(mat4f_t* m, float angle)
-{
-   float sx = sin(angle);
-   float cx = cos(angle);
 
-   memset(m->m, 0, sizeof(m->m));
-   m->m00 = m->m33 = 1.0f;
-   m->m11 = cx;
-   m->m12 = -sx;
-   m->m21 = sx;
-   m->m22 = cx;
-}
-
-void matSetRotationY(mat4f_t* m, float angle)
+void mat4_set_yrotation(mat4f_t* m, float angle)
 {
    float sy = sin(angle);
    float cy = cos(angle);
 
    memset(m->m, 0, sizeof(m->m));
-   m->m11 = m->m33 = 1.0f;
-   m->m00 = cy;
-   m->m02 = sy;
-   m->m20 = -sy;
-   m->m22 = cy;
+   m->m22 = m->m44 = 1.0f;
+   m->m11 = cy;
+   m->m13 = sy;
+   m->m31 = -sy;
+   m->m33 = cy;
 }
 
-void matSetRotationZ(mat4f_t* m, float angle)
+void mat4_set_zrotation(mat4f_t* m, float angle)
 {
    float sz = sin(angle);
    float cz = cos(angle);
 
    memset(m->m, 0, sizeof(m->m));
-   m->m22 = m->m33 = 1.0f;
-   m->m00 = cz;
-   m->m01 = -sz;
-   m->m10 = sz;
+   m->m33 = m->m44 = 1.0f;
    m->m11 = cz;
+   m->m12 = -sz;
+   m->m21 = sz;
+   m->m22 = cz;
 }
 
+/*
 void matSetRotationXYZ(mat4f_t* m, float xangle, float yangle, float zangle)
 {
    float sx = sin(xangle);
@@ -162,10 +150,10 @@ void matShow(mat4f_t* m)
 
 void mat4_show(mat4f_t* m)
 {
-   LOGI("%.2f %.2f %.2f %.2f", m->m11, m->m12, m->m13, m->m14);
-   LOGI("%.2f %.2f %.2f %.2f", m->m21, m->m22, m->m23, m->m24);
-   LOGI("%.2f %.2f %.2f %.2f", m->m31, m->m32, m->m33, m->m34);
-   LOGI("%.2f %.2f %.2f %.2f", m->m41, m->m42, m->m43, m->m44);
+   LOGI("%8.2f %8.2f %8.2f %8.2f", m->m11, m->m12, m->m13, m->m14);
+   LOGI("%8.2f %8.2f %8.2f %8.2f", m->m21, m->m22, m->m23, m->m24);
+   LOGI("%8.2f %8.2f %8.2f %8.2f", m->m31, m->m32, m->m33, m->m34);
+   LOGI("%8.2f %8.2f %8.2f %8.2f", m->m41, m->m42, m->m43, m->m44);
 }
 
 void mat4_set_translation(mat4f_t* m, float x, float y, float z)
@@ -309,23 +297,23 @@ void mat4_from_quaternion(mat4f_t* m, const vec4f_t* q)
    float zw = q->z * q->w;
 
    m->m11 = 1.0f - 2.0f * (yy + zz);
-   m->m12 = 2.0f * (xy + zw);
-   m->m13 = 2.0f * (xz - yw);
-   m->m14 = 0.0f;
-
-   m->m21 = 2.0f * (xy - zw);
-   m->m22 = 1.0f - 2.0f * (xx + zz);
-   m->m23 = 2.0f * (yz + xw);
-   m->m24 = 0.0f;
-
-   m->m31 = 2.0f * (xz + yw);
-   m->m32 = 2.0f * (yz - xw);
-   m->m33 = 1.0f - 2.0f * (xx + yy);
-   m->m34 = 0.0f;
-
+   m->m21 = 2.0f * (xy + zw);
+   m->m31 = 2.0f * (xz - yw);
    m->m41 = 0.0f;
+
+   m->m12 = 2.0f * (xy - zw);
+   m->m22 = 1.0f - 2.0f * (xx + zz);
+   m->m32 = 2.0f * (yz + xw);
    m->m42 = 0.0f;
+
+   m->m13 = 2.0f * (xz + yw);
+   m->m23 = 2.0f * (yz - xw);
+   m->m33 = 1.0f - 2.0f * (xx + yy);
    m->m43 = 0.0f;
+
+   m->m14 = 0.0f;
+   m->m24 = 0.0f;
+   m->m34 = 0.0f;
    m->m44 = 1.0f;
 }
 

@@ -54,7 +54,7 @@ int stream_open_reader(stream_t** pstream, const char* fname)
       return -1;
    }
 
-   stream_t* stream = (stream_t*)malloc(sizeof(stream));
+   stream_t* stream = (stream_t*)malloc(sizeof(stream_t));
 
    if (zip_stat(g_archive, fname, 0, &stream->stat))
    {

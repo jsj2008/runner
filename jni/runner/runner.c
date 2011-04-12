@@ -177,7 +177,7 @@ void init(const char* apkPath)
    glCullFace(GL_BACK);
    glFrontFace(GL_CCW);
 
-   if (model_load(&mdl, "assets/models/big_rock.mdl") != 0)
+   if (model_load(&mdl, "assets/models/test.model") != 0)
    {
       LOGE("Unable to load model\n");
    }
@@ -206,10 +206,10 @@ void resize(int width, int height)
 {
    LOGI("resize %dx%d", width, height);
 
-   if (shader_load(&model_shader, "assets/shaders/test") == 0)
+   if (shader_load(&model_shader, "assets/shaders/test") != 0)
       return;
 
-   if (shader_load(&skybox_shader, "assets/shaders/skybox") == 0)
+   if (shader_load(&skybox_shader, "assets/shaders/skybox") != 0)
       return;
 
    gvSkyboxTextureId = create_texture("assets/textures/skybox.png");
@@ -237,41 +237,8 @@ void resize(int width, int height)
 
 float gAngle = 0.0f;
 
-void draw_mesh(cam_t* c, mesh_t* m)
-{
-   mat4f_t mv;
-   mat4f_t mvp;
-   mat4_mult(&mv, &c->view, &gModel);
-   mat4_mult(&mvp, &c->proj, &mv);
-
-   int sampler_id = 0;
-   shader_use(&model_shader);
-   shader_set_uniform_matrices(&model_shader, "uMVP", 1, mat4_data(&mvp));
-   shader_set_attrib_vertices(&model_shader, "aPos", 3, GL_FLOAT, sizeof(vertex_t), &m->vertices[0].pos);
-   shader_set_attrib_vertices(&model_shader, "aTexCoord", 2, GL_FLOAT, sizeof(vertex_t), &m->vertices[0].tex_coord);
-   shader_set_attrib_vertices(&model_shader, "aNormal", 3, GL_FLOAT, sizeof(vertex_t), &m->vertices[0].normal);
-   shader_set_uniform_integers(&model_shader, "uTex", 1, &sampler_id);
-
-   glActiveTexture(GL_TEXTURE0 + sampler_id);
-   glBindTexture(GL_TEXTURE_2D, gvTextureId);
-
-   glCullFace(GL_FRONT);
-   glDrawElements(GL_TRIANGLES, m->nindices, GL_UNSIGNED_INT, m->indices);
-}
-
 void update()
 {
-   gAngle += 2.0f;
-   mat4_set_xrotation(&gModel, DEG2RAD(gAngle));
-
-   mat4f_t mv;
-   mat4f_t mvp;
-   mat4_mult(&mv, &camera.view, &gModel);
-   mat4_mult(&mvp, &camera.proj, &mv);
-
-   glCullFace(GL_BACK);
-   glDepthFunc(GL_ALWAYS);
-
    int sampler_id = 0;
 
    shader_use(&skybox_shader);
@@ -286,10 +253,15 @@ void update()
    glBindTexture(GL_TEXTURE_2D, gvSkyboxTextureId);
    checkGLError("glBindTexture");
 
+   glCullFace(GL_BACK);
+   glDepthFunc(GL_ALWAYS);
+
    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, skybox_indices);
    glDepthFunc(GL_LESS);
 
-   model_render(mdl, &camera);
+   mat4_set_xrotation(&mdl->transform, DEG2RAD(gAngle));
+   model_render(mdl, &camera, gFrames);
+   gAngle += 2.0f;
 
    ++gFrames;
 }

@@ -4,7 +4,6 @@
 
 static GLuint load_shader_from_string(GLenum type, const char* src)
 {
-   LOGI("creating shader");
    GLuint shader = glCreateShader(type);
    if (shader == 0)
    {
@@ -12,12 +11,9 @@ static GLuint load_shader_from_string(GLenum type, const char* src)
       return 0;
    }
 
-   int len = strlen(src);
-   LOGI("setting shader source [%d bytes]: %s", len, src);
    glShaderSource(shader, 1, &src, NULL);
    checkGLError("glShaderSource");
 
-   LOGI("compiling shader");
    glCompileShader(shader);
    checkGLError("glCompileShader");
 
@@ -74,6 +70,8 @@ static const shader_var_t* find_var(const shader_t* shader, const char* name)
 
 static shader_var_t* add_var(shader_t* shader, const char* name, GLuint location)
 {
+   LOGI("Adding var %s location %d program %ld", name, location, shader->program);
+
    shader_var_t* var = &shader->vars[shader->nvars];
    ++shader->nvars;
 
@@ -175,6 +173,7 @@ int shader_load(shader_t* shader, const char* name)
    strcpy(shader->name, name);
    shader->program = program;
 
+   LOGI("Loaded shader program #%ld", shader->program);
    return 0;
 }
 

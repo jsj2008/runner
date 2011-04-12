@@ -67,5 +67,5 @@ typedef struct model_t
 int model_load(model_t** model, const char* fname);
 int model_save(const model_t* model, const char* fname);
 void model_free(const model_t* model);
-void model_render(const model_t* model, const cam_t* camera);
+void model_render(const model_t* model, const cam_t* camera, int frame);
 

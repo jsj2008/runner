@@ -188,23 +188,28 @@ void model_free(const model_t* model)
 extern shader_t model_shader;
 extern GLuint gvTextureId;
 
-void model_render(const model_t* model, const cam_t* camera)
+void model_render(const model_t* model, const cam_t* camera, int _frame)
 {
+   if (model == NULL || camera == NULL)
+      return;
+
    mat4f_t mv;
    mat4f_t mvp;
    mat4_mult(&mv, &camera->view, &model->transform);
    mat4_mult(&mvp, &camera->proj, &mv);
+
+   static int g_debug = 1;
 
    mat4f_t bone_transforms[MAX_BONES];
    vertex_t vertices[MAX_VERTICES];
    long i = 0;
    long j = 0;
 
-   long sequence = 0;
-   long frame = 0;
+   long sequence = 2;
 
    anim_t* anim = &model->anims[sequence];
-   float* trans = anim->transforms + model->nbones*frame;
+   long frame = (_frame/5) % anim->nframes;
+   float* trans = anim->transforms + 6*model->nbones*frame;
 
    bone_t* bone = &model->bones[0];
    for (i = 0; i < model->nbones; ++i)
@@ -221,9 +226,10 @@ void model_render(const model_t* model, const cam_t* camera)
       q.x = trans[3];
       q.y = trans[4];
       q.z = trans[5];
-      q.w = 1.0f - sqrt(q.x*q.x + q.y*q.y + q.z*q.z);
+      q.w = sqrt(1.0f - q.x*q.x - q.y*q.y - q.z*q.z);
 
-      quat_mult(&quat, &bone->quat, &q);
+      //quat_mult(&quat, &q, &bone->quat);
+      quat_mult(&quat, &q, &bone->quat);
 
       mat4f_t transform;
       mat4_from_quaternion(&transform, &quat);
@@ -234,16 +240,28 @@ void model_render(const model_t* model, const cam_t* camera)
 
       if (bone->parent == -1)
       {
-         bone_transforms[j] = transform;
+         bone_transforms[i] = transform;
       }
       else
       {
-         mat4_mult(&bone_transforms[j], &bone_transforms[bone->parent], &transform);
+         mat4_mult(&bone_transforms[i], &bone_transforms[bone->parent], &transform);
       }
 
-      LOGI("\nBone #%ld transform:", i);
-      mat4_show(&transform);
+      if (g_debug)
+      {
+         //LOGI("\nBone #%ld Parent #%d", i, bone->parent);
+         LOGI("P0: %8.2f %8.2f %8.2f", transform.m14, transform.m24, transform.m34);
+         //LOGI("P1: %8.2f %8.2f %8.2f", bone->pos.x, bone->pos.y, bone->pos.z);
+         //LOGI("Q0: %.2f %.2f %.2f %.2f", bone->quat.x, bone->quat.y, bone->quat.z, bone->quat.w);
+         //LOGI("Q1: %.2f %.2f %.2f %.2f", q.x, q.y, q.z, q.w);
+         LOGI("Q_: %8.2f %8.2f %8.2f %8.2f", quat.x, quat.y, quat.z, quat.w);
+         mat4_show(&transform);
+         LOGI(" ");
+         mat4_show(&bone_transforms[i]);
+         LOGI(" ");
+      }
 
+      trans += 6;
       ++bone;
    }
 
@@ -254,7 +272,7 @@ void model_render(const model_t* model, const cam_t* camera)
       for (j = 0; j < mesh->nvertices; ++j)
       {
          vertices[j] = mesh->vertices[j];
-         mat4_mult_vector(&vertices[j].pos, &bone_transforms[mesh->vertices[j].bone[0]], &vertices[j].pos);
+         mat4_mult_vector(&vertices[j].pos, &bone_transforms[mesh->vertices[j].bone[0]], &mesh->vertices[j].pos);
       }
 
       int sampler_id = 0;
@@ -274,5 +292,7 @@ void model_render(const model_t* model, const cam_t* camera)
 
       ++mesh;
    }
+
+   g_debug = 0;
 }
 

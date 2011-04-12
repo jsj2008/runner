@@ -26,6 +26,8 @@ void matSetView(mat4f_t* m, vec4f_t* from, vec4f_t* view, vec4f_t* up);
 
 void mat4_set_identity(mat4f_t* m);
 void mat4_set_xrotation(mat4f_t* m, float angle);
+void mat4_set_yrotation(mat4f_t* m, float angle);
+void mat4_set_zrotation(mat4f_t* m, float angle);
 void mat4_transpose(mat4f_t* m);
 void mat4_mult(mat4f_t* m, const mat4f_t* a, const mat4f_t* b);
 void mat4_mult_vector(vec4f_t* r, const mat4f_t* m, const vec4f_t* a);
