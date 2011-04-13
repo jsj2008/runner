@@ -209,11 +209,10 @@ void model_render(const model_t* model, const cam_t* camera, int _frame)
 
    anim_t* anim = &model->anims[sequence];
 
-   long frame = (_frame/5) % anim->nframes;
+   long scale = 5;
+   long frame = (_frame/scale) % anim->nframes;
    long next_frame = (frame + 1) % anim->nframes;
-   float t = (float)(_frame % 5) / 5.0f;
-
-   LOGI("Frame: %ld Next: %ld T: %.2f", frame, next_frame, t);
+   float t = (float)(_frame % scale) / (float)scale;
 
    float* trans = anim->transforms + 6*model->nbones*frame;
    float* next_trans = anim->transforms + 6*model->nbones*next_frame;
@@ -236,9 +235,9 @@ void model_render(const model_t* model, const cam_t* camera, int _frame)
       qc.w = sqrt(1.0f - qc.x*qc.x - qc.y*qc.y - qc.z*qc.z);
 
       vec4f_t qn;
-      qn.x = trans[3];
-      qn.y = trans[4];
-      qn.z = trans[5];
+      qn.x = next_trans[3];
+      qn.y = next_trans[4];
+      qn.z = next_trans[5];
       qn.w = sqrt(1.0f - qn.x*qn.x - qn.y*qn.y - qn.z*qn.z);
 
       vec4f_t q;

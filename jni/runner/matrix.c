@@ -335,10 +335,10 @@ void quat_mult(vec4f_t* r, const vec4f_t* a, const vec4f_t* b)
 
 void quat_inv(vec4f_t* r, const vec4f_t* a)
 {
-      r->x = -a->x;
-      r->y = -a->y;
-      r->z = -a->z;
-      r->w = a->w;
+   r->x = -a->x;
+   r->y = -a->y;
+   r->z = -a->z;
+   r->w = a->w;
 }
 
 void quat_slerp(vec4f_t* r, const vec4f_t* a, const vec4f_t* b, float t)

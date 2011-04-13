@@ -136,7 +136,6 @@ static GLubyte indices[] =
    20, 22, 21
 };
 
-GLuint gFrames = 0;
 GLuint gvTextureId = 0;
 GLuint gvSkyboxTextureId = 0;
 
@@ -145,6 +144,11 @@ cam_t camera;
 model_t* mdl = NULL;
 shader_t model_shader;
 shader_t skybox_shader;
+
+float gAngle = 0.0f;
+struct timeval prev_time;
+long frames = 0;
+long total_frames = 0;
 
 vec4f_t* vec4(float x, float y, float z, float w)
 {
@@ -233,12 +237,14 @@ void resize(int width, int height)
    cam_set_up(&camera, vec4(0.0f, 1.0f, 0.0f, 0.0f));
    cam_look_at(&camera, vec4(0.0f, 0.0f, 0.0f, 0.0f));
    cam_update(&camera);
-}
 
-float gAngle = 0.0f;
+   struct timezone tz;
+   gettimeofday(&prev_time, &tz);
+}
 
 void update()
 {
+
    int sampler_id = 0;
 
    shader_use(&skybox_shader);
@@ -260,10 +266,25 @@ void update()
    glDepthFunc(GL_LESS);
 
    //mat4_set_yrotation(&mdl->transform, DEG2RAD(gAngle));
-   model_render(mdl, &camera, gFrames);
+   model_render(mdl, &camera, total_frames);
    gAngle += 2.0f;
 
-   ++gFrames;
+   ++total_frames;
+   ++frames;
+
+   struct timeval cur_time;
+   struct timezone tz;
+   gettimeofday(&cur_time, &tz);
+   if (prev_time.tv_sec + 5 <= cur_time.tv_sec)
+   {
+      long diffs = cur_time.tv_sec - prev_time.tv_sec;
+      long diffms = (cur_time.tv_usec - prev_time.tv_usec)/1000;
+      long diff = diffs * 1000 + diffms;
+
+      LOGI("Total: %4ld Frames: %4ld Diff: %ld FPS: %.2f", total_frames, frames, diff, (float)frames * 1000.0f / (float)diff);
+      prev_time = cur_time;
+      frames = 0;
+   }
 }
 
 void scroll(long delta_time, float delta_x, float delta_y)
