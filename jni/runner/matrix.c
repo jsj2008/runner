@@ -333,3 +333,48 @@ void quat_mult(vec4f_t* r, const vec4f_t* a, const vec4f_t* b)
    (*r).z = a->w*b->z + a->x*b->y - a->y*b->x + a->z*b->w;
 }
 
+void quat_inv(vec4f_t* r, const vec4f_t* a)
+{
+      r->x = -a->x;
+      r->y = -a->y;
+      r->z = -a->z;
+      r->w = a->w;
+}
+
+void quat_slerp(vec4f_t* r, const vec4f_t* a, const vec4f_t* b, float t)
+{
+   float dot = a->x * b->x + a->y * b->y + a->z * b->z + a->w * b->w;
+
+   vec4f_t tmp;
+   if (dot < 0.0f)
+   {
+      dot = -dot;
+      quat_inv(&tmp, b);
+   }
+   else
+   {
+      tmp = *b;
+   }
+
+   float w1;
+   float w2;
+
+   if (dot < 0.95f)
+   {
+      float angle = acos(dot);
+      float sinangle = sin(angle);
+      w1 = sin((1.0f - t) * angle) / sinangle;
+      w2 = sin(t * angle) / sinangle;
+   }
+   else
+   {
+      w1 = 1.0f - t;
+      w2 = t;
+   }
+
+   r->x = a->x * w1 + b->x * w2;
+   r->y = a->y * w1 + b->y * w2;
+   r->z = a->z * w1 + b->z * w2;
+   r->w = a->w * w1 + b->w * w2;
+}
+

@@ -229,7 +229,7 @@ void resize(int width, int height)
    checkGLError("glDepthRange");
 
    cam_init(&camera, 45.0f, (float)width/(float)height, 0.1f, 1000.0f);
-   cam_set_pos(&camera, vec4(0.0f, 0.0f, 50.0f, 0.0f));
+   cam_set_pos(&camera, vec4(50.0f, 50.0f, 50.0f, 0.0f));
    cam_set_up(&camera, vec4(0.0f, 1.0f, 0.0f, 0.0f));
    cam_look_at(&camera, vec4(0.0f, 0.0f, 0.0f, 0.0f));
    cam_update(&camera);
@@ -259,7 +259,7 @@ void update()
    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, skybox_indices);
    glDepthFunc(GL_LESS);
 
-   mat4_set_xrotation(&mdl->transform, DEG2RAD(gAngle));
+   //mat4_set_yrotation(&mdl->transform, DEG2RAD(gAngle));
    model_render(mdl, &camera, gFrames);
    gAngle += 2.0f;
 
@@ -274,7 +274,9 @@ void scroll(long delta_time, float delta_x, float delta_y)
    float coef = 1.0f;//interval * speed;
 
    //cam_slide(&camera, vec4(-coef * delta_x, coef * delta_y, 0.0f, 0.0f));
-   cam_slide(&camera, vec4(0.0f, 0.0f, coef * delta_y, 0.0f));
+   vec4f_t pos = camera.pos;
+   pos.z += coef * delta_y;
+   cam_set_pos(&camera, &pos);
    cam_update(&camera);
    /*
       int i = 0;

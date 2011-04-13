@@ -39,4 +39,6 @@ void mat4_set_lookat(mat4f_t* m, const vec4f_t* eye, const vec4f_t* at, const ve
 float* mat4_data(mat4f_t* m);
 void mat4_from_quaternion(mat4f_t* m, const vec4f_t* q);
 void quat_mult(vec4f_t* r, const vec4f_t* a, const vec4f_t* b);
+void quat_slerp(vec4f_t* r, const vec4f_t* a, const vec4f_t*b, float t);
+void quat_inv(vec4f_t* r, const vec4f_t* a);
 

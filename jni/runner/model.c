@@ -198,7 +198,7 @@ void model_render(const model_t* model, const cam_t* camera, int _frame)
    mat4_mult(&mv, &camera->view, &model->transform);
    mat4_mult(&mvp, &camera->proj, &mv);
 
-   static int g_debug = 1;
+   static int g_debug = 0;
 
    mat4f_t bone_transforms[MAX_BONES];
    vertex_t vertices[MAX_VERTICES];
@@ -208,8 +208,15 @@ void model_render(const model_t* model, const cam_t* camera, int _frame)
    long sequence = 2;
 
    anim_t* anim = &model->anims[sequence];
+
    long frame = (_frame/5) % anim->nframes;
+   long next_frame = (frame + 1) % anim->nframes;
+   float t = (float)(_frame % 5) / 5.0f;
+
+   LOGI("Frame: %ld Next: %ld T: %.2f", frame, next_frame, t);
+
    float* trans = anim->transforms + 6*model->nbones*frame;
+   float* next_trans = anim->transforms + 6*model->nbones*next_frame;
 
    bone_t* bone = &model->bones[0];
    for (i = 0; i < model->nbones; ++i)
@@ -217,18 +224,26 @@ void model_render(const model_t* model, const cam_t* camera, int _frame)
       vec4f_t quat;
 
       vec4f_t p;
-      p.x = trans[0];
-      p.y = trans[1];
-      p.z = trans[2];
+      p.x = trans[0] * (1.0f - t) + next_trans[0] * t;
+      p.y = trans[1] * (1.0f - t) + next_trans[1] * t;
+      p.z = trans[2] * (1.0f - t) + next_trans[2] * t;
       p.w = 1.0f;
 
-      vec4f_t q;
-      q.x = trans[3];
-      q.y = trans[4];
-      q.z = trans[5];
-      q.w = sqrt(1.0f - q.x*q.x - q.y*q.y - q.z*q.z);
+      vec4f_t qc;
+      qc.x = trans[3];
+      qc.y = trans[4];
+      qc.z = trans[5];
+      qc.w = sqrt(1.0f - qc.x*qc.x - qc.y*qc.y - qc.z*qc.z);
 
-      //quat_mult(&quat, &q, &bone->quat);
+      vec4f_t qn;
+      qn.x = trans[3];
+      qn.y = trans[4];
+      qn.z = trans[5];
+      qn.w = sqrt(1.0f - qn.x*qn.x - qn.y*qn.y - qn.z*qn.z);
+
+      vec4f_t q;
+      quat_slerp(&q, &qc, &qn, t);
+
       quat_mult(&quat, &q, &bone->quat);
 
       mat4f_t transform;
@@ -262,6 +277,7 @@ void model_render(const model_t* model, const cam_t* camera, int _frame)
       }
 
       trans += 6;
+      next_trans += 6;
       ++bone;
    }
 
