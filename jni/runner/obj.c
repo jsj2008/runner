@@ -248,12 +248,15 @@ int obj_convert(const char* from, const char* to)
    long i = 0;
    for (i = 0; i < g_nvertices; ++i)
    {
-      LOGI("Vertex #%04ld: %.2f %.2f %.2f", i, g_vertices[i].pos.x, g_vertices[i].pos.y, g_vertices[i].pos.z);
+      LOGI("Vertex #%04ld: %.2f %.2f %.2f [%.2f %.2f %.2f] [%.2f %.2f]", i,
+            g_vertices[i].pos.x, g_vertices[i].pos.y, g_vertices[i].pos.z,
+            g_vertices[i].normal.x, g_vertices[i].normal.y, g_vertices[i].normal.z,
+            g_vertices[i].tex_coord[0], g_vertices[i].tex_coord[1]);
    }
 
    for (i = 0; i < g_nindices; i += 3)
    {
-      LOGI("Tri #%04ld: %d %d %d", i, g_indices[i], g_indices[i + 1], g_indices[i + 2]);
+      LOGI("Tri #%04ld: %d %d %d", i/3, g_indices[i], g_indices[i + 1], g_indices[i + 2]);
    }
 
    mesh_t mesh;
