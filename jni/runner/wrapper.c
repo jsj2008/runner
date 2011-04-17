@@ -2,11 +2,12 @@
 #include <android/log.h>
 #include "runner.h"
 
-JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_init (JNIEnv* env, jclass wrapper, jstring apkPath)
+JNIEXPORT jint JNICALL Java_ua_org_asqz_runner_Wrapper_init (JNIEnv* env, jclass wrapper, jstring apkPath)
 {
    const char* str = (*env)->GetStringUTFChars(env, apkPath, 0);
-   init(str);
+   int res = init(str);
    (*env)->ReleaseStringUTFChars(env, apkPath, str);
+   return res;
 }
 
 JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_resize (JNIEnv* env, jclass wrapper, jint width, jint height)

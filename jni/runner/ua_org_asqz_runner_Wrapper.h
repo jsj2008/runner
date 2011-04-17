@@ -10,9 +10,9 @@ extern "C" {
 /*
  * Class:     ua_org_asqz_runner_Wrapper
  * Method:    init
- * Signature: (Ljava/lang/String;)V
+ * Signature: (Ljava/lang/String;)I
  */
-JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_init
+JNIEXPORT jint JNICALL Java_ua_org_asqz_runner_Wrapper_init
   (JNIEnv *, jclass, jstring);
 
 /*

@@ -109,6 +109,7 @@ int shader_load(shader_t* shader, const char* name)
    char vs_name[256];
    strcpy(vs_name, name);
    strcat(vs_name, ".vs");
+   LOGI("loading vertex shader");
    GLuint vs = load_shader_from_file(GL_VERTEX_SHADER, vs_name);
    if (vs == 0)
    {
@@ -118,6 +119,7 @@ int shader_load(shader_t* shader, const char* name)
    char ps_name[256];
    strcpy(ps_name, name);
    strcat(ps_name, ".ps");
+   LOGI("loading pixel shader");
    GLuint ps = load_shader_from_file(GL_FRAGMENT_SHADER, ps_name);
    if (ps == 0)
    {

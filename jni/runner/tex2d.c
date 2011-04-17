@@ -12,7 +12,7 @@ static void png_read(png_structp png_ptr, png_bytep data, png_size_t length)
 {
    png_read_data_t* p = (png_read_data_t*)png_get_io_ptr(png_ptr);
 
-   LOGI("png_read: %d total: %d", length, p->offset);
+   //LOGI("png_read: %d total: %d", length, p->offset);
 
    memcpy(data, p->data + p->offset, length);
    p->offset += length;

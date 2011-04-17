@@ -159,7 +159,26 @@ vec4f_t* vec4(float x, float y, float z, float w)
    return &tmp;
 }
 
-void init(const char* apkPath)
+GLuint create_texture(const char* fname)
+{
+   tex2d_t t;
+   if (tex2d_load_from_png(&t, fname) != 0)
+   {
+      LOGE("Unable to load texture from %s", fname);
+      return 0;
+   }
+
+   GLuint texId = gl_load_texture(&t);
+   if (texId == 0)
+   {
+      LOGE("Unable to load texture to GPU");
+      return 0;
+   }
+
+   return texId;
+}
+
+int init(const char* apkPath)
 {
    LOGI("init");
 
@@ -182,49 +201,36 @@ void init(const char* apkPath)
    glFrontFace(GL_CCW);
 
    if (model_load(&mdl, "assets/models/test.model") != 0)
-   {
-      LOGE("Unable to load model\n");
-   }
-}
-
-GLuint create_texture(const char* fname)
-{
-   tex2d_t t;
-   if (tex2d_load_from_png(&t, fname) != 0)
-   {
-      LOGE("Unable to load texture from %s", fname);
-      return 0;
-   }
-
-   GLuint texId = gl_load_texture(&t);
-   if (texId == 0)
-   {
-      LOGE("Unable to load texture to GPU");
-      return 0;
-   }
-
-   return texId;
-}
-
-void resize(int width, int height)
-{
-   LOGI("resize %dx%d", width, height);
+      return -1;
 
    if (shader_load(&model_shader, "assets/shaders/test") != 0)
-      return;
+      return -1;
 
    if (shader_load(&skybox_shader, "assets/shaders/skybox") != 0)
-      return;
+      return -1;
 
    gvSkyboxTextureId = create_texture("assets/textures/skybox.png");
+   if (gvSkyboxTextureId == 0)
+      return -1;
+
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
    gvTextureId = create_texture("assets/textures/marble.png");
+   if (gvTextureId == 0)
+      return -1;
+
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+   return 0;
+}
+
+void resize(int width, int height)
+{
+   LOGI("resize %dx%d", width, height);
 
    glViewport(0, 0, width, height);
    checkGLError("glViewport");
@@ -233,7 +239,7 @@ void resize(int width, int height)
    checkGLError("glDepthRange");
 
    cam_init(&camera, 45.0f, (float)width/(float)height, 0.1f, 1000.0f);
-   cam_set_pos(&camera, vec4(50.0f, 50.0f, 50.0f, 0.0f));
+   cam_set_pos(&camera, vec4(0.0f, 0.0f, 50.0f, 0.0f));
    cam_set_up(&camera, vec4(0.0f, 1.0f, 0.0f, 0.0f));
    cam_look_at(&camera, vec4(0.0f, 0.0f, 0.0f, 0.0f));
    cam_update(&camera);
@@ -295,10 +301,9 @@ void scroll(long delta_time, float delta_x, float delta_y)
    float coef = 1.0f;//interval * speed;
 
    //cam_slide(&camera, vec4(-coef * delta_x, coef * delta_y, 0.0f, 0.0f));
-   vec4f_t pos = camera.pos;
-   pos.z += coef * delta_y;
-   cam_set_pos(&camera, &pos);
+   cam_slide(&camera, vec4(0.0f, 0.0f, coef * delta_y, 0.0f));
    cam_update(&camera);
+   LOGI("Cam pos: [%.2f %.2f %.2f] dir: [%.2f %.2f %.2f]", camera.pos.x, camera.pos.y, camera.pos.z, camera.view_dir.x, camera.view_dir.y, camera.view_dir.z);
    /*
       int i = 0;
       for (i = 0; i < 4; ++i)

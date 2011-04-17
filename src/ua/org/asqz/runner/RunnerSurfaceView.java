@@ -1,21 +1,35 @@
 package ua.org.asqz.runner;
 
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.PackageManager;
 import android.opengl.GLSurfaceView;
 import android.view.MotionEvent;
 import android.util.Log;
+import javax.microedition.khronos.opengles.GL10;
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 
 class RunnerSurfaceView extends GLSurfaceView {
+   private static final String TAG = "RunnerSurfaceView";
+
+   public interface Handler {
+      public void handleError(String error);
+   }
+
    public RunnerSurfaceView(Context ctx) {
       super(ctx);
 
-      setEGLContextFactory(new ContextFactory());
-      setRenderer(new RunnerRenderer(ctx));
+      setEGLContextFactory(mContextFactory);
+      setRenderer(mRenderer);
       setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+   }
+
+   public void setHandler(Handler handler) {
+      mHandler = handler;
    }
 
    public boolean onTouchEvent(MotionEvent event) {
@@ -28,13 +42,13 @@ class RunnerSurfaceView extends GLSurfaceView {
             float delta_x = event.getX() - event.getHistoricalX(prevEvent);
             float delta_y = event.getY() - event.getHistoricalY(prevEvent);
             Wrapper.scroll(delta_time, delta_x, delta_y);
-            Log.i("RUNNER", "Pointer moved on [" + delta_x + "," + delta_y + " in " + delta_time + "ms");
+            Log.i(TAG, "Pointer moved on [" + delta_x + "," + delta_y + " in " + delta_time + "ms");
          }
       }
       return true;
    }
 
-   private static class ContextFactory implements GLSurfaceView.EGLContextFactory {
+   private GLSurfaceView.EGLContextFactory mContextFactory = new GLSurfaceView.EGLContextFactory() {
       final static int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
 
       public EGLContext createContext(EGL10 egl, EGLDisplay display, EGLConfig eglConfig) {
@@ -46,6 +60,39 @@ class RunnerSurfaceView extends GLSurfaceView {
       public void destroyContext(EGL10 egl, EGLDisplay display, EGLContext context) {
          egl.eglDestroyContext(display, context);
       }
-   }
+   };
+
+   private GLSurfaceView.Renderer mRenderer = new GLSurfaceView.Renderer() {
+      public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+         PackageManager pm = getContext().getPackageManager();
+         try {
+            ApplicationInfo info = pm.getApplicationInfo(getContext().getPackageName(), 0);
+            mInitialized = (Wrapper.init(info.sourceDir) == 0);
+            if (!mInitialized) {
+               mHandler.handleError("Unable to initialize");
+            }
+         }
+         catch (NameNotFoundException ex) {
+            ex.printStackTrace();
+            mHandler.handleError(ex.getMessage());
+         }
+      }
+
+      public void onSurfaceChanged(GL10 gl, int width, int height) {
+         if (mInitialized) {
+            Wrapper.resize(width, height);
+         }
+      }
+
+      public void onDrawFrame(GL10 gl) {
+         if (mInitialized) {
+            Wrapper.update();
+         }
+      }
+
+      private boolean mInitialized = false;
+   };
+
+   private Handler mHandler;
 }
 

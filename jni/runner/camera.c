@@ -18,16 +18,22 @@ void cam_set_pos(cam_t* c, const vec4f_t* pos)
 void cam_set_up(cam_t* c, const vec4f_t* up)
 {
    c->up = *up;
+   c->up.w = 0.0f;
+   vec4_normalize(&c->up);
 }
 
 void cam_set_view_dir(cam_t* c, const vec4f_t* view_dir)
 {
    c->view_dir = *view_dir;
+   c->view_dir.w = 0.0f;
+   vec4_normalize(&c->view_dir);
 }
 
 void cam_look_at(cam_t* c, const vec4f_t* at)
 {
    vec4_sub(&c->view_dir, at, &c->pos);
+   c->view_dir.w = 0.0f;
+   vec4_normalize(&c->view_dir);
 }
 
 void cam_update(cam_t* c)

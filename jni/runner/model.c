@@ -205,7 +205,7 @@ void model_render(const model_t* model, const cam_t* camera, int _frame)
    long i = 0;
    long j = 0;
 
-   long sequence = 2;
+   long sequence = 2 % model->nanims;
 
    anim_t* anim = &model->anims[sequence];
 
