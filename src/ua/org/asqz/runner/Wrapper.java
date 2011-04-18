@@ -4,7 +4,7 @@ class Wrapper {
    public static native int init(String apkPath);
    public static native void resize(int width, int height);
    public static native void update();
-   public static native void scroll(long delta_time, float delta_x, float delta_y);
+   public static native void scroll(long dt, float dx1, float dy1, float dx2, float dy2);
 
    static {
       System.loadLibrary("runner");

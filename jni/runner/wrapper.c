@@ -20,8 +20,8 @@ JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_update (JNIEnv* env, jcla
    update();
 }
 
-JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_scroll (JNIEnv* env, jclass wrapper, jlong delta_time, jfloat delta_x, jfloat delta_y)
+JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_scroll (JNIEnv* env, jclass wrapper, jlong dt, jfloat dx1, jfloat dy1, jfloat dx2, jfloat dy2)
 {
-   scroll(delta_time, delta_x, delta_y);
+   scroll(dt, dx1, dy1, dx2, dy2);
 }
 

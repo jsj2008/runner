@@ -239,7 +239,7 @@ void resize(int width, int height)
    checkGLError("glDepthRange");
 
    cam_init(&camera, 45.0f, (float)width/(float)height, 0.1f, 1000.0f);
-   cam_set_pos(&camera, vec4(0.0f, 0.0f, 50.0f, 0.0f));
+   cam_set_pos(&camera, vec4(0.0f, 25.0f, 50.0f, 0.0f));
    cam_set_up(&camera, vec4(0.0f, 1.0f, 0.0f, 0.0f));
    cam_look_at(&camera, vec4(0.0f, 0.0f, 0.0f, 0.0f));
    cam_update(&camera);
@@ -293,24 +293,36 @@ void update()
    }
 }
 
-void scroll(long delta_time, float delta_x, float delta_y)
+void scroll(long dt, float dx1, float dy1, float dx2, float dy2)
 {
    static float speed = 1;
 
-   float interval = (float)delta_time / 1000.0f;
-   float coef = 1.0f;//interval * speed;
+   float interval = (float)dt / 1000.0f;
+   float coef = 0.05;//interval * speed;
 
-   //cam_slide(&camera, vec4(-coef * delta_x, coef * delta_y, 0.0f, 0.0f));
-   cam_slide(&camera, vec4(0.0f, 0.0f, coef * delta_y, 0.0f));
-   cam_update(&camera);
-   LOGI("Cam pos: [%.2f %.2f %.2f] dir: [%.2f %.2f %.2f]", camera.pos.x, camera.pos.y, camera.pos.z, camera.view_dir.x, camera.view_dir.y, camera.view_dir.z);
-   /*
+   if (dx2 == 0.0f && dy2 == 0.0f)
+   {
+      // single finger sliding - strafe
+      cam_slide(&camera, vec4(-coef * dx1, coef * dy1, 0.0f, 0.0f));
+
       int i = 0;
       for (i = 0; i < 4; ++i)
       {
-         skybox_tex_coords[i*2] += interval * delta_x * 0.1;
-         skybox_tex_coords[i*2+1] -= interval * delta_y * 0.1;
+         skybox_tex_coords[i*2] += coef * dx1 * 0.0025;
+         skybox_tex_coords[i*2+1] -= coef * dy1 * 0.0025;
       }
-   */
+   }
+   else
+   {
+      // two finger sliding - move forward
+      float v = coef * dy1;
+      cam_slide(&camera, vec4(camera.view_dir.x * v, camera.view_dir.y * v, camera.view_dir.z * v, 0.0f));
+   }
+
+   cam_update(&camera);
+
+   LOGI("Cam pos: [%.2f %.2f %.2f] dir: [%.2f %.2f %.2f]",
+        camera.pos.x, camera.pos.y, camera.pos.z,
+        camera.view_dir.x, camera.view_dir.y, camera.view_dir.z);
 }
 

@@ -202,14 +202,14 @@ int obj_convert(const char* from, const char* to)
                if (nverts >= 3)
                {
                   add_face_vertex(&verts[0], positions, normals, texcoords, npositions, nnormals, ntexcoords);
-                  add_face_vertex(&verts[3], positions, normals, texcoords, npositions, nnormals, ntexcoords);
                   add_face_vertex(&verts[6], positions, normals, texcoords, npositions, nnormals, ntexcoords);
+                  add_face_vertex(&verts[3], positions, normals, texcoords, npositions, nnormals, ntexcoords);
 
                   if (nverts == 4)
                   {
                      add_face_vertex(&verts[0], positions, normals, texcoords, npositions, nnormals, ntexcoords);
-                     add_face_vertex(&verts[6], positions, normals, texcoords, npositions, nnormals, ntexcoords);
                      add_face_vertex(&verts[9], positions, normals, texcoords, npositions, nnormals, ntexcoords);
+                     add_face_vertex(&verts[6], positions, normals, texcoords, npositions, nnormals, ntexcoords);
                   }
                }
             }
@@ -249,9 +249,9 @@ int obj_convert(const char* from, const char* to)
    for (i = 0; i < g_nvertices; ++i)
    {
       LOGI("Vertex #%04ld: %.2f %.2f %.2f [%.2f %.2f %.2f] [%.2f %.2f]", i,
-            g_vertices[i].pos.x, g_vertices[i].pos.y, g_vertices[i].pos.z,
-            g_vertices[i].normal.x, g_vertices[i].normal.y, g_vertices[i].normal.z,
-            g_vertices[i].tex_coord[0], g_vertices[i].tex_coord[1]);
+           g_vertices[i].pos.x, g_vertices[i].pos.y, g_vertices[i].pos.z,
+           g_vertices[i].normal.x, g_vertices[i].normal.y, g_vertices[i].normal.z,
+           g_vertices[i].tex_coord[0], g_vertices[i].tex_coord[1]);
    }
 
    for (i = 0; i < g_nindices; i += 3)

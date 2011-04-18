@@ -34,10 +34,10 @@ JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_update
 /*
  * Class:     ua_org_asqz_runner_Wrapper
  * Method:    scroll
- * Signature: (JFF)V
+ * Signature: (JFFFF)V
  */
 JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_scroll
-  (JNIEnv *, jclass, jlong, jfloat, jfloat);
+  (JNIEnv *, jclass, jlong, jfloat, jfloat, jfloat, jfloat);
 
 #ifdef __cplusplus
 }

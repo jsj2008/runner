@@ -34,17 +34,35 @@ class RunnerSurfaceView extends GLSurfaceView {
 
    public boolean onTouchEvent(MotionEvent event) {
       int action = event.getAction();
-      int nhistory = event.getHistorySize();
       if (action == MotionEvent.ACTION_MOVE) {
-         int prevEvent = nhistory - 1;
-         long delta_time = event.getEventTime() - event.getHistoricalEventTime(prevEvent);
-         if (delta_time > 0) {
-            float delta_x = event.getX() - event.getHistoricalX(prevEvent);
-            float delta_y = event.getY() - event.getHistoricalY(prevEvent);
-            Wrapper.scroll(delta_time, delta_x, delta_y);
-            Log.i(TAG, "Pointer moved on [" + delta_x + "," + delta_y + " in " + delta_time + "ms");
+         long dt = event.getEventTime() - mPrevEventTime;
+         if (dt > 0) {
+            float dx1 = event.getX(0) - mPrevPositions[0];
+            float dy1 = event.getY(0) - mPrevPositions[1];
+            float dx2 = 0.0f;
+            float dy2 = 0.0f;
+
+            if (event.getPointerCount() > 1) {
+               dx2 = event.getX(1) - mPrevPositions[2];
+               dy2 = event.getY(1) - mPrevPositions[3];
+            }
+
+            Wrapper.scroll(dt, dx1, dy1, dx2, dy2);
+            Log.i(TAG, "Pointer moved on [" + dx1 + "," + dy1 + "] [" + dx2 + "," + dy2 +  "] in " + dt + "ms");
          }
       }
+
+      mPrevPositions[0] = event.getX(0);
+      mPrevPositions[1] = event.getY(0);
+      if (event.getPointerCount() > 1) {
+         mPrevPositions[2] = event.getX(1);
+         mPrevPositions[3] = event.getY(1);
+      }
+      else {
+         mPrevPositions[2] = 0.0f;
+         mPrevPositions[3] = 0.0f;
+      }
+      mPrevEventTime = event.getEventTime();
       return true;
    }
 
@@ -94,5 +112,7 @@ class RunnerSurfaceView extends GLSurfaceView {
    };
 
    private Handler mHandler;
+   private float[] mPrevPositions = new float[4];
+   private long mPrevEventTime = 0;
 }
 
