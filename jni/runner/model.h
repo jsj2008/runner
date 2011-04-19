@@ -14,7 +14,7 @@ typedef struct vertex_t
    vec4f_t color;
    float tex_coord[2]; 
 
-   int bone[MAX_BONES_PER_VERTEX];
+   float bone[MAX_BONES_PER_VERTEX];
    float weight[MAX_BONES_PER_VERTEX];
 } vertex_t;
 

@@ -201,9 +201,7 @@ void model_render(const model_t* model, const cam_t* camera, int _frame)
    static int g_debug = 0;
 
    mat4f_t bone_transforms[MAX_BONES];
-   vertex_t vertices[MAX_VERTICES];
    long i = 0;
-   long j = 0;
 
    long sequence = 2 % model->nanims;
 
@@ -283,21 +281,18 @@ void model_render(const model_t* model, const cam_t* camera, int _frame)
    mesh_t* mesh = &model->meshes[0];
    for (i = 0; i < model->nmeshes; ++i)
    {
-      // transform vertices
-      for (j = 0; j < mesh->nvertices; ++j)
-      {
-         vertices[j] = mesh->vertices[j];
-         mat4_mult_vector(&vertices[j].pos, &bone_transforms[mesh->vertices[j].bone[0]], &mesh->vertices[j].pos);
-      }
-
       int sampler_id = 0;
 
       shader_use(&model_shader);
       shader_set_uniform_matrices(&model_shader, "uMVP", 1, mat4_data(&mvp));
-      shader_set_attrib_vertices(&model_shader, "aPos", 3, GL_FLOAT, sizeof(vertex_t), &vertices[0].pos);
-      shader_set_attrib_vertices(&model_shader, "aTexCoord", 2, GL_FLOAT, sizeof(vertex_t), &vertices[0].tex_coord);
-      shader_set_attrib_vertices(&model_shader, "aNormal", 3, GL_FLOAT, sizeof(vertex_t), &vertices[0].normal);
+      shader_set_uniform_matrices(&model_shader, "uMV", 1, mat4_data(&mv));
+      shader_set_uniform_matrices(&model_shader, "uBoneTransforms", model->nbones, mat4_data(&bone_transforms[0]));
       shader_set_uniform_integers(&model_shader, "uTex", 1, &sampler_id);
+      shader_set_attrib_vertices(&model_shader, "aPos", 3, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].pos);
+      shader_set_attrib_vertices(&model_shader, "aTexCoord", 2, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].tex_coord);
+      shader_set_attrib_vertices(&model_shader, "aNormal", 3, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].normal);
+      shader_set_attrib_vertices(&model_shader, "aBoneIndices", 2, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].bone);
+      shader_set_attrib_vertices(&model_shader, "aBoneWeights", 2, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].weight);
 
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, gvTextureId);
