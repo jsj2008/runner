@@ -12,7 +12,7 @@ typedef struct vertex_t
    vec4f_t pos;
    vec4f_t normal;
    vec4f_t color;
-   float tex_coord[2]; 
+   float tex_coord[2];
 
    float bone[MAX_BONES_PER_VERTEX];
    float weight[MAX_BONES_PER_VERTEX];

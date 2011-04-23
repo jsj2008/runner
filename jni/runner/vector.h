@@ -1,14 +1,11 @@
 #pragma once
 
-typedef union vec4f_t
+typedef struct vec4f_t
 {
-   float v[4];
-   struct {
-      float x;
-      float y;
-      float z;
-      float w;
-   };
+   float x;
+   float y;
+   float z;
+   float w;
 } vec4f_t;
 
 vec4f_t* vec4_normalize(vec4f_t* v);

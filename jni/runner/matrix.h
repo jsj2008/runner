@@ -1,7 +1,7 @@
 #pragma once
 
 #include <math.h>
-#include "vector.h" 
+#include "vector.h"
 
 #define DEG2RAD(a)   ((a)*M_PI/180.0f)
 #define RAD2DEG(a)   ((a)*180.0f/M_PI)
@@ -9,7 +9,8 @@
 typedef union
 {
    float m[16];
-   struct {
+   struct
+   {
       float m11, m21, m31, m41;
       float m12, m22, m32, m42;
       float m13, m23, m33, m43;
