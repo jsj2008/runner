@@ -143,6 +143,7 @@ int obj_convert(const char* from, const char* to)
       LOGE("Unable to read model from %s", from);
       return -1;
    }
+   buf[size-1] = '\0';
 
    memset(&g_vertices[0], 0, sizeof(g_vertices));
    memset(&g_indices[0], 0, sizeof(g_indices));
@@ -155,6 +156,10 @@ int obj_convert(const char* from, const char* to)
    long npositions = 0;
    long nnormals = 0;
    long ntexcoords = 0;
+
+   memset(positions, 0, sizeof(positions));
+   memset(normals, 0, sizeof(normals));
+   memset(texcoords, 0, sizeof(texcoords));
 
    char* ptr = NULL;
    char* str = strtok_r(buf, "\n", &ptr);
@@ -245,7 +250,7 @@ int obj_convert(const char* from, const char* to)
    free(buf);
 
    LOGI("Model has %ld positions %ld texture coords %ld normals %ld vertices %ld indices", npositions, ntexcoords, nnormals, g_nvertices, g_nindices);
-   long i = 0;
+   /*long i = 0;
    for (i = 0; i < g_nvertices; ++i)
    {
       LOGI("Vertex #%04ld: %.2f %.2f %.2f [%.2f %.2f %.2f] [%.2f %.2f]", i,
@@ -257,7 +262,7 @@ int obj_convert(const char* from, const char* to)
    for (i = 0; i < g_nindices; i += 3)
    {
       LOGI("Tri #%04ld: %d %d %d", i/3, g_indices[i], g_indices[i + 1], g_indices[i + 2]);
-   }
+   }*/
 
    mesh_t mesh;
    memset(&mesh, 0, sizeof(mesh));
