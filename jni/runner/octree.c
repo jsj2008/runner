@@ -19,12 +19,12 @@ static int octree_node_build(octree_node_t* nodes, long parent, long nodeindex, 
    for (l = 0; l < ntris; ++l)
    {
       int tri = tris[l];
-      vec4f_t a = vertices[indices[tri + 0]].pos;
-      vec4f_t b = vertices[indices[tri + 1]].pos;
-      vec4f_t c = vertices[indices[tri + 2]].pos;
+      vec4f_t a = vertices[indices[tri * 3 + 0]].pos;
+      vec4f_t b = vertices[indices[tri * 3 + 1]].pos;
+      vec4f_t c = vertices[indices[tri * 3 + 2]].pos;
       if (bbox_tri_intersection(&node->bbox, &a, &b, &c) != 0)
       {
-         node_tris[count++] = l;
+         node_tris[count++] = tri;
       }
    }
 
@@ -371,13 +371,16 @@ void octree_show(const octree_t* o)
 
 }
 
-void octree_node_draw(const octree_node_t* nodes, long nodeindex, const frustum_t* frustum)
+long octree_node_draw(const octree_node_t* nodes, long nodeindex, const frustum_t* frustum, const int* tree_indices, int* indices, long nindices, int* used_tris)
 {
+   //LOGI("NINDICES: %ld", nindices);
    if (nodeindex == -1)
-      return;
+      return nindices;
 
    const octree_node_t* node = &nodes[nodeindex];
    int res = 2;
+   long l = 0;
+
    if (frustum != NULL)
    {
       res = frustum_intersect_aabb(frustum, &node->bbox);
@@ -385,21 +388,34 @@ void octree_node_draw(const octree_node_t* nodes, long nodeindex, const frustum_
 
    if (res >= 0)
    {
-
       if (node->ntris == 0)
       {
          LOGI("Branch #%ld parent %ld: res=%d", nodeindex, node->parent, res);
-         long l = 0;
          for (l = 0; l < 8; ++l)
          {
-            octree_node_draw(nodes, node->children[l], (res == 0) ? frustum : NULL);
+            nindices = octree_node_draw(nodes, node->children[l], (res == 0) ? frustum : NULL, tree_indices, indices, nindices, used_tris);
          }
       }
       else
       {
          LOGI("\tLeaf #%ld parent %ld %ld tris res=%d", nodeindex, node->parent, node->ntris, res);
+
+         int* tri = &node->tris[0];
+         for (l = 0; l < node->ntris; ++l)
+         {
+            if (used_tris[*tri] == 0)
+            {
+               used_tris[*tri] = 1;
+
+               memcpy(&indices[nindices], &tree_indices[*tri * 3], 3 * sizeof(int));
+               nindices += 3;
+            }
+
+            ++tri;
+         }
       }
    }
+   return nindices;
 }
 
 void octree_draw(const octree_t* o, const cam_t* camera)
@@ -408,6 +424,19 @@ void octree_draw(const octree_t* o, const cam_t* camera)
    frustum_set(&frustum, camera);
    frustum_show(&frustum);
 
-   octree_node_draw(o->nodes, 0, &frustum);
+   long max_tris = o->nindices / 3;
+   int* used_tris = (int*)malloc(max_tris * sizeof(int));
+   int* indices = (int*)malloc(o->nindices * sizeof(int));
+
+   memset(used_tris, 0, max_tris * sizeof(int));
+   memset(indices, 0, o->nindices * sizeof(int));
+
+   long nindices = octree_node_draw(o->nodes, 0, &frustum, o->indices, indices, 0, used_tris);
+
+   LOGI("Draw %ld indices", nindices);
+   // TODO: draw triangles
+
+   free(indices);
+   free(used_tris);
 }
 
