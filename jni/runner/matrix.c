@@ -148,7 +148,7 @@ void matShow(mat4f_t* m)
 */
 
 
-void mat4_show(mat4f_t* m)
+void mat4_show(const mat4f_t* m)
 {
    LOGI("%8.2f %8.2f %8.2f %8.2f", m->m11, m->m12, m->m13, m->m14);
    LOGI("%8.2f %8.2f %8.2f %8.2f", m->m21, m->m22, m->m23, m->m24);

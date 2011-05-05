@@ -2,6 +2,7 @@
 #include "stream.h"
 #include "frustum.h"
 #include "common.h"
+#include "shader.h"
 
 #define MAX_NODES 256
 #define MAX_TRIS 4096
@@ -373,7 +374,6 @@ void octree_show(const octree_t* o)
 
 long octree_node_draw(const octree_node_t* nodes, long nodeindex, const frustum_t* frustum, const int* tree_indices, int* indices, long nindices, int* used_tris)
 {
-   //LOGI("NINDICES: %ld", nindices);
    if (nodeindex == -1)
       return nindices;
 
@@ -390,7 +390,7 @@ long octree_node_draw(const octree_node_t* nodes, long nodeindex, const frustum_
    {
       if (node->ntris == 0)
       {
-         LOGI("Branch #%ld parent %ld: res=%d", nodeindex, node->parent, res);
+         //LOGI("Branch #%ld parent %ld: res=%d", nodeindex, node->parent, res);
          for (l = 0; l < 8; ++l)
          {
             nindices = octree_node_draw(nodes, node->children[l], (res == 0) ? frustum : NULL, tree_indices, indices, nindices, used_tris);
@@ -398,8 +398,7 @@ long octree_node_draw(const octree_node_t* nodes, long nodeindex, const frustum_
       }
       else
       {
-         LOGI("\tLeaf #%ld parent %ld %ld tris res=%d", nodeindex, node->parent, node->ntris, res);
-
+         //LOGI("\tLeaf #%ld parent %ld %ld tris res=%d", nodeindex, node->parent, node->ntris, res);
          int* tri = &node->tris[0];
          for (l = 0; l < node->ntris; ++l)
          {
@@ -418,11 +417,16 @@ long octree_node_draw(const octree_node_t* nodes, long nodeindex, const frustum_
    return nindices;
 }
 
+extern shader_t octree_shader;
+extern GLuint gvTextureId;
+
 void octree_draw(const octree_t* o, const cam_t* camera)
 {
+   mat4f_t mvp;
+   mat4_mult(&mvp, &camera->proj, &camera->view);
+
    frustum_t frustum;
    frustum_set(&frustum, camera);
-   frustum_show(&frustum);
 
    long max_tris = o->nindices / 3;
    int* used_tris = (int*)malloc(max_tris * sizeof(int));
@@ -433,8 +437,32 @@ void octree_draw(const octree_t* o, const cam_t* camera)
 
    long nindices = octree_node_draw(o->nodes, 0, &frustum, o->indices, indices, 0, used_tris);
 
-   LOGI("Draw %ld indices", nindices);
-   // TODO: draw triangles
+   //LOGI("Draw %ld indices", nindices);
+
+   int sampler_id = 0;
+
+   shader_use(&octree_shader);
+   shader_set_uniform_matrices(&octree_shader, "uMVP", 1, mat4_data(&mvp));
+   shader_set_uniform_integers(&octree_shader, "uTex", 1, &sampler_id);
+   shader_set_attrib_vertices(&octree_shader, "aPos", 3, GL_FLOAT, sizeof(vertex_t), &o->vertices[0].pos);
+   shader_set_attrib_vertices(&octree_shader, "aTexCoord", 2, GL_FLOAT, sizeof(vertex_t), &o->vertices[0].tex_coord);
+   shader_set_attrib_vertices(&octree_shader, "aNormal", 3, GL_FLOAT, sizeof(vertex_t), &o->vertices[0].normal);
+
+   glActiveTexture(GL_TEXTURE0);
+   glBindTexture(GL_TEXTURE_2D, gvTextureId);
+
+   glCullFace(GL_FRONT);
+   glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, indices);
+
+   long l = 0;
+   for (l = 0; l < o->nnodes; ++l)
+   {
+      octree_node_t* node = &o->nodes[l];
+      if (node->ntris != 0)
+      {
+         bbox_draw(&node->bbox, camera);
+      }
+   }
 
    free(indices);
    free(used_tris);

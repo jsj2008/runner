@@ -6,6 +6,7 @@
 #include "model.h"
 #include "hlmdl.h"
 #include "shader.h"
+#include "octree.h"
 
 static GLfloat skybox_vertices[] =
 {
@@ -142,8 +143,11 @@ GLuint gvSkyboxTextureId = 0;
 mat4f_t gModel;
 cam_t camera;
 model_t* mdl = NULL;
+octree_t* level = NULL;
 shader_t model_shader;
+shader_t octree_shader;
 shader_t skybox_shader;
+shader_t bbox_shader;
 
 float gAngle = 0.0f;
 struct timeval prev_time;
@@ -200,13 +204,22 @@ int init(const char* apkPath)
    glCullFace(GL_BACK);
    glFrontFace(GL_CCW);
 
+   if (octree_load(&level, "assets/models/level.octree") != 0)
+      return -1;
+
    if (model_load(&mdl, "assets/models/test.model") != 0)
       return -1;
 
    if (shader_load(&model_shader, "assets/shaders/test") != 0)
       return -1;
 
+   if (shader_load(&octree_shader, "assets/shaders/level") != 0)
+      return -1;
+
    if (shader_load(&skybox_shader, "assets/shaders/skybox") != 0)
+      return -1;
+
+   if (shader_load(&bbox_shader, "assets/shaders/bbox") != 0)
       return -1;
 
    gvSkyboxTextureId = create_texture("assets/textures/skybox.png");
@@ -272,7 +285,8 @@ void update()
    glDepthFunc(GL_LESS);
 
    //mat4_set_yrotation(&mdl->transform, DEG2RAD(gAngle));
-   model_render(mdl, &camera, total_frames);
+   octree_draw(level, &camera);
+   //model_render(mdl, &camera, total_frames);
    gAngle += 2.0f;
 
    ++total_frames;
