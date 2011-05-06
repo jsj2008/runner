@@ -1,10 +1,11 @@
 #include "tex2d.h"
 #include "stream.h"
+#include "gl.h"
 #include <png.h>
 
 struct tex2d_t
 {
-   int id;
+   GLuint id;
    int width;
    int height;
    int bpp;
@@ -34,7 +35,7 @@ int tex2d_load_from_png(tex2d_t** pt, const char* fname)
    if (data == NULL)
       return -1;
 
-   if (png_sig_cmp(data, 0, 8) != 0)
+   if (png_sig_cmp((png_bytep)data, 0, 8) != 0)
    {
       LOGE("File %s is not PNG", fname);
       free(data);
@@ -94,7 +95,7 @@ int tex2d_load_from_png(tex2d_t** pt, const char* fname)
    if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
    {
       png_set_tRNS_to_alpha(png_ptr);
-      +channels;
+      ++channels;
    }
 
    if (bit_depth == 16)
@@ -104,7 +105,7 @@ int tex2d_load_from_png(tex2d_t** pt, const char* fname)
 
    png_read_update_info(png_ptr, info_ptr);
    const unsigned int rowbytes = png_get_rowbytes(png_ptr, info_ptr);
-   char* img = (char*)malloc(rowbytes * height);
+   unsigned char* img = (unsigned char*)malloc(rowbytes * height);
 
    png_bytep* row_pointers = (png_bytep*)malloc(sizeof(png_bytep) * height);
    int i = 0;
@@ -161,7 +162,7 @@ int tex2d_bind(tex2d_t* t, int sampler)
 {
    if (t->id == -1)
    {
-      int id = 0;
+      GLuint id = 0;
       glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
       checkGLError("glPixelStorei");
 

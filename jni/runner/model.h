@@ -4,7 +4,7 @@
 #include "matrix.h"
 #include "camera.h"
 
-#define MAX_TEXTURES 4
+#define MAX_TEXTURES_PER_MESH 4
 #define MAX_BONES_PER_VERTEX 2
 
 typedef struct vertex_t
@@ -27,7 +27,7 @@ typedef struct mesh_t
    long nvertices;
    long nindices;
 
-   char textures[MAX_TEXTURES][64];
+   char textures[MAX_TEXTURES_PER_MESH][64];
    vertex_t* vertices;
    int* indices;
 } mesh_t;
