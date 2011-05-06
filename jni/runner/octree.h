@@ -1,34 +1,14 @@
 #pragma once
 
-#include "bbox.h"
-#include "model.h"
-#include "camera.h"
+struct cam_t;
+struct vertex_t;
 
-typedef struct octree_node_t
-{
-   bbox_t bbox;
-   long parent;
-   long children[8];
+typedef struct octree_t octree_t;
 
-   long ntris;
-   int* tris;
-} octree_node_t;
-
-typedef struct octree_t
-{
-   long nvertices;
-   long nindices;
-   long nnodes;
-
-   vertex_t* vertices;
-   int* indices;
-   octree_node_t* nodes;
-} octree_t;
-
-void octree_build(octree_t** po, vertex_t* vertices, long nvertices, int* indices, long nindices);
+void octree_build(octree_t** po, struct vertex_t* vertices, long nvertices, int* indices, long nindices);
 int octree_load(octree_t** po, const char* fname);
 int octree_save(const octree_t* o, const char* fname);
 void octree_free(octree_t* o);
 void octree_show(const octree_t* o);
-void octree_draw(const octree_t* o, const cam_t* camera);
+void octree_draw(const octree_t* o, const struct cam_t* camera);
 

@@ -144,10 +144,10 @@ mat4f_t gModel;
 cam_t camera;
 model_t* mdl = NULL;
 octree_t* level = NULL;
-shader_t model_shader;
-shader_t octree_shader;
-shader_t skybox_shader;
-shader_t bbox_shader;
+shader_t* model_shader;
+shader_t* octree_shader;
+shader_t* skybox_shader;
+shader_t* bbox_shader;
 
 float gAngle = 0.0f;
 struct timeval prev_time;
@@ -266,11 +266,11 @@ void update()
 
    int sampler_id = 0;
 
-   shader_use(&skybox_shader);
-   shader_set_attrib_vertices(&skybox_shader, "aPos", 3, GL_FLOAT, 0, skybox_vertices);
-   shader_set_attrib_vertices(&skybox_shader, "aTexCoord", 2, GL_FLOAT, 0, skybox_tex_coords);
-   shader_set_attrib_vertices(&skybox_shader, "aColor", 3, GL_FLOAT, 0, skybox_colors);
-   shader_set_uniform_integers(&skybox_shader, "uTex", 1, &sampler_id);
+   shader_use(skybox_shader);
+   shader_set_attrib_vertices(skybox_shader, "aPos", 3, GL_FLOAT, 0, skybox_vertices);
+   shader_set_attrib_vertices(skybox_shader, "aTexCoord", 2, GL_FLOAT, 0, skybox_tex_coords);
+   shader_set_attrib_vertices(skybox_shader, "aColor", 3, GL_FLOAT, 0, skybox_colors);
+   shader_set_uniform_integers(skybox_shader, "uTex", 1, &sampler_id);
 
    glActiveTexture(GL_TEXTURE0);
    checkGLError("glActiveTexture");

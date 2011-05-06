@@ -1,5 +1,7 @@
 #include "frustum.h"
 #include "common.h"
+#include "bbox.h"
+#include "camera.h"
 
 void frustum_set(frustum_t* frustum, const cam_t* camera)
 {

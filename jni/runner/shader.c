@@ -1,6 +1,24 @@
 #include "shader.h"
+#include "common.h"
 #include "stream.h"
 #include "gl.h"
+
+#define MAX_SHADER_VARS 32
+
+typedef struct shader_var_t
+{
+   char name[32];
+   long location;
+} shader_var_t;
+
+struct shader_t
+{
+   char name[64];
+   long program;
+
+   long nvars;
+   shader_var_t vars[MAX_SHADER_VARS];
+};
 
 static GLuint load_shader_from_string(GLenum type, const char* src)
 {
@@ -104,7 +122,7 @@ static const shader_var_t* get_uniform_var(shader_t* shader, const char* name)
    return var;
 }
 
-int shader_load(shader_t* shader, const char* name)
+int shader_load(shader_t** pshader, const char* name)
 {
    char vs_name[256];
    strcpy(vs_name, name);
@@ -172,8 +190,12 @@ int shader_load(shader_t* shader, const char* name)
       return -1;
    }
 
+   shader_t* shader = (shader_t*)malloc(sizeof(shader_t));
+   memset(shader, 0, sizeof(shader_t));
    strcpy(shader->name, name);
    shader->program = program;
+
+   (*pshader) = shader;
 
    LOGI("Loaded shader program #%ld", shader->program);
    return 0;
@@ -187,6 +209,7 @@ void shader_free(shader_t* shader)
       glDeleteProgram(shader->program);
       shader->program = 0;
    }
+   free(shader);
 }
 
 void shader_use(const shader_t* shader)

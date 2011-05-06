@@ -3,10 +3,34 @@
 #include "frustum.h"
 #include "common.h"
 #include "shader.h"
+#include "bbox.h"
+#include "camera.h"
+#include "model.h"
 
 #define MAX_NODES 256
 #define MAX_TRIS 4096
 #define MAX_TRIS_PER_NODE 300
+
+typedef struct octree_node_t
+{
+   bbox_t bbox;
+   long parent;
+   long children[8];
+
+   long ntris;
+   int* tris;
+} octree_node_t;
+
+struct octree_t
+{
+   long nvertices;
+   long nindices;
+   long nnodes;
+
+   vertex_t* vertices;
+   int* indices;
+   octree_node_t* nodes;
+};
 
 static int octree_node_build(octree_node_t* nodes, long parent, long nodeindex, const bbox_t* bbox, const vertex_t* vertices, long nvertices, const int* indices, long nindices, int* tris, long ntris)
 {
@@ -417,7 +441,7 @@ long octree_node_draw(const octree_node_t* nodes, long nodeindex, const frustum_
    return nindices;
 }
 
-extern shader_t octree_shader;
+extern shader_t* octree_shader;
 extern GLuint gvTextureId;
 
 void octree_draw(const octree_t* o, const cam_t* camera)
@@ -441,12 +465,12 @@ void octree_draw(const octree_t* o, const cam_t* camera)
 
    int sampler_id = 0;
 
-   shader_use(&octree_shader);
-   shader_set_uniform_matrices(&octree_shader, "uMVP", 1, mat4_data(&mvp));
-   shader_set_uniform_integers(&octree_shader, "uTex", 1, &sampler_id);
-   shader_set_attrib_vertices(&octree_shader, "aPos", 3, GL_FLOAT, sizeof(vertex_t), &o->vertices[0].pos);
-   shader_set_attrib_vertices(&octree_shader, "aTexCoord", 2, GL_FLOAT, sizeof(vertex_t), &o->vertices[0].tex_coord);
-   shader_set_attrib_vertices(&octree_shader, "aNormal", 3, GL_FLOAT, sizeof(vertex_t), &o->vertices[0].normal);
+   shader_use(octree_shader);
+   shader_set_uniform_matrices(octree_shader, "uMVP", 1, mat4_data(&mvp));
+   shader_set_uniform_integers(octree_shader, "uTex", 1, &sampler_id);
+   shader_set_attrib_vertices(octree_shader, "aPos", 3, GL_FLOAT, sizeof(vertex_t), &o->vertices[0].pos);
+   shader_set_attrib_vertices(octree_shader, "aTexCoord", 2, GL_FLOAT, sizeof(vertex_t), &o->vertices[0].tex_coord);
+   shader_set_attrib_vertices(octree_shader, "aNormal", 3, GL_FLOAT, sizeof(vertex_t), &o->vertices[0].normal);
 
    glActiveTexture(GL_TEXTURE0);
    glBindTexture(GL_TEXTURE_2D, gvTextureId);

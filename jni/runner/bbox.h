@@ -1,7 +1,8 @@
 #pragma once
 
 #include "vector.h"
-#include "camera.h"
+
+struct cam_t;
 
 typedef struct bbox_t
 {
@@ -13,5 +14,5 @@ void bbox_reset(bbox_t* b);
 void bbox_inflate(bbox_t* b, vec4f_t* v);
 void bbox_show(const bbox_t* b);
 int bbox_tri_intersection(const bbox_t* bbox, const vec4f_t* a, const vec4f_t* b, const vec4f_t* c);
-void bbox_draw(const bbox_t* b, const cam_t* camera);
+void bbox_draw(const bbox_t* b, const struct cam_t* camera);
 
