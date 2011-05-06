@@ -6,6 +6,7 @@
 #include "bbox.h"
 #include "camera.h"
 #include "model.h"
+#include "tex2d.h"
 
 #define MAX_NODES 256
 #define MAX_TRIS 4096
@@ -442,7 +443,7 @@ long octree_node_draw(const octree_node_t* nodes, long nodeindex, const frustum_
 }
 
 extern shader_t* octree_shader;
-extern GLuint gvTextureId;
+extern tex2d_t* octree_texture;
 
 void octree_draw(const octree_t* o, const cam_t* camera)
 {
@@ -472,8 +473,7 @@ void octree_draw(const octree_t* o, const cam_t* camera)
    shader_set_attrib_vertices(octree_shader, "aTexCoord", 2, GL_FLOAT, sizeof(vertex_t), &o->vertices[0].tex_coord);
    shader_set_attrib_vertices(octree_shader, "aNormal", 3, GL_FLOAT, sizeof(vertex_t), &o->vertices[0].normal);
 
-   glActiveTexture(GL_TEXTURE0);
-   glBindTexture(GL_TEXTURE_2D, gvTextureId);
+   tex2d_bind(octree_texture, sampler_id);
 
    glCullFace(GL_FRONT);
    glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, indices);

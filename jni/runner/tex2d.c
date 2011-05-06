@@ -2,6 +2,15 @@
 #include "stream.h"
 #include <png.h>
 
+struct tex2d_t
+{
+   int id;
+   int width;
+   int height;
+   int bpp;
+   unsigned char* data;
+};
+
 typedef struct png_read_data_t
 {
    char* data;
@@ -18,10 +27,8 @@ static void png_read(png_structp png_ptr, png_bytep data, png_size_t length)
    p->offset += length;
 }
 
-int tex2d_load_from_png(tex2d_t* t, const char* fname)
+int tex2d_load_from_png(tex2d_t** pt, const char* fname)
 {
-   memset(t, 0, sizeof(tex2d_t));
-
    long size = 0;
    char* data = (char*)stream_read_file(fname, &size);
    if (data == NULL)
@@ -111,11 +118,36 @@ int tex2d_load_from_png(tex2d_t* t, const char* fname)
    free(row_pointers);
    free(data);
 
+   tex2d_t* t = (tex2d_t*)malloc(sizeof(tex2d_t));
    t->data = img;
    t->width = width;
    t->height = height;
    t->bpp = channels * 8;
+   t->id = -1;
 
+   (*pt) = t;
+
+   return 0;
+}
+
+int tex2d_load_checkered_texture(tex2d_t** pt)
+{
+   unsigned char pixels[] =
+   {
+      127, 127, 127,
+      0, 0, 0,
+      0, 0, 0,
+      127, 127, 127,
+   };
+
+   tex2d_t* t = (tex2d_t*)malloc(sizeof(tex2d_t));
+   t->data = pixels;
+   t->width = 2;
+   t->height = 2;
+   t->bpp = 3 * 8;
+   t->id = -1;
+
+   (*pt) = t;
    return 0;
 }
 
@@ -123,5 +155,40 @@ void tex2d_free(tex2d_t* t)
 {
    free(t->data);
    memset(t, 0, sizeof(tex2d_t));
+}
+
+int tex2d_bind(tex2d_t* t, int sampler)
+{
+   if (t->id == -1)
+   {
+      int id = 0;
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+      checkGLError("glPixelStorei");
+
+      glGenTextures(1, &id);
+      checkGLError("glGenTextures");
+
+      glBindTexture(GL_TEXTURE_2D, id);
+      checkGLError("glBindTexture");
+
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, t->width, t->height, 0, GL_RGB, GL_UNSIGNED_BYTE, t->data);
+      checkGLError("glTexImage2D");
+
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+      LOGI("Loaded texture id = %d", id);
+      t->id = id;
+   }
+
+   glActiveTexture(GL_TEXTURE0 + sampler);
+   checkGLError("glActiveTexture");
+
+   glBindTexture(GL_TEXTURE_2D, t->id);
+   checkGLError("glBindTexture");
+
+   return 0;
 }
 

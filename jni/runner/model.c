@@ -2,6 +2,7 @@
 #include "common.h"
 #include "shader.h"
 #include "stream.h"
+#include "tex2d.h"
 
 typedef struct model_header_t
 {
@@ -185,8 +186,8 @@ void model_free(const model_t* model)
 #define MAX_BONES 256
 #define MAX_VERTICES 4096
 
-extern shader_t model_shader;
-extern GLuint gvTextureId;
+extern shader_t* model_shader;
+extern tex2d_t* model_texture;
 
 void model_render(const model_t* model, const cam_t* camera, int _frame)
 {
@@ -283,19 +284,18 @@ void model_render(const model_t* model, const cam_t* camera, int _frame)
    {
       int sampler_id = 0;
 
-      shader_use(&model_shader);
-      shader_set_uniform_matrices(&model_shader, "uMVP", 1, mat4_data(&mvp));
-      shader_set_uniform_matrices(&model_shader, "uMV", 1, mat4_data(&mv));
-      shader_set_uniform_matrices(&model_shader, "uBoneTransforms", model->nbones, mat4_data(&bone_transforms[0]));
-      shader_set_uniform_integers(&model_shader, "uTex", 1, &sampler_id);
-      shader_set_attrib_vertices(&model_shader, "aPos", 3, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].pos);
-      shader_set_attrib_vertices(&model_shader, "aTexCoord", 2, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].tex_coord);
-      shader_set_attrib_vertices(&model_shader, "aNormal", 3, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].normal);
-      shader_set_attrib_vertices(&model_shader, "aBoneIndices", 2, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].bone);
-      shader_set_attrib_vertices(&model_shader, "aBoneWeights", 2, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].weight);
+      shader_use(model_shader);
+      shader_set_uniform_matrices(model_shader, "uMVP", 1, mat4_data(&mvp));
+      shader_set_uniform_matrices(model_shader, "uMV", 1, mat4_data(&mv));
+      shader_set_uniform_matrices(model_shader, "uBoneTransforms", model->nbones, mat4_data(&bone_transforms[0]));
+      shader_set_uniform_integers(model_shader, "uTex", 1, &sampler_id);
+      shader_set_attrib_vertices(model_shader, "aPos", 3, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].pos);
+      shader_set_attrib_vertices(model_shader, "aTexCoord", 2, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].tex_coord);
+      shader_set_attrib_vertices(model_shader, "aNormal", 3, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].normal);
+      shader_set_attrib_vertices(model_shader, "aBoneIndices", 2, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].bone);
+      shader_set_attrib_vertices(model_shader, "aBoneWeights", 2, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].weight);
 
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, gvTextureId);
+      tex2d_bind(model_texture, sampler_id);
 
       glCullFace(GL_FRONT);
       glDrawElements(GL_TRIANGLES, mesh->nindices, GL_UNSIGNED_INT, mesh->indices);

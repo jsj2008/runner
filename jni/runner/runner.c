@@ -7,6 +7,7 @@
 #include "hlmdl.h"
 #include "shader.h"
 #include "octree.h"
+#include "tex2d.h"
 
 static GLfloat skybox_vertices[] =
 {
@@ -137,9 +138,6 @@ static GLubyte indices[] =
    20, 22, 21
 };
 
-GLuint gvTextureId = 0;
-GLuint gvSkyboxTextureId = 0;
-
 mat4f_t gModel;
 cam_t camera;
 model_t* mdl = NULL;
@@ -148,6 +146,9 @@ shader_t* model_shader;
 shader_t* octree_shader;
 shader_t* skybox_shader;
 shader_t* bbox_shader;
+tex2d_t* model_texture;
+tex2d_t* octree_texture;
+tex2d_t* skybox_texture;
 
 float gAngle = 0.0f;
 struct timeval prev_time;
@@ -161,25 +162,6 @@ vec4f_t* vec4(float x, float y, float z, float w)
    tmp.y = y;
    tmp.z = z;
    return &tmp;
-}
-
-GLuint create_texture(const char* fname)
-{
-   tex2d_t t;
-   if (tex2d_load_from_png(&t, fname) != 0)
-   {
-      LOGE("Unable to load texture from %s", fname);
-      return 0;
-   }
-
-   GLuint texId = gl_load_texture(&t);
-   if (texId == 0)
-   {
-      LOGE("Unable to load texture to GPU");
-      return 0;
-   }
-
-   return texId;
 }
 
 int init(const char* apkPath)
@@ -222,21 +204,14 @@ int init(const char* apkPath)
    if (shader_load(&bbox_shader, "assets/shaders/bbox") != 0)
       return -1;
 
-   gvSkyboxTextureId = create_texture("assets/textures/skybox.png");
-   if (gvSkyboxTextureId == 0)
+   if (tex2d_load_from_png(&model_texture, "assets/textures/marble.png") != 0)
       return -1;
 
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-   gvTextureId = create_texture("assets/textures/marble.png");
-   if (gvTextureId == 0)
+   if (tex2d_load_from_png(&octree_texture, "assets/textures/marble.png") != 0)
       return -1;
 
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   if (tex2d_load_from_png(&skybox_texture, "assets/textures/skybox.png") != 0)
+      return -1;
 
    return 0;
 }
@@ -272,11 +247,7 @@ void update()
    shader_set_attrib_vertices(skybox_shader, "aColor", 3, GL_FLOAT, 0, skybox_colors);
    shader_set_uniform_integers(skybox_shader, "uTex", 1, &sampler_id);
 
-   glActiveTexture(GL_TEXTURE0);
-   checkGLError("glActiveTexture");
-
-   glBindTexture(GL_TEXTURE_2D, gvSkyboxTextureId);
-   checkGLError("glBindTexture");
+   tex2d_bind(skybox_texture, sampler_id);
 
    glCullFace(GL_BACK);
    glDepthFunc(GL_ALWAYS);
