@@ -187,7 +187,7 @@ int init(const char* apkPath)
    if (octree_load(&level, "assets/models/level.octree") != 0)
       return -1;
 
-   if (model_load(&mdl, "assets/models/test.model") != 0)
+   if (model_load(&mdl, "assets/models/crate.model") != 0)
       return -1;
 
    return 0;
@@ -228,6 +228,7 @@ void draw_skybox()
    shader_set_attrib_vertices(shader, "aColor", 3, GL_FLOAT, 0, skybox_colors);
    shader_set_uniform_integers(shader, "uTex", 1, &sampler_id);
 
+   tex2d_set_params(tex, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, GL_MIRRORED_REPEAT, GL_CLAMP_TO_EDGE);
    tex2d_bind(tex, sampler_id);
 
    glCullFace(GL_BACK);
@@ -241,9 +242,9 @@ void update()
 {
    draw_skybox();
 
-   //mat4_set_yrotation(&mdl->transform, DEG2RAD(gAngle));
    octree_draw(level, &camera);
-   //model_render(mdl, &camera, total_frames);
+   mat4_set_yrotation(&mdl->transform, DEG2RAD(gAngle));
+   model_render(mdl, &camera, total_frames);
    gAngle += 2.0f;
 
    ++total_frames;

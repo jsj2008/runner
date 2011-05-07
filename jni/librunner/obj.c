@@ -267,11 +267,11 @@ int obj_convert(const char* from, const char* to)
    mesh_t mesh;
    memset(&mesh, 0, sizeof(mesh));
    strcpy(mesh.name, "obj");
-   strcpy(mesh.shader, "shaders/obj");
+   strcpy(mesh.shader, "assets/shaders/obj");
    mesh.ntextures = 1;
    mesh.nvertices = g_nvertices;
    mesh.nindices = g_nindices;
-   strcpy(mesh.textures[0], "textures/marble.png");
+   strcpy(mesh.textures[0], "assets/textures/crate.png");
    mesh.vertices = g_vertices;
    mesh.indices = g_indices;
 

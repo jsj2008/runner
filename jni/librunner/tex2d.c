@@ -10,6 +10,11 @@ struct tex2d_t
    int height;
    int bpp;
    unsigned char* data;
+
+   int min_filter;
+   int mag_filter;
+   int wrap_s;
+   int wrap_t;
 };
 
 typedef struct png_read_data_t
@@ -125,6 +130,10 @@ int tex2d_load_from_png(tex2d_t** pt, const char* fname)
    t->height = height;
    t->bpp = channels * 8;
    t->id = -1;
+   t->min_filter = GL_LINEAR_MIPMAP_LINEAR;
+   t->mag_filter = GL_LINEAR;
+   t->wrap_s = GL_REPEAT;
+   t->wrap_t = GL_REPEAT;
 
    (*pt) = t;
 
@@ -147,6 +156,10 @@ int tex2d_load_checkered_texture(tex2d_t** pt)
    t->height = 2;
    t->bpp = 3 * 8;
    t->id = -1;
+   t->min_filter = GL_NEAREST_MIPMAP_NEAREST;
+   t->mag_filter = GL_NEAREST;
+   t->wrap_s = GL_REPEAT;
+   t->wrap_t = GL_REPEAT;
 
    (*pt) = t;
    return 0;
@@ -156,6 +169,14 @@ void tex2d_free(tex2d_t* t)
 {
    free(t->data);
    memset(t, 0, sizeof(tex2d_t));
+}
+
+void tex2d_set_params(tex2d_t* t, int min_filter, int mag_filter, int wrap_s, int wrap_t)
+{
+   t->min_filter = min_filter;
+   t->mag_filter = mag_filter;
+   t->wrap_s = wrap_s;
+   t->wrap_t = wrap_t;
 }
 
 int tex2d_bind(tex2d_t* t, int sampler)
@@ -172,13 +193,16 @@ int tex2d_bind(tex2d_t* t, int sampler)
       glBindTexture(GL_TEXTURE_2D, id);
       checkGLError("glBindTexture");
 
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, t->min_filter);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, t->mag_filter);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, t->wrap_s);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, t->wrap_t);
+
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, t->width, t->height, 0, GL_RGB, GL_UNSIGNED_BYTE, t->data);
       checkGLError("glTexImage2D");
 
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      glGenerateMipmap(GL_TEXTURE_2D);
+      checkGLError("glGenerateMipmap");
 
       LOGI("Loaded texture id = %d", id);
       t->id = id;
