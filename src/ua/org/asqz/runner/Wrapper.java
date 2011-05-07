@@ -7,7 +7,7 @@ class Wrapper {
    public static native void scroll(long dt, float dx1, float dy1, float dx2, float dy2);
 
    static {
-      System.loadLibrary("runner");
+      System.loadLibrary("wrapper");
    }
 }
 
