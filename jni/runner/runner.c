@@ -8,6 +8,7 @@
 #include "shader.h"
 #include "octree.h"
 #include "tex2d.h"
+#include "resman.h"
 
 static GLfloat skybox_vertices[] =
 {
@@ -142,13 +143,7 @@ mat4f_t gModel;
 cam_t camera;
 model_t* mdl = NULL;
 octree_t* level = NULL;
-shader_t* model_shader;
-shader_t* octree_shader;
-shader_t* skybox_shader;
-shader_t* bbox_shader;
-tex2d_t* model_texture;
-tex2d_t* octree_texture;
-tex2d_t* skybox_texture;
+resman_t* g_resman = NULL;
 
 float gAngle = 0.0f;
 struct timeval prev_time;
@@ -171,8 +166,11 @@ int init(const char* apkPath)
    if (stream_set_root(apkPath) != 0)
    {
       LOGE("Error setting APK path");
-      return;
+      return -1;
    }
+
+   if (resman_init(&g_resman) != 0)
+      return -1;
 
    outGLString("Version", GL_VERSION);
    outGLString("Vendor", GL_VENDOR);
@@ -190,27 +188,6 @@ int init(const char* apkPath)
       return -1;
 
    if (model_load(&mdl, "assets/models/test.model") != 0)
-      return -1;
-
-   if (shader_load(&model_shader, "assets/shaders/test") != 0)
-      return -1;
-
-   if (shader_load(&octree_shader, "assets/shaders/level") != 0)
-      return -1;
-
-   if (shader_load(&skybox_shader, "assets/shaders/skybox") != 0)
-      return -1;
-
-   if (shader_load(&bbox_shader, "assets/shaders/bbox") != 0)
-      return -1;
-
-   if (tex2d_load_from_png(&model_texture, "assets/textures/marble.png") != 0)
-      return -1;
-
-   if (tex2d_load_from_png(&octree_texture, "assets/textures/marble.png") != 0)
-      return -1;
-
-   if (tex2d_load_from_png(&skybox_texture, "assets/textures/skybox.png") != 0)
       return -1;
 
    return 0;
@@ -236,24 +213,33 @@ void resize(int width, int height)
    gettimeofday(&prev_time, &tz);
 }
 
-void update()
+void draw_skybox()
 {
-
    int sampler_id = 0;
 
-   shader_use(skybox_shader);
-   shader_set_attrib_vertices(skybox_shader, "aPos", 3, GL_FLOAT, 0, skybox_vertices);
-   shader_set_attrib_vertices(skybox_shader, "aTexCoord", 2, GL_FLOAT, 0, skybox_tex_coords);
-   shader_set_attrib_vertices(skybox_shader, "aColor", 3, GL_FLOAT, 0, skybox_colors);
-   shader_set_uniform_integers(skybox_shader, "uTex", 1, &sampler_id);
+   shader_t* shader = resman_get_shader(g_resman, "assets/shaders/skybox");
+   tex2d_t* tex = resman_get_texture(g_resman, "assets/textures/skybox.png");
+   if (shader == NULL || tex == NULL)
+      return;
 
-   tex2d_bind(skybox_texture, sampler_id);
+   shader_use(shader);
+   shader_set_attrib_vertices(shader, "aPos", 3, GL_FLOAT, 0, skybox_vertices);
+   shader_set_attrib_vertices(shader, "aTexCoord", 2, GL_FLOAT, 0, skybox_tex_coords);
+   shader_set_attrib_vertices(shader, "aColor", 3, GL_FLOAT, 0, skybox_colors);
+   shader_set_uniform_integers(shader, "uTex", 1, &sampler_id);
+
+   tex2d_bind(tex, sampler_id);
 
    glCullFace(GL_BACK);
    glDepthFunc(GL_ALWAYS);
 
    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, skybox_indices);
    glDepthFunc(GL_LESS);
+}
+
+void update()
+{
+   draw_skybox();
 
    //mat4_set_yrotation(&mdl->transform, DEG2RAD(gAngle));
    octree_draw(level, &camera);

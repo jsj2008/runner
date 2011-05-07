@@ -7,6 +7,7 @@
 #include "camera.h"
 #include "model.h"
 #include "tex2d.h"
+#include "resman.h"
 
 #define MAX_NODES 256
 #define MAX_TRIS 4096
@@ -24,6 +25,9 @@ typedef struct octree_node_t
 
 struct octree_t
 {
+   char shader[64];
+   char texture[64];
+
    long nvertices;
    long nindices;
    long nnodes;
@@ -209,6 +213,8 @@ void octree_build(octree_t** po, vertex_t* vertices, long nvertices, int* indice
                     nnodes * sizeof(octree_node_t) +
                     totaltris * sizeof(int));
 
+   strcpy(o->shader, "assets/shaders/level");
+   strcpy(o->texture, "assets/textures/marble.png");
    o->nvertices = nvertices;
    o->nindices = nindices;
    o->nnodes = nnodes;
@@ -442,8 +448,7 @@ long octree_node_draw(const octree_node_t* nodes, long nodeindex, const frustum_
    return nindices;
 }
 
-extern shader_t* octree_shader;
-extern tex2d_t* octree_texture;
+extern resman_t* g_resman;
 
 void octree_draw(const octree_t* o, const cam_t* camera)
 {
@@ -466,14 +471,20 @@ void octree_draw(const octree_t* o, const cam_t* camera)
 
    int sampler_id = 0;
 
-   shader_use(octree_shader);
-   shader_set_uniform_matrices(octree_shader, "uMVP", 1, mat4_data(&mvp));
-   shader_set_uniform_integers(octree_shader, "uTex", 1, &sampler_id);
-   shader_set_attrib_vertices(octree_shader, "aPos", 3, GL_FLOAT, sizeof(vertex_t), &o->vertices[0].pos);
-   shader_set_attrib_vertices(octree_shader, "aTexCoord", 2, GL_FLOAT, sizeof(vertex_t), &o->vertices[0].tex_coord);
-   shader_set_attrib_vertices(octree_shader, "aNormal", 3, GL_FLOAT, sizeof(vertex_t), &o->vertices[0].normal);
+   shader_t* shader = resman_get_shader(g_resman, o->shader);
+   tex2d_t* tex = resman_get_texture(g_resman, o->texture);
 
-   tex2d_bind(octree_texture, sampler_id);
+   if (shader == NULL || tex == NULL)
+      return;
+
+   shader_use(shader);
+   shader_set_uniform_matrices(shader, "uMVP", 1, mat4_data(&mvp));
+   shader_set_uniform_integers(shader, "uTex", 1, &sampler_id);
+   shader_set_attrib_vertices(shader, "aPos", 3, GL_FLOAT, sizeof(vertex_t), &o->vertices[0].pos);
+   shader_set_attrib_vertices(shader, "aTexCoord", 2, GL_FLOAT, sizeof(vertex_t), &o->vertices[0].tex_coord);
+   shader_set_attrib_vertices(shader, "aNormal", 3, GL_FLOAT, sizeof(vertex_t), &o->vertices[0].normal);
+
+   tex2d_bind(tex, sampler_id);
 
    glCullFace(GL_FRONT);
    glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, indices);
