@@ -167,6 +167,11 @@ int tex2d_load_checkered_texture(tex2d_t** pt)
 
 void tex2d_free(tex2d_t* t)
 {
+   if (t->id > 0)
+   {
+      glDeleteTextures(1, &t->id);
+   }
+
    free(t->data);
    memset(t, 0, sizeof(tex2d_t));
 }
