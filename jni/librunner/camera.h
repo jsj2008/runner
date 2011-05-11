@@ -9,6 +9,13 @@ typedef struct cam_t
    vec4f_t up;
    vec4f_t view_dir;
 
+   vec4f_t speed;
+   vec4f_t target;
+
+   vec4f_t max_speed;
+   vec4f_t acceleration;
+   vec4f_t decceleration;
+
    mat4f_t proj;
    mat4f_t view;
 } cam_t;
@@ -19,5 +26,5 @@ void cam_set_pos(cam_t* c, const vec4f_t* pos);
 void cam_set_up(cam_t* c, const vec4f_t* up);
 void cam_set_view_dir(cam_t* c, const vec4f_t* view_dir);
 void cam_look_at(cam_t* c, const vec4f_t* at);
-void cam_update(cam_t* c);
+void cam_update(float dt, cam_t* c);
 

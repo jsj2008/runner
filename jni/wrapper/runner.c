@@ -207,7 +207,11 @@ void resize(int width, int height)
    cam_set_pos(&camera, vec4(0.0f, 25.0f, 50.0f, 0.0f));
    cam_set_up(&camera, vec4(0.0f, 1.0f, 0.0f, 0.0f));
    cam_look_at(&camera, vec4(0.0f, 0.0f, 0.0f, 0.0f));
-   cam_update(&camera);
+   camera.max_speed = *vec4(50.0f, 50.0f, 50.0f, 0.0f);
+   camera.acceleration = *vec4(1000.0f, 1000.0f, 1000.0f, 0.0f);
+   camera.decceleration = *vec4(25.0f, 25.0f, 25.0f, 0.0f);
+   camera.target = camera.pos;
+   cam_update(0.0f, &camera);
 
    struct timezone tz;
    gettimeofday(&prev_time, &tz);
@@ -263,6 +267,8 @@ void update()
       prev_time = cur_time;
       frames = 0;
    }
+
+   cam_update(0.03f, &camera);
 }
 
 void scroll(long dt, float dx1, float dy1, float dx2, float dy2)
@@ -290,8 +296,6 @@ void scroll(long dt, float dx1, float dy1, float dx2, float dy2)
       float v = coef * dy1;
       cam_slide(&camera, vec4(camera.view_dir.x * v, camera.view_dir.y * v, camera.view_dir.z * v, 0.0f));
    }
-
-   cam_update(&camera);
 
    LOGI("Cam pos: [%.2f %.2f %.2f] dir: [%.2f %.2f %.2f]",
         camera.pos.x, camera.pos.y, camera.pos.z,
