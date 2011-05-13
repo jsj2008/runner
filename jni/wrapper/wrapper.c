@@ -30,3 +30,18 @@ JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_scroll (JNIEnv* env, jcla
    scroll(dt, dx1, dy1, dx2, dy2);
 }
 
+JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_pointer_1down (JNIEnv* env, jclass wrapper, jint pointerId, jfloat x, jfloat y)
+{
+   pointer_down(pointerId, x, y);
+}
+
+JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_pointer_1up (JNIEnv* env, jclass wrapper, jint pointerId, jfloat x, jfloat y)
+{
+   pointer_up(pointerId, x, y);
+}
+
+JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_pointer_1move (JNIEnv* env, jclass wrapper, jint pointerId, jfloat dx, jfloat dy)
+{
+   pointer_move(pointerId, dx, dy);
+}
+

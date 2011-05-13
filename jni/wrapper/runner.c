@@ -315,3 +315,40 @@ void scroll(long dt, float dx1, float dy1, float dx2, float dy2)
         camera.view_dir.x, camera.view_dir.y, camera.view_dir.z);
 }
 
+void perform_jump()
+{
+   LOGI("jump");
+}
+
+void perform_crouch()
+{
+   LOGI("crouch");
+}
+
+void pointer_down(int pointerId, float x, float y)
+{
+   LOGI("pointer #%d down: %.2f %.2f", pointerId, x, y);
+
+   if (y >= 0.80f)
+   {
+      if (x <= 0.15f)
+      {
+         perform_crouch();
+      }
+      else if (x >= 0.85f)
+      {
+         perform_jump();
+      }
+   }
+}
+
+void pointer_up(int pointerId, float x, float y)
+{
+   LOGI("pointer #%d up: %.2f %.2f", pointerId, x, y);
+}
+
+void pointer_move(int pointerId, float dx, float dy)
+{
+   //LOGI("pointer #%d move: %.2f %.2f", pointerId, dx, dy);
+}
+

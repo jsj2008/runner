@@ -35,7 +35,10 @@ class RunnerSurfaceView extends GLSurfaceView {
 
    public boolean onTouchEvent(MotionEvent event) {
       int action = event.getAction();
-      if (action == MotionEvent.ACTION_MOVE) {
+      int pointerIndex = (action & MotionEvent.ACTION_POINTER_ID_MASK) >> MotionEvent.ACTION_POINTER_ID_SHIFT;
+      int actionCode = action & MotionEvent.ACTION_MASK;
+
+      if (actionCode == MotionEvent.ACTION_MOVE) {
          long dt = event.getEventTime() - mPrevEventTime;
          if (dt > 0) {
             float dx1 = event.getX(0) - mPrevPositions[0];
@@ -51,6 +54,16 @@ class RunnerSurfaceView extends GLSurfaceView {
             Wrapper.scroll(dt, dx1, dy1, dx2, dy2);
             Log.i(TAG, "Pointer moved on [" + dx1 + "," + dy1 + "] [" + dx2 + "," + dy2 +  "] in " + dt + "ms");
          }
+      }
+      else if (actionCode == MotionEvent.ACTION_DOWN || actionCode == MotionEvent.ACTION_POINTER_DOWN) {
+         float x = event.getX(pointerIndex) / getWidth();
+         float y = event.getY(pointerIndex) / getHeight();
+         Wrapper.pointer_down(event.getPointerId(pointerIndex), x, y);
+      }
+      else if (actionCode == MotionEvent.ACTION_UP || actionCode == MotionEvent.ACTION_POINTER_UP) {
+         float x = event.getX(pointerIndex) / getWidth();
+         float y = event.getY(pointerIndex) / getHeight();
+         Wrapper.pointer_up(event.getPointerId(pointerIndex), x, y);
       }
 
       mPrevPositions[0] = event.getX(0);

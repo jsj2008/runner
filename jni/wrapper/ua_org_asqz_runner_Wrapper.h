@@ -47,6 +47,30 @@ JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_update
 JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_scroll
   (JNIEnv *, jclass, jlong, jfloat, jfloat, jfloat, jfloat);
 
+/*
+ * Class:     ua_org_asqz_runner_Wrapper
+ * Method:    pointer_down
+ * Signature: (IFF)V
+ */
+JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_pointer_1down
+  (JNIEnv *, jclass, jint, jfloat, jfloat);
+
+/*
+ * Class:     ua_org_asqz_runner_Wrapper
+ * Method:    pointer_up
+ * Signature: (IFF)V
+ */
+JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_pointer_1up
+  (JNIEnv *, jclass, jint, jfloat, jfloat);
+
+/*
+ * Class:     ua_org_asqz_runner_Wrapper
+ * Method:    pointer_move
+ * Signature: (IFF)V
+ */
+JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_pointer_1move
+  (JNIEnv *, jclass, jint, jfloat, jfloat);
+
 #ifdef __cplusplus
 }
 #endif
