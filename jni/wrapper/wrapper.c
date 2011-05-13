@@ -10,6 +10,11 @@ JNIEXPORT jint JNICALL Java_ua_org_asqz_runner_Wrapper_init (JNIEnv* env, jclass
    return res;
 }
 
+JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_shutdown (JNIEnv* env, jclass wrapper)
+{
+   shutdown();
+}
+
 JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_resize (JNIEnv* env, jclass wrapper, jint width, jint height)
 {
    resize(width, height);

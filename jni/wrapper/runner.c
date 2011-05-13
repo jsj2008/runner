@@ -1,3 +1,4 @@
+#include "runner.h"
 #include "common.h"
 #include "gl.h"
 #include "matrix.h"
@@ -191,6 +192,18 @@ int init(const char* apkPath)
       return -1;
 
    return 0;
+}
+
+void shutdown()
+{
+   LOGI("shutdown");
+
+   if (g_resman != NULL)
+   {
+      LOGI("Releasing old resources");
+      resman_free(g_resman);
+      g_resman = NULL;
+   }
 }
 
 void resize(int width, int height)

@@ -17,6 +17,14 @@ JNIEXPORT jint JNICALL Java_ua_org_asqz_runner_Wrapper_init
 
 /*
  * Class:     ua_org_asqz_runner_Wrapper
+ * Method:    shutdown
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_shutdown
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     ua_org_asqz_runner_Wrapper
  * Method:    resize
  * Signature: (II)V
  */

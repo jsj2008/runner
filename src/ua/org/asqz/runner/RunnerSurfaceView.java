@@ -6,6 +6,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PackageManager;
 import android.opengl.GLSurfaceView;
 import android.view.MotionEvent;
+import android.view.SurfaceHolder;
 import android.util.Log;
 import javax.microedition.khronos.opengles.GL10;
 import javax.microedition.khronos.egl.EGL10;
@@ -79,6 +80,12 @@ class RunnerSurfaceView extends GLSurfaceView {
          egl.eglDestroyContext(display, context);
       }
    };
+
+   @Override
+   public void surfaceDestroyed(SurfaceHolder holder) {
+      Wrapper.shutdown();
+      super.surfaceDestroyed(holder);
+   }
 
    private GLSurfaceView.Renderer mRenderer = new GLSurfaceView.Renderer() {
       public void onSurfaceCreated(GL10 gl, EGLConfig config) {
