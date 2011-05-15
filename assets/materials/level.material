@@ -1,0 +1,6 @@
+texture=assets/textures/marble.png
+shader=assets/shaders/level
+tex_min_filter=LINEAR_MIPMAP_LINEAR
+tex_mag_filter=LINEAR
+tex_wrap_s=REPEAT
+tex_wrap_t=REPEAT

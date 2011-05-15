@@ -77,7 +77,7 @@ void inertion_movement_scalar(float dt, float* porigin, float* pspeed, float tar
    (*pspeed) = speed;
 }
 
-void inertion_movement(float dt, vec4f_t* origin, vec4f_t* speed, const vec4f_t* target, const vec4f_t* max_speed, const vec4f_t* acceleration, const vec4f_t* decceleration)
+void inertion_movement(float dt, vec3f_t* origin, vec3f_t* speed, const vec3f_t* target, const vec3f_t* max_speed, const vec3f_t* acceleration, const vec3f_t* decceleration)
 {
    inertion_movement_scalar(dt, &origin->x, &speed->x, target->x, max_speed->x, acceleration->x, decceleration->x);
    inertion_movement_scalar(dt, &origin->y, &speed->y, target->y, max_speed->y, acceleration->y, decceleration->y);
@@ -89,43 +89,40 @@ void cam_init(cam_t* c, float fov, float aspect, float znear, float zfar)
    mat4_set_perspective(&c->proj, DEG2RAD(fov), aspect, znear, zfar);
 }
 
-void cam_slide(cam_t* c, const vec4f_t* offset)
+void cam_slide(cam_t* c, const vec3f_t* offset)
 {
-   vec4_add(&c->target, &c->target, offset);
+   vec3_add(&c->target, &c->target, offset);
 }
 
-void cam_set_pos(cam_t* c, const vec4f_t* pos)
+void cam_set_pos(cam_t* c, const vec3f_t* pos)
 {
    c->pos = *pos;
 }
 
-void cam_set_up(cam_t* c, const vec4f_t* up)
+void cam_set_up(cam_t* c, const vec3f_t* up)
 {
    c->up = *up;
-   c->up.w = 0.0f;
-   vec4_normalize(&c->up);
+   vec3_normalize(&c->up);
 }
 
-void cam_set_view_dir(cam_t* c, const vec4f_t* view_dir)
+void cam_set_view_dir(cam_t* c, const vec3f_t* view_dir)
 {
    c->view_dir = *view_dir;
-   c->view_dir.w = 0.0f;
-   vec4_normalize(&c->view_dir);
+   vec3_normalize(&c->view_dir);
 }
 
-void cam_look_at(cam_t* c, const vec4f_t* at)
+void cam_look_at(cam_t* c, const vec3f_t* at)
 {
-   vec4_sub(&c->view_dir, at, &c->pos);
-   c->view_dir.w = 0.0f;
-   vec4_normalize(&c->view_dir);
+   vec3_sub(&c->view_dir, at, &c->pos);
+   vec3_normalize(&c->view_dir);
 }
 
 void cam_update(float dt, cam_t* c)
 {
    inertion_movement(dt, &c->pos, &c->speed, &c->target, &c->max_speed, &c->acceleration, &c->decceleration);
 
-   vec4f_t look_at;
-   vec4_add(&look_at, &c->pos, &c->view_dir);
+   vec3f_t look_at;
+   vec3_add(&look_at, &c->pos, &c->view_dir);
    mat4_set_lookat(&c->view, &c->pos, &look_at, &c->up);
 }
 

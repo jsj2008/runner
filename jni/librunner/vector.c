@@ -1,7 +1,7 @@
 #include "vector.h"
 #include <math.h>
 
-vec4f_t* vec4_normalize(vec4f_t* v)
+vec3f_t* vec3_normalize(vec3f_t* v)
 {
    float len = sqrt(v->x*v->x + v->y*v->y + v->z*v->z);
    if (len < 1E-6)
@@ -10,12 +10,11 @@ vec4f_t* vec4_normalize(vec4f_t* v)
    v->x /= len;
    v->y /= len;
    v->z /= len;
-   v->w = 1.0f;
 
    return v;
 }
 
-vec4f_t* vec4_add(vec4f_t* r, const vec4f_t* a, const vec4f_t* b)
+vec3f_t* vec3_add(vec3f_t* r, const vec3f_t* a, const vec3f_t* b)
 {
    r->x = a->x + b->x;
    r->y = a->y + b->y;
@@ -23,7 +22,7 @@ vec4f_t* vec4_add(vec4f_t* r, const vec4f_t* a, const vec4f_t* b)
    return r;
 }
 
-vec4f_t* vec4_sub(vec4f_t* r, const vec4f_t* a, const vec4f_t* b)
+vec3f_t* vec3_sub(vec3f_t* r, const vec3f_t* a, const vec3f_t* b)
 {
    r->x = a->x - b->x;
    r->y = a->y - b->y;
@@ -31,7 +30,7 @@ vec4f_t* vec4_sub(vec4f_t* r, const vec4f_t* a, const vec4f_t* b)
    return r;
 }
 
-vec4f_t* vec4_cross(vec4f_t* r, const vec4f_t* a, const vec4f_t* b)
+vec3f_t* vec3_cross(vec3f_t* r, const vec3f_t* a, const vec3f_t* b)
 {
    r->x = a->y * b->z - a->z * b->y;
    r->y = a->z * b->x - a->x * b->z;
@@ -39,7 +38,7 @@ vec4f_t* vec4_cross(vec4f_t* r, const vec4f_t* a, const vec4f_t* b)
    return r;
 }
 
-vec4f_t* quat_from_angles(vec4f_t* r, const vec4f_t* a)
+quat_t* quat_from_angles(quat_t* r, const vec3f_t* a)
 {
    float ax = a->x * 0.5f;
    float sin0 = sin(ax);
@@ -61,7 +60,7 @@ vec4f_t* quat_from_angles(vec4f_t* r, const vec4f_t* a)
    return r;
 }
 
-vec4f_t* quat_to_angles(vec4f_t* r, const vec4f_t* q)
+vec3f_t* quat_to_angles(vec3f_t* r, const quat_t* q)
 {
    float test = q->x*q->y + q->z*q->w;
    if (test > 0.499)   // singularity at north pole

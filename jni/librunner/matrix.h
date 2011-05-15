@@ -18,13 +18,6 @@ typedef union
    };
 } mat4f_t;
 
-//void matSetRotationX(mat4f_t* m, float angle);
-//void matSetRotationY(mat4f_t* m, float angle);
-//void matSetRotationZ(mat4f_t* m, float angle);
-void matSetRotationXYZ(mat4f_t* m, float xangle, float yangle, float zangle);
-void matSetPerspective(mat4f_t* m, float fov, float aspect, float znear, float zfar);
-void matSetView(mat4f_t* m, vec4f_t* from, vec4f_t* view, vec4f_t* up);
-
 void mat4_set_identity(mat4f_t* m);
 void mat4_set_xrotation(mat4f_t* m, float angle);
 void mat4_set_yrotation(mat4f_t* m, float angle);
@@ -36,10 +29,10 @@ void mat4_set_translation(mat4f_t* m, float x, float y, float z);
 void mat4_show(const mat4f_t* m);
 void mat4_set_frustum(mat4f_t* m, float left, float right, float bottom, float top, float znear, float zfar);
 void mat4_set_perspective(mat4f_t* m, float fovy, float aspect, float znear, float zfar);
-void mat4_set_lookat(mat4f_t* m, const vec4f_t* eye, const vec4f_t* at, const vec4f_t* up);
-float* mat4_data(mat4f_t* m);
-void mat4_from_quaternion(mat4f_t* m, const vec4f_t* q);
-void quat_mult(vec4f_t* r, const vec4f_t* a, const vec4f_t* b);
-void quat_slerp(vec4f_t* r, const vec4f_t* a, const vec4f_t*b, float t);
-void quat_inv(vec4f_t* r, const vec4f_t* a);
+void mat4_set_lookat(mat4f_t* m, const vec3f_t* eye, const vec3f_t* at, const vec3f_t* up);
+const float* mat4_data(const mat4f_t* m);
+void mat4_from_quaternion(mat4f_t* m, const quat_t* q);
+void quat_mult(quat_t* r, const quat_t* a, const quat_t* b);
+void quat_slerp(quat_t* r, const quat_t* a, const quat_t*b, float t);
+void quat_inv(quat_t* r, const quat_t* a);
 

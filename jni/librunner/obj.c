@@ -98,7 +98,7 @@ int parse_face(char** pptr, long* verts, long* pnverts)
    return 0;
 }
 
-long add_face_vertex(long vert[3], vec4f_t* positions, vec4f_t* normals, float* texcoords, long npositions, long nnormals, long ntexcoords)
+long add_face_vertex(long vert[3], vec3f_t* positions, vec3f_t* normals, float* texcoords, long npositions, long nnormals, long ntexcoords)
 {
    long p = vert[0];
    long t = vert[1];
@@ -150,8 +150,8 @@ int obj_convert(const char* from, const char* to)
    g_nvertices = 0;
    g_nindices = 0;
 
-   vec4f_t positions[MAX_VERTICES];
-   vec4f_t normals[MAX_VERTICES];
+   vec3f_t positions[MAX_VERTICES];
+   vec3f_t normals[MAX_VERTICES];
    float texcoords[MAX_VERTICES * 2];
    long npositions = 0;
    long nnormals = 0;
@@ -175,7 +175,7 @@ int obj_convert(const char* from, const char* to)
             if (strcmp(cmd, "v") == 0)
             {
                // vertex: (x,y,z[,w])
-               vec4f_t* p = &positions[npositions];
+               vec3f_t* p = &positions[npositions];
                p->x = strtof(strtok_r(NULL, " ", &ptr2), NULL);
                p->y = strtof(strtok_r(NULL, " ", &ptr2), NULL);
                p->z = strtof(strtok_r(NULL, " ", &ptr2), NULL);
@@ -191,7 +191,7 @@ int obj_convert(const char* from, const char* to)
             else if (strcmp(cmd, "vn") == 0)
             {
                // normal (x,y,z)
-               vec4f_t* n = &normals[nnormals];
+               vec3f_t* n = &normals[nnormals];
                n->x = strtof(strtok_r(NULL, " ", &ptr2), NULL);
                n->y = strtof(strtok_r(NULL, " ", &ptr2), NULL);
                n->z = strtof(strtok_r(NULL, " ", &ptr2), NULL);
@@ -267,11 +267,9 @@ int obj_convert(const char* from, const char* to)
    mesh_t mesh;
    memset(&mesh, 0, sizeof(mesh));
    strcpy(mesh.name, "obj");
-   strcpy(mesh.shader, "assets/shaders/obj");
-   mesh.ntextures = 1;
+   strcpy(mesh.material, "assets/materials/crate.material");
    mesh.nvertices = g_nvertices;
    mesh.nindices = g_nindices;
-   strcpy(mesh.textures[0], "assets/textures/crate.png");
    mesh.vertices = g_vertices;
    mesh.indices = g_indices;
 
@@ -282,7 +280,6 @@ int obj_convert(const char* from, const char* to)
    bone.pos.x = 0.0f;
    bone.pos.y = 0.0f;
    bone.pos.z = 0.0f;
-   bone.pos.w = 0.0f;
    bone.quat.x = 0.0f;
    bone.quat.y = 0.0f;
    bone.quat.z = 0.0f;
@@ -298,7 +295,6 @@ int obj_convert(const char* from, const char* to)
    model_t mdl;
    memset(&mdl, 0, sizeof(mdl));
    strcpy(mdl.name, to);
-   mat4_set_identity(&mdl.transform);
    mdl.nbones = 1;
    mdl.nanims = 1;
    mdl.nmeshes = 1;

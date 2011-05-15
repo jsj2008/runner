@@ -6,7 +6,7 @@
 #include "bbox.h"
 #include "camera.h"
 #include "model.h"
-#include "tex2d.h"
+#include "material.h"
 #include "resman.h"
 
 #define MAX_NODES 256
@@ -25,8 +25,7 @@ typedef struct octree_node_t
 
 struct octree_t
 {
-   char shader[64];
-   char texture[64];
+   char material[64];
 
    long nvertices;
    long nindices;
@@ -49,9 +48,9 @@ static int octree_node_build(octree_node_t* nodes, long parent, long nodeindex, 
    for (l = 0; l < ntris; ++l)
    {
       int tri = tris[l];
-      vec4f_t a = vertices[indices[tri * 3 + 0]].pos;
-      vec4f_t b = vertices[indices[tri * 3 + 1]].pos;
-      vec4f_t c = vertices[indices[tri * 3 + 2]].pos;
+      vec3f_t a = vertices[indices[tri * 3 + 0]].pos;
+      vec3f_t b = vertices[indices[tri * 3 + 1]].pos;
+      vec3f_t c = vertices[indices[tri * 3 + 2]].pos;
       if (bbox_tri_intersection(&node->bbox, &a, &b, &c) != 0)
       {
          node_tris[count++] = tri;
@@ -85,8 +84,8 @@ static int octree_node_build(octree_node_t* nodes, long parent, long nodeindex, 
       node->ntris = 0;
       node->tris = NULL;
 
-      vec4f_t size;
-      vec4_sub(&size, &node->bbox.max, &node->bbox.min);
+      vec3f_t size;
+      vec3_sub(&size, &node->bbox.max, &node->bbox.min);
 
       float hx = size.x / 2.0f;
       float hy = size.y / 2.0f;
@@ -151,9 +150,9 @@ void octree_build(octree_t** po, vertex_t* vertices, long nvertices, int* indice
       bbox_inflate(&box, &v->pos);
    }
 
-   vec4f_t size;
-   vec4_sub(&size, &box.max, &box.min);
-   vec4f_t center =
+   vec3f_t size;
+   vec3_sub(&size, &box.max, &box.min);
+   vec3f_t center =
    {
       .x = box.min.x + size.x / 2.0f,
       .y = box.min.y + size.y / 2.0f,
@@ -213,8 +212,7 @@ void octree_build(octree_t** po, vertex_t* vertices, long nvertices, int* indice
                     nnodes * sizeof(octree_node_t) +
                     totaltris * sizeof(int));
 
-   strcpy(o->shader, "assets/shaders/level");
-   strcpy(o->texture, "assets/textures/marble.png");
+   strcpy(o->material, "assets/materials/level.material");
    o->nvertices = nvertices;
    o->nindices = nindices;
    o->nnodes = nnodes;
@@ -469,22 +467,20 @@ void octree_draw(const octree_t* o, const cam_t* camera)
 
    //LOGI("Draw %ld indices", nindices);
 
-   int sampler_id = 0;
-
-   shader_t* shader = resman_get_shader(g_resman, o->shader);
-   tex2d_t* tex = resman_get_texture(g_resman, o->texture);
-
-   if (shader == NULL || tex == NULL)
+   material_t* mtl = resman_get_material(g_resman, o->material);
+   if (mtl == NULL)
       return;
 
-   shader_use(shader);
+   shader_t* shader = material_get_shader(mtl);
+   if (shader == NULL)
+      return;
+
+   material_use(mtl, 0);
+
    shader_set_uniform_matrices(shader, "uMVP", 1, mat4_data(&mvp));
-   shader_set_uniform_integers(shader, "uTex", 1, &sampler_id);
    shader_set_attrib_vertices(shader, "aPos", 3, GL_FLOAT, sizeof(vertex_t), &o->vertices[0].pos);
    shader_set_attrib_vertices(shader, "aTexCoord", 2, GL_FLOAT, sizeof(vertex_t), &o->vertices[0].tex_coord);
    shader_set_attrib_vertices(shader, "aNormal", 3, GL_FLOAT, sizeof(vertex_t), &o->vertices[0].normal);
-
-   tex2d_bind(tex, sampler_id);
 
    glCullFace(GL_FRONT);
    glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, indices);

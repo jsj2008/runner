@@ -68,8 +68,8 @@ void frustum_show(const frustum_t* frustum)
 /*
 int frustum_intersect_aabb(const frustum_t* frustum, const bbox_t* aabb)
 {
-   const vec4f_t* min = &aabb->min;
-   const vec4f_t* max = &aabb->max;
+   const vec3f_t* min = &aabb->min;
+   const vec3f_t* max = &aabb->max;
 
    int i = 0;
    for (i = 0; i < 6; ++i)
@@ -107,9 +107,9 @@ int frustum_intersect_aabb(const frustum_t* frustum, const bbox_t* aabb)
 */
 int frustum_intersect_aabb(const frustum_t* frustum, const bbox_t* aabb)
 {
-   const vec4f_t* min = &aabb->min;
-   const vec4f_t* max = &aabb->max;
-   vec4f_t tmp;
+   const vec3f_t* min = &aabb->min;
+   const vec3f_t* max = &aabb->max;
+   vec3f_t tmp;
 
    int result = 1;
    //  1 - inside

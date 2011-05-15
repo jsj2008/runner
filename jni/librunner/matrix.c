@@ -60,94 +60,6 @@ void mat4_set_zrotation(mat4f_t* m, float angle)
    m->m22 = cz;
 }
 
-/*
-void matSetRotationXYZ(mat4f_t* m, float xangle, float yangle, float zangle)
-{
-   float sx = sin(xangle);
-   float cx = cos(xangle);
-   float sy = sin(yangle);
-   float cy = cos(yangle);
-   float sz = sin(zangle);
-   float cz = cos(zangle);
-
-   m->m00 = cy * cz;
-   m->m01 = -cy * sz;
-   m->m02 = sy;
-
-   m->m10 = cz * sx * sy + cx * sz;
-   m->m11 = cx * cz - sx * sy * sz;
-   m->m12 = -cy * sx;
-
-   m->m20 = -cx * cz * sy + sx * sz;
-   m->m21 = cz * sx + cx * sy + sz;
-   m->m22 = cx * cy;
-
-   m->m33 = 1.0f;
-   m->m03 = m->m13 = m->m23 = m->m30 = m->m31 = m->m32 = 0.0f;
-}
-
-void matSetView(mat4f_t* m, vec4f_t* from, vec4f_t* view, vec4f_t* worldUp)
-{
-   vec4f_t up, right;
-   float dotProduct = (worldUp->x * view->x) + (worldUp->y * view->y) + (worldUp->z * view->z);
-
-   up.x = worldUp->x - (dotProduct * view->x);
-   up.y = worldUp->y - (dotProduct * view->y);
-   up.z = worldUp->z - (dotProduct * view->z);
-   float length = sqrt((up.x * up.x) + (up.y * up.y) + (up.z * up.z));
-   if (1E-6f > length)
-   {
-      up.x = 0.0f - (view->y * view->x);
-      up.y = 1.0f - (view->y * view->y);
-      up.z = 0.0f - (view->y * view->z);
-      length = sqrt((up.x * up.x) + (up.y * up.y) + (up.z * up.z));
-      if (1E-6f > length)
-      {
-         up.x = 0.0f - (view->z * view->x);
-         up.y = 0.0f - (view->z * view->y);
-         up.z = 1.0f - (view->z * view->z);
-         length = sqrt((up.x * up.x) + (up.y * up.y) + (up.z * up.z));
-         if (1E-6f > length)
-         {
-            return;
-         }
-      }
-   }
-   length = 1.0f / length;
-   up.x *= length;
-   up.y *= length;
-   up.z *= length;
-   right.x = up.y * view->z - up.z * view->y;
-   right.y = up.z * view->x - up.x * view->z;
-   right.z = up.x * view->y - up.y * view->x;
-
-   m->m00 = right.x;
-   m->m01 = right.y;
-   m->m02 = right.z;
-   m->m03 = - ((from->x * right.x) + (from->y * right.y) + (from->z * right.z));
-
-   m->m10 = up.x;
-   m->m11 = up.y;
-   m->m12 = up.z;
-   m->m13 = - ((from->x * up.x)    + (from->y * up.y)    + (from->z * up.z));
-   m->m20 = view->x;
-   m->m21 = view->y;
-   m->m22 = view->z;
-   m->m23 = - ((from->x * view->x) + (from->y * view->y) + (from->z * view->z));
-   m->m30 = m->m31 = m->m32 = 0.0f;
-   m->m33 = 1.0f;
-}
-
-void matShow(mat4f_t* m)
-{
-   LOGI("%.2f %.2f %.2f %.2f", m->m00, m->m01, m->m02, m->m03);
-   LOGI("%.2f %.2f %.2f %.2f", m->m10, m->m11, m->m12, m->m13);
-   LOGI("%.2f %.2f %.2f %.2f", m->m20, m->m21, m->m22, m->m23);
-   LOGI("%.2f %.2f %.2f %.2f", m->m30, m->m31, m->m32, m->m33);
-}
-*/
-
-
 void mat4_show(const mat4f_t* m)
 {
    LOGI("%8.2f %8.2f %8.2f %8.2f", m->m11, m->m12, m->m13, m->m14);
@@ -216,16 +128,16 @@ void mat4_set_perspective(mat4f_t* m, float fovy, float aspect, float znear, flo
    mat4_set_frustum(m, xmin, xmax, ymin, ymax, znear, zfar);
 }
 
-void mat4_set_lookat(mat4f_t* m, const vec4f_t* eye, const vec4f_t* at, const vec4f_t* up)
+void mat4_set_lookat(mat4f_t* m, const vec3f_t* eye, const vec3f_t* at, const vec3f_t* up)
 {
-   vec4f_t f, s, u;
+   vec3f_t f, s, u;
 
-   vec4f_t nup = *up;
-   vec4_normalize(&nup);
+   vec3f_t nup = *up;
+   vec3_normalize(&nup);
 
-   vec4_normalize(vec4_sub(&f, at, eye));
-   vec4_normalize(vec4_cross(&s, &f, &nup));
-   vec4_normalize(vec4_cross(&u, &s, &f));
+   vec3_normalize(vec3_sub(&f, at, eye));
+   vec3_normalize(vec3_cross(&s, &f, &nup));
+   vec3_normalize(vec3_cross(&u, &s, &f));
 
    mat4f_t r;
    r.m11 = s.x;
@@ -277,12 +189,12 @@ void mat4_mult(mat4f_t* m, const mat4f_t* a, const mat4f_t* b)
    m->m44 = a->m41*b->m14 + a->m42*b->m24 + a->m43*b->m34 + a->m44*b->m44;
 }
 
-float* mat4_data(mat4f_t* m)
+const float* mat4_data(const mat4f_t* m)
 {
-   return (float*)m->m;
+   return (const float*)m->m;
 }
 
-void mat4_from_quaternion(mat4f_t* m, const vec4f_t* q)
+void mat4_from_quaternion(mat4f_t* m, const quat_t* q)
 {
    float xx = q->x * q->x;
    float xy = q->x * q->y;
@@ -325,7 +237,7 @@ void mat4_mult_vector(vec4f_t* r, const mat4f_t* m, const vec4f_t* a)
    r->w = m->m41 * a->x + m->m42 * a->y + m->m43 * a->z + m->m44 * a->w;
 }
 
-void quat_mult(vec4f_t* r, const vec4f_t* a, const vec4f_t* b)
+void quat_mult(quat_t* r, const quat_t* a, const quat_t* b)
 {
    (*r).w = a->w*b->w - a->x*b->x - a->y*b->y - a->z*b->z;
    (*r).x = a->w*b->x + a->x*b->w + a->y*b->z - a->z*b->y;
@@ -333,7 +245,7 @@ void quat_mult(vec4f_t* r, const vec4f_t* a, const vec4f_t* b)
    (*r).z = a->w*b->z + a->x*b->y - a->y*b->x + a->z*b->w;
 }
 
-void quat_inv(vec4f_t* r, const vec4f_t* a)
+void quat_inv(quat_t* r, const quat_t* a)
 {
    r->x = -a->x;
    r->y = -a->y;
@@ -341,11 +253,11 @@ void quat_inv(vec4f_t* r, const vec4f_t* a)
    r->w = a->w;
 }
 
-void quat_slerp(vec4f_t* r, const vec4f_t* a, const vec4f_t* b, float t)
+void quat_slerp(quat_t* r, const quat_t* a, const quat_t* b, float t)
 {
    float dot = a->x * b->x + a->y * b->y + a->z * b->z + a->w * b->w;
 
-   vec4f_t tmp;
+   quat_t tmp;
    if (dot < 0.0f)
    {
       dot = -dot;

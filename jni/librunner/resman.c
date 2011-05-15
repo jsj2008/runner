@@ -3,6 +3,7 @@
 #include "tex2d.h"
 #include "model.h"
 #include "octree.h"
+#include "material.h"
 
 typedef struct entry_t
 {
@@ -14,6 +15,7 @@ typedef struct entry_t
 #define MAX_TEXTURES 64
 #define MAX_MODELS   256
 #define MAX_OCTREES  32
+#define MAX_MATERIALS 64
 
 struct resman_t
 {
@@ -21,11 +23,13 @@ struct resman_t
    long ntextures;
    long nmodels;
    long noctrees;
+   long nmaterials;
 
    entry_t shaders[MAX_SHADERS];
    entry_t textures[MAX_TEXTURES];
    entry_t models[MAX_MODELS];
    entry_t octrees[MAX_OCTREES];
+   entry_t materials[MAX_MATERIALS];
 };
 
 static void* entry_get(const entry_t* entries, long nentries, const char* key)
@@ -84,6 +88,13 @@ void resman_free(resman_t* rm)
       ++e;
    }
 
+   e = &rm->materials[0];
+   for (l = 0; l < rm->nmaterials; ++l)
+   {
+      material_free((material_t*)e->value);
+      ++e;
+   }
+
    free(rm);
 }
 
@@ -120,6 +131,14 @@ void resman_show(const resman_t* rm)
    LOGI("\tOctrees:");
    e = &rm->octrees[0];
    for (l = 0; l < rm->noctrees; ++l)
+   {
+      LOGI("\t\t#%04ld:\t%s", l, e->key);
+      ++e;
+   }
+
+   LOGI("\tMaterials:");
+   e = &rm->materials[0];
+   for (l = 0; l < rm->nmaterials; ++l)
    {
       LOGI("\t\t#%04ld:\t%s", l, e->key);
       ++e;
@@ -210,6 +229,28 @@ struct octree_t* resman_get_octree(resman_t* rm, const char* name)
    strcpy(rm->octrees[rm->noctrees].key, name);
    rm->octrees[rm->noctrees].value = v;
    ++rm->noctrees;
+
+   return v;
+}
+
+struct material_t* resman_get_material(resman_t* rm, const char* name)
+{
+   material_t* v = (material_t*)entry_get(rm->materials, rm->nmaterials, name);
+   if (v != NULL)
+      return v;
+
+   if (rm->nmaterials >= MAX_MATERIALS - 1)
+   {
+      LOGE("materials count overflow");
+      return NULL;
+   }
+
+   if (material_load(&v, name) != 0)
+      return NULL;
+
+   strcpy(rm->materials[rm->nmaterials].key, name);
+   rm->materials[rm->nmaterials].value = v;
+   ++rm->nmaterials;
 
    return v;
 }

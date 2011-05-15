@@ -112,7 +112,8 @@ void* stream_read_file(const char* fname, long* psize)
    }
 
    long size = stream_size(stream);
-   void* buffer = malloc(size);
+   void* buffer = malloc(size + 1);
+   memset(buffer, 0, size + 1);
 
    (*psize) = stream_read(stream, buffer, size);
 

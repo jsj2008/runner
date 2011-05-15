@@ -251,11 +251,9 @@ long add_vertex(const short* t, vertex_t* buf, long* nverts, const vec3_t* v, co
    vert.pos.x = v[vi][0];
    vert.pos.y = v[vi][1];
    vert.pos.z = v[vi][2];
-   vert.pos.w = 1.0f;
    vert.normal.x = n[ni][0];
    vert.normal.y = n[ni][1];
    vert.normal.z = n[ni][2];
-   vert.normal.w = 0.0f;
    vert.tex_coord[0] = (float)tu/256.0f;
    vert.tex_coord[1] = (float)tv/256.0f;
    vert.bone[0] = bi;
@@ -422,9 +420,8 @@ int hlmdl_convert(const char* from, const char* to)
       bones[l].pos.x = bone->value[0];
       bones[l].pos.y = bone->value[1];
       bones[l].pos.z = bone->value[2];
-      bones[l].pos.w = 1.0f;
 
-      vec4f_t angles;
+      vec3f_t angles;
       angles.x = bone->value[3];
       angles.y = bone->value[4];
       angles.z = bone->value[5];
@@ -456,22 +453,22 @@ int hlmdl_convert(const char* from, const char* to)
             short values[6] = {0};
             get_anim_values(anim, k, values);
 
-            vec4f_t quat0;
-            vec4f_t angles0;
+            quat_t quat0;
+            vec3f_t angles0;
             angles0.x = bone->value[3];
             angles0.y = bone->value[4];
             angles0.z = bone->value[5];
             quat_from_angles(&quat0, &angles0);
 
-            vec4f_t quat1;
-            vec4f_t angles1;
+            quat_t quat1;
+            vec3f_t angles1;
             angles1.x = angles0.x + values[3] * bone->scale[3];
             angles1.y = angles0.y + values[4] * bone->scale[4];
             angles1.z = angles0.z + values[5] * bone->scale[5];
             quat_from_angles(&quat1, &angles1);
 
-            vec4f_t qdiff;
-            vec4f_t iquat0;
+            quat_t qdiff;
+            quat_t iquat0;
             iquat0.x = -quat0.x;
             iquat0.y = -quat0.y;
             iquat0.z = -quat0.z;
@@ -516,24 +513,23 @@ int hlmdl_convert(const char* from, const char* to)
             short values[6] = {0};
             get_anim_values(anim, 0, values);
 
-            vec4f_t angles;
+            vec3f_t angles;
             angles.x = bone->value[3] + values[3] * bone->scale[3];
             angles.y = bone->value[4] + values[4] * bone->scale[4];
             angles.z = bone->value[5] + values[5] * bone->scale[5];
-            angles.w = 0.0f;
 
-            vec4f_t quat1;
+            quat_t quat1;
             quat_from_angles(&quat1, &angles);
 
-            vec4f_t quat0;
-            vec4f_t angles0;
+            quat_t quat0;
+            vec3f_t angles0;
             angles0.x = bone->value[3];
             angles0.y = bone->value[4];
             angles0.z = bone->value[5];
             quat_from_angles(&quat0, &angles0);
 
-            vec4f_t qdiff;
-            vec4f_t iquat0;
+            quat_t qdiff;
+            quat_t iquat0;
             iquat0.x = -quat0.x;
             iquat0.y = -quat0.y;
             iquat0.z = -quat0.z;
@@ -543,7 +539,7 @@ int hlmdl_convert(const char* from, const char* to)
             //LOGI("\nBone #%ld Parent #%ld", j, bone->parent);
             //LOGI("Q0: %8.2f %8.2f %8.2f %8.2f", quat0.x, quat0.y, quat0.z, quat0.w);
             //LOGI("QD: %8.2f %8.2f %8.2f %8.2f", qdiff.x, qdiff.y, qdiff.z, qdiff.w);
-            LOGI("A1: %8.2f %8.2f %8.2f %8.2f", angles.x, angles.y, angles.z, angles.w);
+            LOGI("A1: %8.2f %8.2f %8.2f", angles.x, angles.y, angles.z);
             LOGI("Q1: %8.2f %8.2f %8.2f %8.2f\n", quat1.x, quat1.y, quat1.z, quat1.w);
 
             ++bone;
@@ -634,7 +630,6 @@ int hlmdl_convert(const char* from, const char* to)
       ++mesh;
       ++part;
    }
-   mat4_set_identity(&model.transform);
    model_save(&model, to);
 
    free(header);

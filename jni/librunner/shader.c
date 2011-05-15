@@ -66,7 +66,6 @@ static GLuint load_shader_from_file(GLenum type, const char* fname)
       return 0;
    }
 
-   buf[size - 1] = '\0';
    GLuint res = load_shader_from_string(type, buf);
    free(buf);
 

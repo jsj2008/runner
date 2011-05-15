@@ -8,7 +8,7 @@
 #include "hlmdl.h"
 #include "shader.h"
 #include "octree.h"
-#include "tex2d.h"
+#include "material.h"
 #include "resman.h"
 
 static GLfloat skybox_vertices[] =
@@ -151,9 +151,9 @@ struct timeval prev_time;
 long frames = 0;
 long total_frames = 0;
 
-vec4f_t* vec4(float x, float y, float z, float w)
+vec3f_t* vec3(float x, float y, float z)
 {
-   static vec4f_t tmp;
+   static vec3f_t tmp;
    tmp.x = x;
    tmp.y = y;
    tmp.z = z;
@@ -185,10 +185,12 @@ int init(const char* apkPath)
    glCullFace(GL_BACK);
    glFrontFace(GL_CCW);
 
-   if (octree_load(&level, "assets/models/level.octree") != 0)
+   level = resman_get_octree(g_resman, "assets/models/level.octree");
+   if (level == NULL)
       return -1;
 
-   if (model_load(&mdl, "assets/models/crate.model") != 0)
+   mdl = resman_get_model(g_resman, "assets/models/crate.model");
+   if (mdl == NULL)
       return -1;
 
    return 0;
@@ -200,6 +202,8 @@ void shutdown()
 
    if (g_resman != NULL)
    {
+      resman_show(g_resman);
+
       LOGI("Releasing old resources");
       resman_free(g_resman);
       g_resman = NULL;
@@ -217,12 +221,12 @@ void resize(int width, int height)
    checkGLError("glDepthRange");
 
    cam_init(&camera, 45.0f, (float)width/(float)height, 0.1f, 1000.0f);
-   cam_set_pos(&camera, vec4(0.0f, 25.0f, 50.0f, 0.0f));
-   cam_set_up(&camera, vec4(0.0f, 1.0f, 0.0f, 0.0f));
-   cam_look_at(&camera, vec4(0.0f, 0.0f, 0.0f, 0.0f));
-   camera.max_speed = *vec4(50.0f, 50.0f, 50.0f, 0.0f);
-   camera.acceleration = *vec4(1000.0f, 1000.0f, 1000.0f, 0.0f);
-   camera.decceleration = *vec4(25.0f, 25.0f, 25.0f, 0.0f);
+   cam_set_pos(&camera, vec3(0.0f, 25.0f, 50.0f));
+   cam_set_up(&camera, vec3(0.0f, 1.0f, 0.0f));
+   cam_look_at(&camera, vec3(0.0f, 0.0f, 0.0f));
+   camera.max_speed = *vec3(50.0f, 50.0f, 50.0f);
+   camera.acceleration = *vec3(1000.0f, 1000.0f, 1000.0f);
+   camera.decceleration = *vec3(25.0f, 25.0f, 25.0f);
    camera.target = camera.pos;
    cam_update(0.0f, &camera);
 
@@ -232,21 +236,18 @@ void resize(int width, int height)
 
 void draw_skybox()
 {
-   int sampler_id = 0;
-
-   shader_t* shader = resman_get_shader(g_resman, "assets/shaders/skybox");
-   tex2d_t* tex = resman_get_texture(g_resman, "assets/textures/skybox.png");
-   if (shader == NULL || tex == NULL)
+   material_t* mtl = resman_get_material(g_resman, "assets/materials/skybox.material");
+   if (mtl == NULL)
       return;
 
-   shader_use(shader);
+   shader_t* shader = material_get_shader(mtl);
+   if (shader == NULL)
+      return;
+
+   material_use(mtl, 0);
    shader_set_attrib_vertices(shader, "aPos", 3, GL_FLOAT, 0, skybox_vertices);
    shader_set_attrib_vertices(shader, "aTexCoord", 2, GL_FLOAT, 0, skybox_tex_coords);
    shader_set_attrib_vertices(shader, "aColor", 3, GL_FLOAT, 0, skybox_colors);
-   shader_set_uniform_integers(shader, "uTex", 1, &sampler_id);
-
-   tex2d_set_params(tex, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, GL_MIRRORED_REPEAT, GL_CLAMP_TO_EDGE);
-   tex2d_bind(tex, sampler_id);
 
    glCullFace(GL_BACK);
    glDepthFunc(GL_ALWAYS);
@@ -260,8 +261,10 @@ void update()
    draw_skybox();
 
    octree_draw(level, &camera);
-   mat4_set_yrotation(&mdl->transform, DEG2RAD(gAngle));
-   model_render(mdl, &camera, total_frames);
+
+   static mat4f_t transform;
+   mat4_set_yrotation(&transform, DEG2RAD(gAngle));
+   model_render(mdl, &camera, total_frames, &transform);
    gAngle += 2.0f;
 
    ++total_frames;
@@ -294,7 +297,7 @@ void scroll(long dt, float dx1, float dy1, float dx2, float dy2)
    if (dx2 == 0.0f && dy2 == 0.0f)
    {
       // single finger sliding - strafe
-      cam_slide(&camera, vec4(-coef * dx1, coef * dy1, 0.0f, 0.0f));
+      cam_slide(&camera, vec3(-coef * dx1, coef * dy1, 0.0f));
 
       int i = 0;
       for (i = 0; i < 4; ++i)
@@ -307,7 +310,7 @@ void scroll(long dt, float dx1, float dy1, float dx2, float dy2)
    {
       // two finger sliding - move forward
       float v = coef * dy1;
-      cam_slide(&camera, vec4(camera.view_dir.x * v, camera.view_dir.y * v, camera.view_dir.z * v, 0.0f));
+      cam_slide(&camera, vec3(camera.view_dir.x * v, camera.view_dir.y * v, camera.view_dir.z * v));
    }
 
    LOGI("Cam pos: [%.2f %.2f %.2f] dir: [%.2f %.2f %.2f]",

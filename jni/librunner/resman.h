@@ -6,6 +6,7 @@ struct shader_t;
 struct tex2d_t;
 struct model_t;
 struct octree_t;
+struct material_t;
 
 typedef struct resman_t resman_t;
 
@@ -17,4 +18,5 @@ struct shader_t* resman_get_shader(resman_t* rm, const char* name);
 struct tex2d_t* resman_get_texture(resman_t* rm, const char* name);
 struct model_t* resman_get_model(resman_t* rm, const char* name);
 struct octree_t* resman_get_octree(resman_t* rm, const char* name);
+struct material_t* resman_get_material(resman_t* rm, const char* name);
 

@@ -2,7 +2,7 @@
 #include "common.h"
 #include "shader.h"
 #include "stream.h"
-#include "tex2d.h"
+#include "material.h"
 #include "resman.h"
 
 typedef struct model_header_t
@@ -189,14 +189,14 @@ void model_free(const model_t* model)
 
 extern resman_t* g_resman;
 
-void model_render(const model_t* model, const cam_t* camera, int _frame)
+void model_render(const model_t* model, const cam_t* camera, int _frame, const mat4f_t* transform)
 {
    if (model == NULL || camera == NULL)
       return;
 
    mat4f_t mv;
    mat4f_t mvp;
-   mat4_mult(&mv, &camera->view, &model->transform);
+   mat4_mult(&mv, &camera->view, transform);
    mat4_mult(&mvp, &camera->proj, &mv);
 
    static int g_debug = 0;
@@ -219,27 +219,26 @@ void model_render(const model_t* model, const cam_t* camera, int _frame)
    bone_t* bone = &model->bones[0];
    for (i = 0; i < model->nbones; ++i)
    {
-      vec4f_t quat;
+      quat_t quat;
 
-      vec4f_t p;
+      vec3f_t p;
       p.x = trans[0] * (1.0f - t) + next_trans[0] * t;
       p.y = trans[1] * (1.0f - t) + next_trans[1] * t;
       p.z = trans[2] * (1.0f - t) + next_trans[2] * t;
-      p.w = 1.0f;
 
-      vec4f_t qc;
+      quat_t qc;
       qc.x = trans[3];
       qc.y = trans[4];
       qc.z = trans[5];
       qc.w = sqrt(1.0f - qc.x*qc.x - qc.y*qc.y - qc.z*qc.z);
 
-      vec4f_t qn;
+      quat_t qn;
       qn.x = next_trans[3];
       qn.y = next_trans[4];
       qn.z = next_trans[5];
       qn.w = sqrt(1.0f - qn.x*qn.x - qn.y*qn.y - qn.z*qn.z);
 
-      vec4f_t q;
+      quat_t q;
       quat_slerp(&q, &qc, &qn, t);
 
       quat_mult(&quat, &q, &bone->quat);
@@ -282,32 +281,24 @@ void model_render(const model_t* model, const cam_t* camera, int _frame)
    mesh_t* mesh = &model->meshes[0];
    for (i = 0; i < model->nmeshes; ++i)
    {
-      int sampler_id = 0;
+      material_t* mtl = resman_get_material(g_resman, mesh->material);
+      if (mtl == NULL)
+         continue;
 
-      shader_t* shader = resman_get_shader(g_resman, mesh->shader);
+      shader_t* shader = material_get_shader(mtl);
       if (shader == NULL)
          continue;
 
-      shader_use(shader);
+      material_use(mtl, 0);
+
       shader_set_uniform_matrices(shader, "uMVP", 1, mat4_data(&mvp));
       shader_set_uniform_matrices(shader, "uMV", 1, mat4_data(&mv));
       shader_set_uniform_matrices(shader, "uBoneTransforms", model->nbones, mat4_data(&bone_transforms[0]));
-      shader_set_uniform_integers(shader, "uTex", 1, &sampler_id);
       shader_set_attrib_vertices(shader, "aPos", 3, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].pos);
       shader_set_attrib_vertices(shader, "aTexCoord", 2, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].tex_coord);
       shader_set_attrib_vertices(shader, "aNormal", 3, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].normal);
       shader_set_attrib_vertices(shader, "aBoneIndices", 2, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].bone);
       shader_set_attrib_vertices(shader, "aBoneWeights", 2, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].weight);
-
-      long l = 0;
-      for (l = 0; l < mesh->ntextures; ++l)
-      {
-         tex2d_t* tex = resman_get_texture(g_resman, mesh->textures[l]);
-         if (tex == NULL)
-            continue;
-
-         tex2d_bind(tex, sampler_id + l);
-      }
 
       glCullFace(GL_FRONT);
       glDrawElements(GL_TRIANGLES, mesh->nindices, GL_UNSIGNED_INT, mesh->indices);
