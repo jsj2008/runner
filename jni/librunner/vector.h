@@ -21,6 +21,7 @@ vec3f_t* vec3_normalize(vec3f_t* v);
 vec3f_t* vec3_add(vec3f_t* r, const vec3f_t* a, const vec3f_t* b);
 vec3f_t* vec3_sub(vec3f_t* r, const vec3f_t* a, const vec3f_t* b);
 vec3f_t* vec3_cross(vec3f_t* r, const vec3f_t* a, const vec3f_t* b);
+vec3f_t* vec3_scale(vec3f_t* r, const vec3f_t* a, float scale);
 quat_t* quat_from_angles(quat_t* r, const vec3f_t* a);
 vec3f_t* quat_to_angles(vec3f_t* r, const quat_t* q);
 

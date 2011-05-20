@@ -38,6 +38,14 @@ vec3f_t* vec3_cross(vec3f_t* r, const vec3f_t* a, const vec3f_t* b)
    return r;
 }
 
+vec3f_t* vec3_scale(vec3f_t* r, const vec3f_t* a, float scale)
+{
+   r->x = a->x * scale;
+   r->y = a->y * scale;
+   r->z = a->z * scale;
+   return r;
+}
+
 quat_t* quat_from_angles(quat_t* r, const vec3f_t* a)
 {
    float ax = a->x * 0.5f;

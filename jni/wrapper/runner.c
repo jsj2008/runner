@@ -10,6 +10,7 @@
 #include "octree.h"
 #include "material.h"
 #include "resman.h"
+#include "entity.h"
 
 static GLfloat skybox_vertices[] =
 {
@@ -140,16 +141,12 @@ static GLubyte indices[] =
    20, 22, 21
 };
 
-mat4f_t gModel;
 cam_t camera;
-model_t* mdl = NULL;
 octree_t* level = NULL;
 resman_t* g_resman = NULL;
 
-float gAngle = 0.0f;
-struct timeval prev_time;
-long frames = 0;
-long total_frames = 0;
+entity_t entities[16];
+long nentities = sizeof(entities)/sizeof(entities[0]);
 
 vec3f_t* vec3(float x, float y, float z)
 {
@@ -158,6 +155,55 @@ vec3f_t* vec3(float x, float y, float z)
    tmp.y = y;
    tmp.z = z;
    return &tmp;
+}
+
+quat_t* quat(float x, float y, float z, float w)
+{
+   static quat_t tmp;
+   tmp.x = x;
+   tmp.y = y;
+   tmp.z = z;
+   tmp.w = w;
+   return &tmp;
+}
+
+long frames = 0;
+long total_frames = 0;
+struct timeval prev_time;
+struct timeval fps_time;
+
+void timers_init()
+{
+   frames = 0;
+   total_frames = 0;
+
+   struct timezone tz;
+   gettimeofday(&fps_time, &tz);
+   prev_time = fps_time;
+}
+
+float timers_update()
+{
+   ++total_frames;
+   ++frames;
+
+   struct timeval cur_time;
+   struct timezone tz;
+   gettimeofday(&cur_time, &tz);
+   float dt = (cur_time.tv_sec - prev_time.tv_sec) + (cur_time.tv_usec - prev_time.tv_usec) / 1000000.0f;
+   prev_time = cur_time;
+
+   if (fps_time.tv_sec + 5 <= cur_time.tv_sec)
+   {
+      long diffs = cur_time.tv_sec - fps_time.tv_sec;
+      long diffms = (cur_time.tv_usec - fps_time.tv_usec)/1000;
+      long diff = diffs * 1000 + diffms;
+
+      LOGI("Total: %4ld Frames: %4ld Diff: %ld FPS: %.2f", total_frames, frames, diff, (float)frames * 1000.0f / (float)diff);
+      fps_time = cur_time;
+      frames = 0;
+   }
+   return dt;
 }
 
 int init(const char* apkPath)
@@ -189,9 +235,18 @@ int init(const char* apkPath)
    if (level == NULL)
       return -1;
 
-   mdl = resman_get_model(g_resman, "assets/models/crate.model");
-   if (mdl == NULL)
-      return -1;
+   int i = 0;
+   entity_t* e = &entities[0];
+   for (i = 0; i < nentities; ++i, ++e)
+   {
+      strcpy(e->model, "assets/models/crate.model");
+      e->phys.position = *vec3(4.0f * i, 2.0f, 0.0f);
+      e->phys.orientation = *quat(0.0f, 0.0f, 0.0f, 1.0f);
+      e->phys.velocity = *vec3(0.0f, 0.0f, 0.0f);
+      e->phys.angular_velocity = *vec3(0.0f, 0.0f, 0.0f);
+      e->phys.mass = 1.0f;
+      physent_set_box_inertia(&e->phys, 1.0f, 1.0f, 1.0f);
+   }
 
    return 0;
 }
@@ -230,8 +285,7 @@ void resize(int width, int height)
    camera.target = camera.pos;
    cam_update(0.0f, &camera);
 
-   struct timezone tz;
-   gettimeofday(&prev_time, &tz);
+   timers_init();
 }
 
 void draw_skybox()
@@ -258,33 +312,22 @@ void draw_skybox()
 
 void update()
 {
+   float dt = timers_update();
+
+   cam_update(dt, &camera);
+
    draw_skybox();
 
    octree_draw(level, &camera);
 
-   static mat4f_t transform;
-   mat4_set_yrotation(&transform, DEG2RAD(gAngle));
-   model_render(mdl, &camera, total_frames, &transform);
-   gAngle += 2.0f;
-
-   ++total_frames;
-   ++frames;
-
-   struct timeval cur_time;
-   struct timezone tz;
-   gettimeofday(&cur_time, &tz);
-   if (prev_time.tv_sec + 5 <= cur_time.tv_sec)
+   int i = 0;
+   for (i = 0; i < nentities; ++i)
    {
-      long diffs = cur_time.tv_sec - prev_time.tv_sec;
-      long diffms = (cur_time.tv_usec - prev_time.tv_usec)/1000;
-      long diff = diffs * 1000 + diffms;
-
-      LOGI("Total: %4ld Frames: %4ld Diff: %ld FPS: %.2f", total_frames, frames, diff, (float)frames * 1000.0f / (float)diff);
-      prev_time = cur_time;
-      frames = 0;
+      // TODO: implement collision detection
+      // physent_apply_force_wcs(&entities[i].phys, &entities[i].phys.position, vec3(0.0f, -9.8f, 0.0f));
+      entity_update(&entities[i], dt);
+      entity_render(&entities[i], &camera);
    }
-
-   cam_update(0.03f, &camera);
 }
 
 void scroll(long dt, float dx1, float dy1, float dx2, float dy2)
