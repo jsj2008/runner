@@ -37,12 +37,13 @@ typedef struct collshape_params_t
 
       struct
       {
-         long npoints;
-         float* points;
-         long stride;
-
-         long nindice;
+         long nindices;
+         long indices_stride;
          int* indices;
+
+         long nvertices;
+         long vertices_stride;
+         float* vertices;
       } bvh_trimesh;
    } params;
 } collshape_params_t;

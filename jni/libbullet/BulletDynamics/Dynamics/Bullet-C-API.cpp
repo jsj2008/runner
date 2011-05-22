@@ -348,6 +348,27 @@ void plSetGravity(plDynamicsWorldHandle world, const plVector3 gravity)
 	dynamicsWorld->setGravity(g);
 }
 
+plCollisionShapeHandle plNewBvhTriangleMeshShape(long nindices, int* indices, long indices_stride, long nvertices, plReal* vertices, long vertices_stride)
+{
+   btIndexedMesh mesh;
+   mesh.m_numTriangles = nindices / 3;
+   mesh.m_triangleIndexBase = (const unsigned char*)indices;
+   mesh.m_triangleIndexStride = indices_stride;
+   mesh.m_numVertices = nvertices;
+   mesh.m_vertexBase = (const unsigned char*)vertices;
+   mesh.m_vertexStride = vertices_stride;
+   mesh.m_indexType = PHY_INTEGER;
+   mesh.m_vertexType = PHY_FLOAT;
+
+   void* mem_data = btAlignedAlloc(sizeof(btTriangleIndexVertexArray), 16);
+   btTriangleIndexVertexArray* data = new (mem_data)btTriangleIndexVertexArray();
+   data->addIndexedMesh(mesh);
+
+   void* mem = btAlignedAlloc(sizeof(btBvhTriangleMeshShape), 16);
+   btBvhTriangleMeshShape* shape = new (mem) btBvhTriangleMeshShape(data, true, true);
+
+   return (plCollisionShapeHandle)shape;
+}
 
 //plRigidBodyHandle plRayCast(plDynamicsWorldHandle world, const plVector3 rayStart, const plVector3 rayEnd, plVector3 hitpoint, plVector3 normal);
 

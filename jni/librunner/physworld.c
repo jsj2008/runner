@@ -82,6 +82,26 @@ int rigidbody_create(rigidbody_t** pb, const rigidbody_params_t* params)
          s = plNewBoxShape(sp->params.box.width/2.0f, sp->params.box.height/2.0f, sp->params.box.width/2.0f);
          break;
 
+      case SHAPE_CONVEX:
+         s = plNewConvexHullShape();
+         int i = 0;
+         vec3f_t* v = &sp->params.convex.points[0];
+         for (i = 0; i < sp->params.convex.npoints; ++i, ++v)
+         {
+            plAddVertex(s, v->x, v->y, v->z);
+         }
+         break;
+
+      case SHAPE_BVH_TRIMESH:
+         s = plNewBvhTriangleMeshShape(
+               sp->params.bvh_trimesh.nindices,
+               sp->params.bvh_trimesh.indices,
+               sp->params.bvh_trimesh.indices_stride,
+               sp->params.bvh_trimesh.nvertices,
+               sp->params.bvh_trimesh.vertices,
+               sp->params.bvh_trimesh.vertices_stride);
+         break;
+
       default:
          LOGE("Unknown shape type: %d", sp->type);
          return -1;

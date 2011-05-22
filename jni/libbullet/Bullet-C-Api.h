@@ -169,6 +169,7 @@ extern "C" {
 
    extern void plSetGravity(plDynamicsWorldHandle world, const plVector3 gravity);
    extern void plApplyCentralImpulse(plRigidBodyHandle object, const plVector3 impulse);
+   extern plCollisionShapeHandle plNewBvhTriangleMeshShape(long nindices, int* indices, long indices_stride, long nvertices, plReal* vertices, long vertices_stride);
 
 #ifdef __cplusplus
 }
