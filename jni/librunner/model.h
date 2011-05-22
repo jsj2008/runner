@@ -41,6 +41,8 @@ typedef struct anim_t
 {
    char name[32];
 
+   float fps;
+
    long nframes;
 
    float* transforms;

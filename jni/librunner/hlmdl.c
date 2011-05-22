@@ -436,6 +436,7 @@ int hlmdl_convert(const char* from, const char* to)
    {
       anim_t* a = &anims[j];
       strcpy(a->name, seq->name);
+      a->fps = seq->fps;
       a->nframes = seq->nframes;
       a->transforms = (float*)malloc(seq->nframes * header->nbones * 6 * sizeof(float));
 
