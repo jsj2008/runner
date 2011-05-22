@@ -47,7 +47,7 @@ void frustum_set(frustum_t* frustum, const cam_t* camera)
    int i = 0;
    for (i = 0; i < 6; ++i)
    {
-      vec4f_t* p = &frustum->planes[i];
+      plane_t* p = &frustum->planes[i];
       float len = sqrt(p->x * p->x + p->y * p->y + p->z * p->z);
       p->x /= len;
       p->y /= len;
@@ -74,7 +74,7 @@ int frustum_intersect_aabb(const frustum_t* frustum, const bbox_t* aabb)
    int i = 0;
    for (i = 0; i < 6; ++i)
    {
-      const vec4f_t* plane = &frustum->planes[i];
+      const plane_t* plane = &frustum->planes[i];
 
       if (plane->x * min->x + plane->y * max->y + plane->z * min->z + plane->w > 0.0f)
          continue;
@@ -119,7 +119,7 @@ int frustum_intersect_aabb(const frustum_t* frustum, const bbox_t* aabb)
    int i = 0;
    for (i = 0; i < 6; ++i)
    {
-      const vec4f_t* plane = &frustum->planes[i];
+      const plane_t* plane = &frustum->planes[i];
 
       tmp.x = (plane->x < 0.0f) ? min->x : max->x;
       tmp.y = (plane->y < 0.0f) ? min->y : max->y;

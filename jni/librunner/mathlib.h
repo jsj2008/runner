@@ -1,10 +1,24 @@
 #pragma once
 
 #include <math.h>
-#include "vector.h"
 
 #define DEG2RAD(a)   ((a)*M_PI/180.0f)
 #define RAD2DEG(a)   ((a)*180.0f/M_PI)
+
+typedef struct vec3f_t
+{
+   float x;
+   float y;
+   float z;
+} vec3f_t;
+
+typedef struct vec4f_t
+{
+   float x;
+   float y;
+   float z;
+   float w;
+} vec4f_t;
 
 typedef union
 {
@@ -17,6 +31,15 @@ typedef union
       float m14, m24, m34, m44;
    };
 } mat4f_t;
+
+typedef vec4f_t quat_t;
+typedef vec4f_t plane_t;
+
+vec3f_t* vec3_normalize(vec3f_t* v);
+vec3f_t* vec3_add(vec3f_t* r, const vec3f_t* a, const vec3f_t* b);
+vec3f_t* vec3_sub(vec3f_t* r, const vec3f_t* a, const vec3f_t* b);
+vec3f_t* vec3_cross(vec3f_t* r, const vec3f_t* a, const vec3f_t* b);
+vec3f_t* vec3_scale(vec3f_t* r, const vec3f_t* a, float scale);
 
 void mat4_set_zero(mat4f_t* m);
 void mat4_set_identity(mat4f_t* m);
@@ -40,6 +63,8 @@ void mat4_set_lookat(mat4f_t* m, const vec3f_t* eye, const vec3f_t* at, const ve
 const float* mat4_data(const mat4f_t* m);
 void mat4_from_quaternion(mat4f_t* m, const quat_t* q);
 
+quat_t* quat_from_angles(quat_t* r, const vec3f_t* a);
+vec3f_t* quat_to_angles(vec3f_t* r, const quat_t* q);
 void quat_mult(quat_t* r, const quat_t* a, const quat_t* b);
 void quat_slerp(quat_t* r, const quat_t* a, const quat_t*b, float t);
 void quat_inv(quat_t* r, const quat_t* a);

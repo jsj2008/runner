@@ -1,7 +1,6 @@
 #pragma once
 
-#include "vector.h"
-#include "matrix.h"
+#include "mathlib.h"
 #include "camera.h"
 
 #define MAX_TEXTURES_PER_MESH 4

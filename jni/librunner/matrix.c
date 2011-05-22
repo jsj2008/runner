@@ -1,4 +1,4 @@
-#include "matrix.h"
+#include "mathlib.h"
 #include "common.h"
 
 void mat4_set_zero(mat4f_t* m)
@@ -307,83 +307,5 @@ void mat4_mult_vec4(vec4f_t* r, const mat4f_t* m, const vec4f_t* a)
    r->y = m->m21 * a->x + m->m22 * a->y + m->m23 * a->z + m->m24 * a->w;
    r->z = m->m31 * a->x + m->m32 * a->y + m->m33 * a->z + m->m34 * a->w;
    r->w = m->m41 * a->x + m->m42 * a->y + m->m43 * a->z + m->m44 * a->w;
-}
-
-void quat_mult(quat_t* r, const quat_t* a, const quat_t* b)
-{
-   (*r).w = a->w*b->w - a->x*b->x - a->y*b->y - a->z*b->z;
-   (*r).x = a->w*b->x + a->x*b->w + a->y*b->z - a->z*b->y;
-   (*r).y = a->w*b->y - a->x*b->z + a->y*b->w + a->z*b->x;
-   (*r).z = a->w*b->z + a->x*b->y - a->y*b->x + a->z*b->w;
-}
-
-void quat_inv(quat_t* r, const quat_t* a)
-{
-   // TODO: it works only for unit quaternion
-   r->x = -a->x;
-   r->y = -a->y;
-   r->z = -a->z;
-   r->w = a->w;
-}
-
-void quat_conjugate(quat_t* r, const quat_t* a)
-{
-   r->x = -a->x;
-   r->y = -a->y;
-   r->z = -a->z;
-   r->w = a->w;
-}
-
-void quat_slerp(quat_t* r, const quat_t* a, const quat_t* b, float t)
-{
-   float dot = a->x * b->x + a->y * b->y + a->z * b->z + a->w * b->w;
-
-   quat_t tmp;
-   if (dot < 0.0f)
-   {
-      dot = -dot;
-      quat_inv(&tmp, b);
-   }
-   else
-   {
-      tmp = *b;
-   }
-
-   float w1;
-   float w2;
-
-   if (dot < 0.95f)
-   {
-      float angle = acos(dot);
-      float sinangle = sin(angle);
-      w1 = sin((1.0f - t) * angle) / sinangle;
-      w2 = sin(t * angle) / sinangle;
-   }
-   else
-   {
-      w1 = 1.0f - t;
-      w2 = t;
-   }
-
-   r->x = a->x * w1 + b->x * w2;
-   r->y = a->y * w1 + b->y * w2;
-   r->z = a->z * w1 + b->z * w2;
-   r->w = a->w * w1 + b->w * w2;
-}
-
-void quat_scale(quat_t* r, const quat_t* a, float scale)
-{
-   r->x = a->x * scale;
-   r->y = a->y * scale;
-   r->z = a->z * scale;
-   r->w = a->w * scale;
-}
-
-void quat_add(quat_t* r, const quat_t* a, const quat_t* b)
-{
-   r->x = a->x + b->x;
-   r->y = a->y + b->y;
-   r->z = a->z + b->z;
-   r->w = a->w + b->w;
 }
 
