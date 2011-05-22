@@ -1,7 +1,6 @@
 #pragma once
 
-#include "vector.h"
-#include "matrix.h"
+#include "mathlib.h"
 
 typedef struct cam_t
 {

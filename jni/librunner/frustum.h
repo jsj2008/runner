@@ -1,13 +1,13 @@
 #pragma once
 
-#include "vector.h"
+#include "mathlib.h"
 
 struct cam_t;
 struct bbox_t;
 
 typedef struct frustum_t
 {
-   vec4f_t planes[6];
+   plane_t planes[6];
 } frustum_t;
 
 void frustum_set(frustum_t* frustum, const struct cam_t* camera);

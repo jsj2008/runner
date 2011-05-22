@@ -1,7 +1,7 @@
 #include "runner.h"
 #include "common.h"
 #include "gl.h"
-#include "matrix.h"
+#include "math.h"
 #include "stream.h"
 #include "camera.h"
 #include "model.h"

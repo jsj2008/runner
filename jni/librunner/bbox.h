@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vector.h"
+#include "mathlib.h"
 
 struct cam_t;
 
