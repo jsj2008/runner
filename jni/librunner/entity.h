@@ -1,6 +1,6 @@
 #pragma once
 
-#include "physent.h"
+#include "physworld.h"
 
 struct cam_t;
 
@@ -10,7 +10,7 @@ typedef struct entity_t
    int anim;
    int frame;
 
-   physent_t phys;
+   rigidbody_t* phys;
 } entity_t;
 
 void entity_update(entity_t* e, float dt);

@@ -7,8 +7,6 @@ extern resman_t* g_resman;
 
 void entity_update(entity_t* e, float dt)
 {
-   physent_update(&e->phys, dt);
-
    // TODO: update animation
 }
 
@@ -19,7 +17,7 @@ void entity_render(const entity_t* e, const struct cam_t* camera)
       return;
 
    mat4f_t transform;
-   physent_get_transform(&e->phys, &transform);
+   rigidbody_get_transform(e->phys, &transform);
 
    model_render(model, camera, e->frame, &transform);
 }

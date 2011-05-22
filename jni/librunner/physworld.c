@@ -9,7 +9,6 @@ struct physworld_t
 };
 
 struct rigidbody_t { };
-struct collshape_t { };
 
 int physworld_create(physworld_t** pw)
 {
@@ -64,38 +63,37 @@ void physworld_remove_rigidbody(physworld_t* w, rigidbody_t* b)
    plRemoveRigidBody(w->handle, (plRigidBodyHandle)b);
 }
 
-static int set_shape_handle(collshape_t** ps, plCollisionShapeHandle handle)
+void physworld_set_gravity(physworld_t* w, const vec3f_t* gravity)
 {
-   if (handle == NULL)
+   plSetGravity(w->handle, (float*)gravity);
+}
+
+int rigidbody_create(rigidbody_t** pb, const rigidbody_params_t* params)
+{
+   const collshape_params_t* sp = &params->shape_params;
+   plCollisionShapeHandle s = NULL;
+   switch (sp->type)
+   {
+      case SHAPE_SPHERE:
+         s = plNewSphereShape(sp->params.sphere.radius);
+         break;
+
+      case SHAPE_BOX:
+         s = plNewBoxShape(sp->params.box.width/2.0f, sp->params.box.height/2.0f, sp->params.box.width/2.0f);
+         break;
+
+      default:
+         LOGE("Unknown shape type: %d", sp->type);
+         return -1;
+   }
+
+   if (s == NULL)
    {
       LOGE("Unable to create collision shape");
       return -1;
    }
 
-   (*ps) = (collshape_t*)handle;
-   return 0;
-}
-
-int collshape_create_sphere(collshape_t** ps, float radius)
-{
-   plCollisionShapeHandle handle = plNewSphereShape(radius);
-   return set_shape_handle(ps, handle);
-}
-
-int collshape_create_box(collshape_t** ps, float width, float height, float depth)
-{
-   plCollisionShapeHandle handle = plNewBoxShape(width, height, depth);
-   return set_shape_handle(ps, handle);
-}
-
-void collshape_free(collshape_t* s)
-{
-   plDeleteShape((plCollisionShapeHandle)s);
-}
-
-int rigidbody_create(rigidbody_t** pb, float mass, collshape_t* s)
-{
-   plRigidBodyHandle handle = plCreateRigidBody(NULL, mass, (plCollisionShapeHandle)s);
+   plRigidBodyHandle handle = plCreateRigidBody(NULL, params->mass, s);
    if (handle == NULL)
    {
       LOGE("Unable to create rigid body");
@@ -103,6 +101,9 @@ int rigidbody_create(rigidbody_t** pb, float mass, collshape_t* s)
    }
 
    (*pb) = (rigidbody_t*)handle;
+
+   rigidbody_set_transform(*pb, &params->transform);
+
    return 0;
 }
 
@@ -120,5 +121,10 @@ void rigidbody_set_transform(rigidbody_t* b, const mat4f_t* transform)
 void rigidbody_get_transform(const rigidbody_t* b, mat4f_t* transform)
 {
    plGetOpenGLMatrix((plRigidBodyHandle)b, &transform->m[0]);
+}
+
+void rigidbody_apply_central_impulse(rigidbody_t* b, const vec3f_t* impulse)
+{
+   plApplyCentralImpulse((plRigidBodyHandle)b, (float*)impulse);
 }
 

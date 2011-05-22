@@ -332,6 +332,21 @@ void plGetOrientation(plRigidBodyHandle object,plQuaternion orientation)
 	orientation[3] = orn.getW();
 }
 
+void plApplyCentralImpulse(plRigidBodyHandle object, const plVector3 impulse)
+{
+	btRigidBody* body = reinterpret_cast< btRigidBody* >(object);
+	btAssert(body);
+   btVector3 f (impulse[0], impulse[1], impulse[2]);
+   body->applyCentralImpulse(f);
+}
+
+void plSetGravity(plDynamicsWorldHandle world, const plVector3 gravity)
+{
+	btDynamicsWorld* dynamicsWorld = reinterpret_cast< btDynamicsWorld* >(world);
+	btAssert(dynamicsWorld);
+   btVector3 g (gravity[0], gravity[1], gravity[2]);
+	dynamicsWorld->setGravity(g);
+}
 
 
 //plRigidBodyHandle plRayCast(plDynamicsWorldHandle world, const plVector3 rayStart, const plVector3 rayEnd, plVector3 hitpoint, plVector3 normal);

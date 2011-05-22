@@ -11,6 +11,7 @@
 #include "material.h"
 #include "resman.h"
 #include "entity.h"
+#include "physworld.h"
 
 static GLfloat skybox_vertices[] =
 {
@@ -147,6 +148,8 @@ resman_t* g_resman = NULL;
 
 entity_t entities[16];
 long nentities = sizeof(entities)/sizeof(entities[0]);
+rigidbody_t* ground = NULL;
+physworld_t* world = NULL;
 
 vec3f_t* vec3(float x, float y, float z)
 {
@@ -235,18 +238,71 @@ int init(const char* apkPath)
    if (level == NULL)
       return -1;
 
+   if (physworld_create(&world) != 0)
+      return -1;
+
+   vec3f_t gravity = *vec3(0.0f, -9.8f, 0.0f);
+   physworld_set_gravity(world, &gravity);
+
+   mat4f_t transform;
+
    int i = 0;
    entity_t* e = &entities[0];
    for (i = 0; i < nentities; ++i, ++e)
    {
       strcpy(e->model, "assets/models/crate.model");
-      e->phys.position = *vec3(4.0f * i, 2.0f, 0.0f);
-      e->phys.orientation = *quat(0.0f, 0.0f, 0.0f, 1.0f);
-      e->phys.velocity = *vec3(0.0f, 0.0f, 0.0f);
-      e->phys.angular_velocity = *vec3(0.0f, 0.0f, 0.0f);
-      e->phys.mass = 1.0f;
-      physent_set_box_inertia(&e->phys, 1.0f, 1.0f, 1.0f);
+
+      mat4_from_quaternion(&transform, quat(0.0f, 0.0f, 0.0f, 1.0f));
+      transform.m14 = 4.0f * (i % 4);
+      transform.m24 = 2.0f * i;
+      transform.m34 = 0.0f;
+      transform.m44 = 1.0f;
+
+      rigidbody_params_t p =
+      {
+         .mass = 1.0f,
+         .friction = 1.0f,
+         .transform = transform,
+         .shape_params =
+         {
+            .type = SHAPE_BOX,
+            .params.box =
+            {
+               .width = 1.0f,
+               .height = 1.0f,
+               .depth = 1.0f,
+            }
+         }
+      };
+
+      if (rigidbody_create(&e->phys, &p) != 0)
+         return -1;
+
+      physworld_add_rigidbody(world, e->phys);
    }
+
+   mat4_set_identity(&transform);
+   rigidbody_params_t p =
+   {
+      .mass = 0.0f,
+      .friction = 1.0f,
+      .transform = transform,
+      .shape_params =
+      {
+         .type = SHAPE_BOX,
+         .params.box =
+         {
+            .width = 100.0f,
+            .height = 3.0f,
+            .depth = 100.f,
+         }
+      }
+   };
+
+   if (rigidbody_create(&ground, &p) != 0)
+      return -1;
+
+   physworld_add_rigidbody(world, ground);
 
    return 0;
 }
@@ -254,6 +310,12 @@ int init(const char* apkPath)
 void shutdown()
 {
    LOGI("shutdown");
+
+   if (world != NULL)
+   {
+      physworld_free(world);
+      world = NULL;
+   }
 
    if (g_resman != NULL)
    {
@@ -315,6 +377,7 @@ void update()
    float dt = timers_update();
 
    cam_update(dt, &camera);
+   physworld_update(world, dt);
 
    draw_skybox();
 
