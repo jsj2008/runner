@@ -173,7 +173,7 @@ void tex2d_free(tex2d_t* t)
    }
 
    free(t->data);
-   memset(t, 0, sizeof(tex2d_t));
+   free(t);
 }
 
 void tex2d_set_params(tex2d_t* t, int min_filter, int mag_filter, int wrap_s, int wrap_t)
@@ -189,6 +189,7 @@ int tex2d_bind(tex2d_t* t, int sampler)
    if (t->id == -1)
    {
       GLuint id = 0;
+
       glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
       checkGLError("glPixelStorei");
 
@@ -202,6 +203,7 @@ int tex2d_bind(tex2d_t* t, int sampler)
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, t->mag_filter);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, t->wrap_s);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, t->wrap_t);
+      glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_HINT, GL_NICEST);
 
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, t->width, t->height, 0, GL_RGB, GL_UNSIGNED_BYTE, t->data);
       checkGLError("glTexImage2D");

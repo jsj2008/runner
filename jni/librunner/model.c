@@ -13,6 +13,8 @@ typedef struct model_header_t
    long data_size;
 } model_header_t;
 
+extern resman_t* g_resman;
+
 #define WRITE(n)     { header.data_size += stream_write(f, &n, sizeof(n)); }
 #define WRITEA(n, c) { header.data_size += stream_write(f, &n[0], c * sizeof(n[0])); }
 
@@ -171,6 +173,15 @@ int model_load(model_t** m, const char* fname)
       LOGI("Mesh: %s [%ld vertices %ld indices]", mesh->name, mesh->nvertices, mesh->nindices);
       mesh->vertices = (vertex_t*)(buf + (long)mesh->vertices);
       mesh->indices = (int*)(buf + (long)mesh->indices);
+
+      // try to load materials
+      material_t* mtl = resman_get_material(g_resman, mesh->material);
+      if (mtl == NULL)
+      {
+         free(buf);
+         return -1;
+      }
+
       ++mesh;
    }
 
@@ -186,8 +197,6 @@ void model_free(const model_t* model)
 
 #define MAX_BONES 256
 #define MAX_VERTICES 4096
-
-extern resman_t* g_resman;
 
 void model_render(const model_t* model, const cam_t* camera, int _frame, const mat4f_t* transform)
 {
@@ -302,6 +311,8 @@ void model_render(const model_t* model, const cam_t* camera, int _frame, const m
 
       glCullFace(GL_FRONT);
       glDrawElements(GL_TRIANGLES, mesh->nindices, GL_UNSIGNED_INT, mesh->indices);
+
+      material_unuse(mtl);
 
       ++mesh;
    }

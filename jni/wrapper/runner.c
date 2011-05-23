@@ -338,9 +338,9 @@ void resize(int width, int height)
    checkGLError("glDepthRange");
 
    cam_init(&camera, 45.0f, (float)width/(float)height, 0.1f, 1000.0f);
-   cam_set_pos(&camera, vec3(0.0f, 25.0f, 50.0f));
+   cam_set_pos(&camera, vec3(10.0f, 10.0f, 25.0f));
    cam_set_up(&camera, vec3(0.0f, 1.0f, 0.0f));
-   cam_look_at(&camera, vec3(0.0f, 0.0f, 0.0f));
+   cam_look_at(&camera, vec3(10.0f, 2.0f, 0.0f));
    camera.max_speed = *vec3(50.0f, 50.0f, 50.0f);
    camera.acceleration = *vec3(1000.0f, 1000.0f, 1000.0f);
    camera.decceleration = *vec3(25.0f, 25.0f, 25.0f);
@@ -370,6 +370,8 @@ void draw_skybox()
 
    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, skybox_indices);
    glDepthFunc(GL_LESS);
+
+   material_unuse(mtl);
 }
 
 void update()

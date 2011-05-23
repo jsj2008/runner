@@ -98,5 +98,6 @@ void bbox_draw(const bbox_t* b, const cam_t* camera)
    shader_set_uniform_matrices(shader, "uMVP", 1, mat4_data(&mvp));
    shader_set_attrib_vertices(shader, "aPos", 3, GL_FLOAT, 0, &vertices[0]);
    glDrawArrays(GL_LINES, 0, sizeof(vertices)/sizeof(vertices[0])/3);
+   shader_unuse(shader);
 }
 

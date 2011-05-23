@@ -8,7 +8,6 @@ attribute vec2 aBoneWeights;
 uniform mat4 uMVP;
 uniform mat4 uMV;
 uniform mat4 uBoneTransforms[MAX_BONES];
-varying vec3 vColor;
 varying vec4 vNormal;
 varying vec2 vTexCoord;
 
@@ -26,10 +25,6 @@ void main()
    index = int(aBoneIndices.y);
    newPos = (uBoneTransforms[index] * vec4(aPos, 1.0)) * aBoneWeights.y + newPos;
    newNormal = (uBoneTransforms[index] * vec4(aNormal, 0.0)) * aBoneWeights.y + newNormal;
-
-   vColor.x = clamp(aPos.x, 0.0, 1.0);
-   vColor.y = clamp(aPos.y, 0.0, 1.0);
-   vColor.z = clamp(aPos.z, 0.0, 1.0);
 
    vTexCoord = aTexCoord;
    vNormal = uMV * vec4(newNormal.xyz, 0.0);

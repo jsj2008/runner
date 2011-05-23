@@ -7,6 +7,12 @@
 
 typedef struct shader_var_t
 {
+   enum
+   {
+      VAR_ATTRIB = 0,
+      VAR_UNIFORM,
+   } type;
+
    char name[32];
    long location;
 } shader_var_t;
@@ -85,15 +91,16 @@ static const shader_var_t* find_var(const shader_t* shader, const char* name)
    return NULL;
 }
 
-static shader_var_t* add_var(shader_t* shader, const char* name, GLuint location)
+static shader_var_t* add_var(shader_t* shader, const char* name, GLuint location, int type)
 {
-   LOGI("Adding var %s location %d program %ld", name, location, shader->program);
+   LOGI("Adding var %s[%d] location %d program %ld", name, type, location, shader->program);
 
    shader_var_t* var = &shader->vars[shader->nvars];
    ++shader->nvars;
 
    strcpy(var->name, name);
    var->location = location;
+   var->type = type;
    return var;
 }
 
@@ -104,7 +111,7 @@ static const shader_var_t* get_attrib_var(shader_t* shader, const char* name)
    {
       GLuint location = glGetAttribLocation(shader->program, name);
       checkGLError("glGetAttribLocation");
-      var = add_var(shader, name, location);
+      var = add_var(shader, name, location, VAR_ATTRIB);
    }
    return var;
 }
@@ -116,7 +123,7 @@ static const shader_var_t* get_uniform_var(shader_t* shader, const char* name)
    {
       GLuint location = glGetUniformLocation(shader->program, name);
       checkGLError("glGetUniformLocation");
-      var = add_var(shader, name, location);
+      var = add_var(shader, name, location, VAR_UNIFORM);
    }
    return var;
 }
@@ -214,6 +221,22 @@ void shader_free(shader_t* shader)
 void shader_use(const shader_t* shader)
 {
    glUseProgram(shader->program);
+   checkGLError("glUseProgram");
+}
+
+void shader_unuse(const shader_t* shader)
+{
+   long i = 0;
+   for (; i < shader->nvars; ++i)
+   {
+      if (shader->vars[i].type == VAR_ATTRIB)
+      {
+         glDisableVertexAttribArray(shader->vars[i].location);
+         checkGLError("glDisableVertexAttribArray");
+      }
+   }
+
+   glUseProgram(0);
    checkGLError("glUseProgram");
 }
 

@@ -193,6 +193,11 @@ void material_use(const material_t* m, int sampler_id)
    tex2d_bind(m->ptexture, sampler_id);
 }
 
+void material_unuse(const material_t* m)
+{
+   shader_unuse(m->pshader);
+}
+
 shader_t* material_get_shader(const material_t* m)
 {
    return m->pshader;

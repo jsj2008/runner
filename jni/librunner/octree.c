@@ -13,6 +13,8 @@
 #define MAX_TRIS 4096
 #define MAX_TRIS_PER_NODE 300
 
+extern resman_t* g_resman;
+
 typedef struct octree_node_t
 {
    bbox_t bbox;
@@ -309,6 +311,13 @@ int octree_load(octree_t** po, const char* fname)
       ++node;
    }
 
+   material_t* mtl = resman_get_material(g_resman, o->material);
+   if (mtl == NULL)
+   {
+      free(buf);
+      return -1;
+   }
+
    (*po) = o;
    return 0;
 }
@@ -446,8 +455,6 @@ long octree_node_draw(const octree_node_t* nodes, long nodeindex, const frustum_
    return nindices;
 }
 
-extern resman_t* g_resman;
-
 void octree_draw(const octree_t* o, const cam_t* camera)
 {
    mat4f_t mvp;
@@ -494,6 +501,8 @@ void octree_draw(const octree_t* o, const cam_t* camera)
          bbox_draw(&node->bbox, camera);
       }
    }
+
+   material_unuse(mtl);
 
    free(indices);
    free(used_tris);
