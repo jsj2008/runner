@@ -370,6 +370,34 @@ plCollisionShapeHandle plNewBvhTriangleMeshShape(long nindices, int* indices, lo
    return (plCollisionShapeHandle)shape;
 }
 
+void plSetFriction(plRigidBodyHandle object, plReal friction)
+{
+	btRigidBody* body = reinterpret_cast< btRigidBody* >(object);
+	btAssert(body);
+   body->setFriction(friction);
+}
+
+void plSetRestitution(plRigidBodyHandle object, plReal restitution)
+{
+	btRigidBody* body = reinterpret_cast< btRigidBody* >(object);
+	btAssert(body);
+   body->setRestitution(restitution);
+}
+
+void plSetDamping(plRigidBodyHandle object, plReal linear, plReal angular)
+{
+	btRigidBody* body = reinterpret_cast< btRigidBody* >(object);
+	btAssert(body);
+   body->setDamping(linear, angular);
+}
+
+void plSetSleepingThresholds(plRigidBodyHandle object, plReal linear, plReal angular)
+{
+	btRigidBody* body = reinterpret_cast< btRigidBody* >(object);
+	btAssert(body);
+   body->setSleepingThresholds(linear, angular);
+}
+
 //plRigidBodyHandle plRayCast(plDynamicsWorldHandle world, const plVector3 rayStart, const plVector3 rayEnd, plVector3 hitpoint, plVector3 normal);
 
 //	extern  plRigidBodyHandle plObjectCast(plDynamicsWorldHandle world, const plVector3 rayStart, const plVector3 rayEnd, plVector3 hitpoint, plVector3 normal);

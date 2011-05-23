@@ -123,6 +123,10 @@ int rigidbody_create(rigidbody_t** pb, const rigidbody_params_t* params)
    (*pb) = (rigidbody_t*)handle;
 
    rigidbody_set_transform(*pb, &params->transform);
+   rigidbody_set_friction(*pb, params->friction);
+   rigidbody_set_restitution(*pb, params->restitution);
+   rigidbody_set_damping(*pb, params->linear_damping, params->angular_damping);
+   rigidbody_set_sleeping_thresholds(*pb, params->linear_sleeping_threshold, params->angular_sleeping_threshold);
 
    return 0;
 }
@@ -141,6 +145,26 @@ void rigidbody_set_transform(rigidbody_t* b, const mat4f_t* transform)
 void rigidbody_get_transform(const rigidbody_t* b, mat4f_t* transform)
 {
    plGetOpenGLMatrix((plRigidBodyHandle)b, &transform->m[0]);
+}
+
+void rigidbody_set_friction(rigidbody_t* b, float friction)
+{
+   plSetFriction((plRigidBodyHandle)b, friction);
+}
+
+void rigidbody_set_restitution(rigidbody_t* b, float restitution)
+{
+   plSetRestitution((plRigidBodyHandle)b, restitution);
+}
+
+void rigidbody_set_damping(rigidbody_t* b, float linear, float angular)
+{
+   plSetDamping((plRigidBodyHandle)b, linear, angular);
+}
+
+void rigidbody_set_sleeping_thresholds(rigidbody_t* b, float linear, float angular)
+{
+   plSetSleepingThresholds((plRigidBodyHandle)b, linear, angular);
 }
 
 void rigidbody_apply_central_impulse(rigidbody_t* b, const vec3f_t* impulse)

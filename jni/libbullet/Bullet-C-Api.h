@@ -171,6 +171,10 @@ extern "C" {
    extern void plApplyCentralImpulse(plRigidBodyHandle object, const plVector3 impulse);
    extern plCollisionShapeHandle plNewBvhTriangleMeshShape(long nindices, int* indices, long indices_stride, long nvertices, plReal* vertices, long vertices_stride);
 
+	extern void plSetFriction(plRigidBodyHandle object, plReal friction);
+	extern void plSetRestitution(plRigidBodyHandle object, plReal restitution);
+	extern void plSetDamping(plRigidBodyHandle object, plReal linear, plReal angular);
+	extern void plSetSleepingThresholds(plRigidBodyHandle object, plReal linear, plReal angular);
 #ifdef __cplusplus
 }
 #endif
