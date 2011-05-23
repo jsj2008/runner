@@ -50,7 +50,9 @@ void physworld_free(physworld_t* w)
 
 void physworld_update(physworld_t* w, float dt)
 {
-   plStepSimulation(w->handle, dt);
+   const float internal_dt = 1.0f / 60.0f;
+   int steps = (int)(dt / internal_dt + 0.5f);
+   plStepSimulationPrecise(w->handle, dt, steps, internal_dt);
 }
 
 void physworld_add_rigidbody(physworld_t* w, rigidbody_t* b)

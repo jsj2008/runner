@@ -167,6 +167,7 @@ extern "C" {
 	// needed for source/blender/blenkernel/intern/collision.c
 	double plNearestPoints(float p1[3], float p2[3], float p3[3], float q1[3], float q2[3], float q3[3], float *pa, float *pb, float normal[3]);
 
+   extern void plStepSimulationPrecise(plDynamicsWorldHandle world, plReal timeStep, int maxSteps, plReal internalTimeStep);
    extern void plSetGravity(plDynamicsWorldHandle world, const plVector3 gravity);
    extern void plApplyCentralImpulse(plRigidBodyHandle object, const plVector3 impulse);
    extern plCollisionShapeHandle plNewBvhTriangleMeshShape(long nindices, int* indices, long indices_stride, long nvertices, plReal* vertices, long vertices_stride);

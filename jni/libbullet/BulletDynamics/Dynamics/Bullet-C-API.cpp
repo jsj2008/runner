@@ -332,6 +332,13 @@ void plGetOrientation(plRigidBodyHandle object,plQuaternion orientation)
 	orientation[3] = orn.getW();
 }
 
+void plStepSimulationPrecise(plDynamicsWorldHandle world, plReal timeStep, int maxSteps, plReal internalTimeStep)
+{
+   btDynamicsWorld* dynamicsWorld = reinterpret_cast< btDynamicsWorld* >(world);
+   btAssert(dynamicsWorld);
+   dynamicsWorld->stepSimulation(timeStep, maxSteps, internalTimeStep);
+}
+
 void plApplyCentralImpulse(plRigidBodyHandle object, const plVector3 impulse)
 {
 	btRigidBody* body = reinterpret_cast< btRigidBody* >(object);
