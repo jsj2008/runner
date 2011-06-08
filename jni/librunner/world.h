@@ -31,6 +31,24 @@ typedef struct mesh_t
    struct submesh_t* submeshes;
 } mesh_t;
 
+typedef struct shape_t
+{
+   enum
+   {
+      SHAPE_BOX = 0,
+      SHAPE_SPHERE,
+      SHAPE_CAPSULE,
+      SHAPE_CONE,
+      SHAPE_CYLINDER,
+      SHAPE_CONVEX,
+      SHAPE_CONCAVE,
+   } type;
+
+   float margin;
+   float radius;
+   vec3f_t extents;
+} shape_t;
+
 typedef struct phys_t
 {
    enum
@@ -42,6 +60,15 @@ typedef struct phys_t
 
    float mass;
    float friction;
+   float restitution;
+
+   float linear_damping;
+   float angular_damping;
+
+   float linear_sleeping_threshold;
+   float angular_sleeping_threshold;
+
+   struct shape_t shape;
 } phys_t;
 
 typedef struct node_t

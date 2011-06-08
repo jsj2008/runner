@@ -142,27 +142,14 @@ void game_set_scene(game_t* game, const char* scenename)
       if (node->phys.type == PHYS_NOCOLLISION)
          continue;
 
-      rigidbody_params_t p =
-      {
-         .mass = (node->phys.type == PHYS_RIGID) ? node->phys.mass : 0.0f,
-         .friction = node->phys.friction,
-         .transform = node->transform,
-         .shape_params =
-         {
-            .type = SHAPE_BOX,
-            .params.box =
-            {
-               .width = node->bbox.max.x - node->bbox.min.x,
-               .height = node->bbox.max.y - node->bbox.min.y,
-               .depth = node->bbox.max.z - node->bbox.min.z,
-            }
-         }
-      };
+      struct mesh_t* mesh = world_get_mesh(game->world, node->data);
 
       LOGI("rigidbody_create");
-      rigidbody_create(&game->bodies[l], &p);
-      LOGI("physworld_add_rigidbody");
-      physworld_add_rigidbody(game->phys, game->bodies[l]);
+      if (rigidbody_create(&game->bodies[l], &node->phys, mesh, &node->transform) == 0)
+      {
+         LOGI("physworld_add_rigidbody");
+         physworld_add_rigidbody(game->phys, game->bodies[l]);
+      }
    }
 }
 

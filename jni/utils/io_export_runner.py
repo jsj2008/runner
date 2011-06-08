@@ -26,8 +26,9 @@ material_t = struct.Struct("<64s64s64s")
 texture_t = struct.Struct("<64s64s4L")
 mesh_t = struct.Struct("<64s2L")
 submesh_t = struct.Struct("<64s4L")
-node_t = struct.Struct("<64s64sL64s24s12sl")
-phys_t = struct.Struct("<L2f")
+node_t = struct.Struct("<64s64sL64s24s56sl")
+shape_t = struct.Struct("<L2f12s")
+phys_t = struct.Struct("<L7f24s")
 scene_t = struct.Struct("<64s64s12s2L")
 world_t = struct.Struct("<64s10L")
 
@@ -161,6 +162,23 @@ def get_camera_type(typename):
       return 1
    return -1
 
+def get_shape_type(typename):
+   if (typename == 'BOX'):
+      return 0
+   if (typename == 'SPHERE'):
+      return 1
+   if (typename == 'CAPSULE'):
+      return 2
+   if (typename == 'CONE'):
+      return 3
+   if (typename == 'CYLINDER'):
+      return 4
+   if (typename == 'CONVEX_HULL'):
+      return 5
+   if (typename == 'TRIANGLE_MESH'):
+      return 6
+   return 0
+
 def get_phys_type(typename):
    if (typename == 'RIGID_BODY'):
       return 1
@@ -250,13 +268,14 @@ def get_bbox(node):
    return (bbox_min, bbox_max)
 
 def pack_scene_node(node, parent_index):
+   bbox = get_bbox(node)
    return node_t.pack(
          node.name.encode('utf-8'),
          node.data.name.encode('utf-8'),
          get_node_type(node.type),
          pack_matrix(node.matrix_local),
-         pack_bbox(get_bbox(node)),
-         pack_phys(node.game),
+         pack_bbox(bbox),
+         pack_phys(node.game, bbox),
          parent_index)
 
 def build_nodes_list(root_nodes, offset):
@@ -309,8 +328,20 @@ def pack_scenes(scenes, offset):
 
    return (header + data, len(scenes))
 
-def pack_phys(phys):
-   return phys_t.pack(get_phys_type(phys.physics_type), phys.mass, phys.friction_coefficients[0])
+def pack_shape(shape):
+   (type, margin, radius, extents) = shape
+   return shape_t.pack(type, margin, radius, pack_vector(extents))
+
+def pack_phys(phys, bbox):
+   (bbox_min, bbox_max) = bbox
+   extents = [bbox_max[0] - bbox_min[0], bbox_max[1] - bbox_min[1], bbox_max[2] - bbox_min[2]]
+   print("Extents %.2f %.2f %.2f"%(extents[0], extents[1], extents[2]))
+   return phys_t.pack(
+         get_phys_type(phys.physics_type),
+         phys.mass, phys.friction_coefficients[0], 0.01,
+         phys.damping, phys.rotation_damping,
+         0.0, 0.0,
+         pack_shape((get_shape_type(phys.collision_bounds_type), phys.collision_margin, phys.radius, extents)))
 
 def pack_world(name, world):
    print("World: " + name)

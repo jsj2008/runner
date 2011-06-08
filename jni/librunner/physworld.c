@@ -1,6 +1,7 @@
 #include "physworld.h"
 #include <Bullet-C-Api.h>
 #include "common.h"
+#include "world.h"
 
 struct physworld_t
 {
@@ -70,39 +71,50 @@ void physworld_set_gravity(physworld_t* w, const vec3f_t* gravity)
    plSetGravity(w->handle, (float*)gravity);
 }
 
-int rigidbody_create(rigidbody_t** pb, const rigidbody_params_t* params)
+int rigidbody_create(rigidbody_t** pb, const struct phys_t* phys, const mesh_t* mesh, const mat4f_t* transform)
 {
-   const collshape_params_t* sp = &params->shape_params;
+   if (phys->type == PHYS_NOCOLLISION)
+   {
+      return -1;
+   }
+
+   const struct shape_t* sp = &phys->shape;
    plCollisionShapeHandle s = NULL;
    switch (sp->type)
    {
    case SHAPE_SPHERE:
-      s = plNewSphereShape(sp->params.sphere.radius);
+      s = plNewSphereShape(sp->radius);
       break;
 
    case SHAPE_BOX:
-      s = plNewBoxShape(sp->params.box.width/2.0f, sp->params.box.height/2.0f, sp->params.box.depth/2.0f);
+      s = plNewBoxShape(sp->extents.x/2.0f, sp->extents.y/2.0f, sp->extents.z/2.0f);
       break;
 
    case SHAPE_CONVEX:
       s = plNewConvexHullShape();
-      int i = 0;
-      vec3f_t* v = &sp->params.convex.points[0];
-      for (i = 0; i < sp->params.convex.npoints; ++i, ++v)
+      long l = 0;
+      long k = 0;
+
+      const struct submesh_t* submesh = &mesh->submeshes[0];
+      for (l = 0; l < mesh->nsubmeshes; ++l, ++submesh)
       {
-         plAddVertex(s, v->x, v->y, v->z);
+         vertex_t* vert = &submesh->vertices[0];
+         for (k = 0; k < submesh->nvertices; ++k, ++vert)
+         {
+            plAddVertex(s, vert->point.x, vert->point.y, vert->point.z);
+         }
       }
       break;
 
-   case SHAPE_BVH_TRIMESH:
-      s = plNewBvhTriangleMeshShape(
-             sp->params.bvh_trimesh.nindices,
-             sp->params.bvh_trimesh.indices,
-             sp->params.bvh_trimesh.indices_stride,
-             sp->params.bvh_trimesh.nvertices,
-             sp->params.bvh_trimesh.vertices,
-             sp->params.bvh_trimesh.vertices_stride);
-      break;
+      /*case SHAPE_CONCAVE:
+         s = plNewBvhTriangleMeshShape(
+                sp->params.bvh_trimesh.nindices,
+                sp->params.bvh_trimesh.indices,
+                sp->params.bvh_trimesh.indices_stride,
+                sp->params.bvh_trimesh.nvertices,
+                sp->params.bvh_trimesh.vertices,
+                sp->params.bvh_trimesh.vertices_stride);
+         break;*/
 
    default:
       LOGE("Unknown shape type: %d", sp->type);
@@ -115,7 +127,9 @@ int rigidbody_create(rigidbody_t** pb, const rigidbody_params_t* params)
       return -1;
    }
 
-   plRigidBodyHandle handle = plCreateRigidBody(NULL, params->mass, s);
+   float mass = (phys->type == PHYS_RIGID) ? phys->mass : 0.0f;
+
+   plRigidBodyHandle handle = plCreateRigidBody(NULL, mass, s);
    if (handle == NULL)
    {
       LOGE("Unable to create rigid body");
@@ -124,11 +138,11 @@ int rigidbody_create(rigidbody_t** pb, const rigidbody_params_t* params)
 
    (*pb) = (rigidbody_t*)handle;
 
-   rigidbody_set_transform(*pb, &params->transform);
-   //rigidbody_set_friction(*pb, params->friction);
-   //rigidbody_set_restitution(*pb, params->restitution);
-   //rigidbody_set_damping(*pb, params->linear_damping, params->angular_damping);
-   //rigidbody_set_sleeping_thresholds(*pb, params->linear_sleeping_threshold, params->angular_sleeping_threshold);
+   rigidbody_set_transform(*pb, transform);
+   rigidbody_set_friction(*pb, phys->friction);
+   rigidbody_set_restitution(*pb, phys->restitution);
+   rigidbody_set_damping(*pb, phys->linear_damping, phys->angular_damping);
+   //rigidbody_set_sleeping_thresholds(*pb, phys->linear_sleeping_threshold, phys->angular_sleeping_threshold);
 
    return 0;
 }
