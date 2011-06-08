@@ -1,17 +1,14 @@
 #include "runner.h"
 #include "common.h"
-#include "gl.h"
 #include "math.h"
 #include "stream.h"
 #include "camera.h"
-#include "model.h"
-#include "hlmdl.h"
 #include "shader.h"
-#include "octree.h"
 #include "material.h"
 #include "resman.h"
-#include "entity.h"
 #include "physworld.h"
+#include "game.h"
+#include "material.h"
 
 static GLfloat skybox_vertices[] =
 {
@@ -142,14 +139,7 @@ static GLubyte indices[] =
    20, 22, 21
 };
 
-cam_t camera;
-octree_t* level = NULL;
-resman_t* g_resman = NULL;
-
-entity_t entities[16];
-long nentities = sizeof(entities)/sizeof(entities[0]);
-rigidbody_t* ground = NULL;
-physworld_t* world = NULL;
+game_t* game = NULL;
 
 vec3f_t* vec3(float x, float y, float z)
 {
@@ -213,96 +203,32 @@ int init(const char* apkPath)
 {
    LOGI("init");
 
+   outGLString("Version", GL_VERSION);
+   outGLString("Vendor", GL_VENDOR);
+   outGLString("Renderer", GL_RENDERER);
+   outGLString("Extensions", GL_EXTENSIONS);
+
+   glClearColor(1.0f, 0.1f, 0.1f, 1.0f);
+   glEnable(GL_DEPTH_TEST);
+   checkGLError("glEnable GL_DEPTH_TEST");
+
+   glEnable(GL_CULL_FACE);
+   checkGLError("glEnable GL_CULL_FACE");
+
+   glCullFace(GL_BACK);
+   checkGLError("glCullFace");
+
+   glFrontFace(GL_CCW);
+   checkGLError("glFrontFace");
+
    if (stream_set_root(apkPath) != 0)
    {
       LOGE("Error setting APK path");
       return -1;
    }
 
-   if (resman_init(&g_resman) != 0)
+   if (game_init(&game, "w01d01.runner") != 0)
       return -1;
-
-   outGLString("Version", GL_VERSION);
-   outGLString("Vendor", GL_VENDOR);
-   outGLString("Renderer", GL_RENDERER);
-   outGLString("Extensions", GL_EXTENSIONS);
-
-   glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-   glEnable(GL_DEPTH_TEST);
-   glEnable(GL_CULL_FACE);
-   glEnable(GL_TEXTURE_2D);
-   glCullFace(GL_BACK);
-   glFrontFace(GL_CCW);
-
-   level = resman_get_octree(g_resman, "assets/models/level.octree");
-   if (level == NULL)
-      return -1;
-
-   if (physworld_create(&world) != 0)
-      return -1;
-
-   vec3f_t gravity = *vec3(0.0f, -9.8f, 0.0f);
-   physworld_set_gravity(world, &gravity);
-
-   mat4f_t transform;
-
-   int i = 0;
-   entity_t* e = &entities[0];
-   for (i = 0; i < nentities; ++i, ++e)
-   {
-      strcpy(e->model, "assets/models/crate.model");
-
-      mat4_from_quaternion(&transform, quat(0.0f, 0.0f, 0.0f, 1.0f));
-      transform.m14 = 4.0f * (i % 4);
-      transform.m24 = 2.0f * i;
-      transform.m34 = 0.0f;
-      transform.m44 = 1.0f;
-
-      rigidbody_params_t p =
-      {
-         .mass = 1.0f,
-         .friction = 1.0f,
-         .transform = transform,
-         .shape_params =
-         {
-            .type = SHAPE_BOX,
-            .params.box =
-            {
-               .width = 1.0f,
-               .height = 1.0f,
-               .depth = 1.0f,
-            }
-         }
-      };
-
-      if (rigidbody_create(&e->phys, &p) != 0)
-         return -1;
-
-      physworld_add_rigidbody(world, e->phys);
-   }
-
-   mat4_set_identity(&transform);
-   rigidbody_params_t p =
-   {
-      .mass = 0.0f,
-      .friction = 1.0f,
-      .transform = transform,
-      .shape_params =
-      {
-         .type = SHAPE_BOX,
-         .params.box =
-         {
-            .width = 100.0f,
-            .height = 3.0f,
-            .depth = 100.f,
-         }
-      }
-   };
-
-   if (rigidbody_create(&ground, &p) != 0)
-      return -1;
-
-   physworld_add_rigidbody(world, ground);
 
    return 0;
 }
@@ -311,19 +237,10 @@ void shutdown()
 {
    LOGI("shutdown");
 
-   if (world != NULL)
+   if (game != NULL)
    {
-      physworld_free(world);
-      world = NULL;
-   }
-
-   if (g_resman != NULL)
-   {
-      resman_show(g_resman);
-
-      LOGI("Releasing old resources");
-      resman_free(g_resman);
-      g_resman = NULL;
+      game_free(game);
+      game = NULL;
    }
 }
 
@@ -334,33 +251,22 @@ void resize(int width, int height)
    glViewport(0, 0, width, height);
    checkGLError("glViewport");
 
-   glDepthRangef(0.1f, 1000.0f);
+   game->camera->aspect = (float)width/(float)height;
+   glDepthRangef(game->camera->znear, game->camera->zfar);
    checkGLError("glDepthRange");
-
-   cam_init(&camera, 45.0f, (float)width/(float)height, 0.1f, 1000.0f);
-   cam_set_pos(&camera, vec3(10.0f, 10.0f, 25.0f));
-   cam_set_up(&camera, vec3(0.0f, 1.0f, 0.0f));
-   cam_look_at(&camera, vec3(10.0f, 2.0f, 0.0f));
-   camera.max_speed = *vec3(50.0f, 50.0f, 50.0f);
-   camera.acceleration = *vec3(1000.0f, 1000.0f, 1000.0f);
-   camera.decceleration = *vec3(25.0f, 25.0f, 25.0f);
-   camera.target = camera.pos;
-   cam_update(0.0f, &camera);
 
    timers_init();
 }
 
-void draw_skybox()
+void skybox_render()
 {
-   material_t* mtl = resman_get_material(g_resman, "assets/materials/skybox.material");
+   material_t* mtl = resman_get_material(game->resman, "SkyboxMaterial");
    if (mtl == NULL)
       return;
 
-   shader_t* shader = material_get_shader(mtl);
-   if (shader == NULL)
-      return;
+   shader_t* shader = resman_get_shader(game->resman, mtl->shader);
 
-   material_use(mtl, 0);
+   material_bind(mtl, 0);
    shader_set_attrib_vertices(shader, "aPos", 3, GL_FLOAT, 0, skybox_vertices);
    shader_set_attrib_vertices(shader, "aTexCoord", 2, GL_FLOAT, 0, skybox_tex_coords);
    shader_set_attrib_vertices(shader, "aColor", 3, GL_FLOAT, 0, skybox_colors);
@@ -371,28 +277,18 @@ void draw_skybox()
    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, skybox_indices);
    glDepthFunc(GL_LESS);
 
-   material_unuse(mtl);
+   material_unbind(mtl);
 }
 
 void update()
 {
+   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
    float dt = timers_update();
+   game_update(game, dt);
 
-   cam_update(dt, &camera);
-   physworld_update(world, dt);
-
-   draw_skybox();
-
-   octree_draw(level, &camera);
-
-   int i = 0;
-   for (i = 0; i < nentities; ++i)
-   {
-      // TODO: implement collision detection
-      // physent_apply_force_wcs(&entities[i].phys, &entities[i].phys.position, vec3(0.0f, -9.8f, 0.0f));
-      entity_update(&entities[i], dt);
-      entity_render(&entities[i], &camera);
-   }
+   skybox_render();
+   game_render(game);
 }
 
 void scroll(long dt, float dx1, float dy1, float dx2, float dy2)
@@ -405,7 +301,7 @@ void scroll(long dt, float dx1, float dy1, float dx2, float dy2)
    if (dx2 == 0.0f && dy2 == 0.0f)
    {
       // single finger sliding - strafe
-      cam_slide(&camera, vec3(-coef * dx1, coef * dy1, 0.0f));
+      //cam_slide(&game->camera, vec3(-coef * dx1, coef * dy1, 0.0f));
 
       int i = 0;
       for (i = 0; i < 4; ++i)
@@ -418,12 +314,8 @@ void scroll(long dt, float dx1, float dy1, float dx2, float dy2)
    {
       // two finger sliding - move forward
       float v = coef * dy1;
-      cam_slide(&camera, vec3(camera.view_dir.x * v, camera.view_dir.y * v, camera.view_dir.z * v));
+      //cam_slide(&game->camera, vec3(game->camera.view_dir.x * v, game->camera.view_dir.y * v, game->camera.view_dir.z * v));
    }
-
-   LOGI("Cam pos: [%.2f %.2f %.2f] dir: [%.2f %.2f %.2f]",
-        camera.pos.x, camera.pos.y, camera.pos.z,
-        camera.view_dir.x, camera.view_dir.y, camera.view_dir.z);
 }
 
 void perform_jump()

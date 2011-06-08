@@ -51,7 +51,7 @@ void physworld_free(physworld_t* w)
 void physworld_update(physworld_t* w, float dt)
 {
    const float internal_dt = 1.0f / 60.0f;
-   int steps = (int)(dt / internal_dt + 0.5f);
+   int steps = 5;//(int)(dt / internal_dt + 0.5f);
    plStepSimulationPrecise(w->handle, dt, steps, internal_dt);
 }
 
@@ -76,37 +76,37 @@ int rigidbody_create(rigidbody_t** pb, const rigidbody_params_t* params)
    plCollisionShapeHandle s = NULL;
    switch (sp->type)
    {
-      case SHAPE_SPHERE:
-         s = plNewSphereShape(sp->params.sphere.radius);
-         break;
+   case SHAPE_SPHERE:
+      s = plNewSphereShape(sp->params.sphere.radius);
+      break;
 
-      case SHAPE_BOX:
-         s = plNewBoxShape(sp->params.box.width/2.0f, sp->params.box.height/2.0f, sp->params.box.width/2.0f);
-         break;
+   case SHAPE_BOX:
+      s = plNewBoxShape(sp->params.box.width/2.0f, sp->params.box.height/2.0f, sp->params.box.depth/2.0f);
+      break;
 
-      case SHAPE_CONVEX:
-         s = plNewConvexHullShape();
-         int i = 0;
-         vec3f_t* v = &sp->params.convex.points[0];
-         for (i = 0; i < sp->params.convex.npoints; ++i, ++v)
-         {
-            plAddVertex(s, v->x, v->y, v->z);
-         }
-         break;
+   case SHAPE_CONVEX:
+      s = plNewConvexHullShape();
+      int i = 0;
+      vec3f_t* v = &sp->params.convex.points[0];
+      for (i = 0; i < sp->params.convex.npoints; ++i, ++v)
+      {
+         plAddVertex(s, v->x, v->y, v->z);
+      }
+      break;
 
-      case SHAPE_BVH_TRIMESH:
-         s = plNewBvhTriangleMeshShape(
-               sp->params.bvh_trimesh.nindices,
-               sp->params.bvh_trimesh.indices,
-               sp->params.bvh_trimesh.indices_stride,
-               sp->params.bvh_trimesh.nvertices,
-               sp->params.bvh_trimesh.vertices,
-               sp->params.bvh_trimesh.vertices_stride);
-         break;
+   case SHAPE_BVH_TRIMESH:
+      s = plNewBvhTriangleMeshShape(
+             sp->params.bvh_trimesh.nindices,
+             sp->params.bvh_trimesh.indices,
+             sp->params.bvh_trimesh.indices_stride,
+             sp->params.bvh_trimesh.nvertices,
+             sp->params.bvh_trimesh.vertices,
+             sp->params.bvh_trimesh.vertices_stride);
+      break;
 
-      default:
-         LOGE("Unknown shape type: %d", sp->type);
-         return -1;
+   default:
+      LOGE("Unknown shape type: %d", sp->type);
+      return -1;
    }
 
    if (s == NULL)
@@ -125,10 +125,10 @@ int rigidbody_create(rigidbody_t** pb, const rigidbody_params_t* params)
    (*pb) = (rigidbody_t*)handle;
 
    rigidbody_set_transform(*pb, &params->transform);
-   rigidbody_set_friction(*pb, params->friction);
-   rigidbody_set_restitution(*pb, params->restitution);
-   rigidbody_set_damping(*pb, params->linear_damping, params->angular_damping);
-   rigidbody_set_sleeping_thresholds(*pb, params->linear_sleeping_threshold, params->angular_sleeping_threshold);
+   //rigidbody_set_friction(*pb, params->friction);
+   //rigidbody_set_restitution(*pb, params->restitution);
+   //rigidbody_set_damping(*pb, params->linear_damping, params->angular_damping);
+   //rigidbody_set_sleeping_thresholds(*pb, params->linear_sleeping_threshold, params->angular_sleeping_threshold);
 
    return 0;
 }

@@ -3,6 +3,7 @@
 #include "shader.h"
 #include "camera.h"
 #include "resman.h"
+#include "game.h"
 
 void bbox_reset(bbox_t* b)
 {
@@ -43,9 +44,9 @@ int bbox_tri_intersection(const bbox_t* bbox, const vec3f_t* a, const vec3f_t* b
    return 0;
 }
 
-extern resman_t* g_resman;
+extern struct game_t* game;
 
-void bbox_draw(const bbox_t* b, const cam_t* camera)
+void bbox_draw(const bbox_t* b, const camera_t* camera)
 {
    mat4f_t mvp;
    mat4_mult(&mvp, &camera->proj, &camera->view);
@@ -90,7 +91,7 @@ void bbox_draw(const bbox_t* b, const cam_t* camera)
       vertices[i + 2] = b->min.z * (1.0f - vertices[i + 2]) + b->max.z * vertices[i + 2];
    }
 
-   shader_t* shader = resman_get_shader(g_resman, "assets/shaders/bbox");
+   shader_t* shader = resman_get_shader(game->resman, "//shaders/bbox");
    if (shader == NULL)
       return;
 

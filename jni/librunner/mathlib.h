@@ -5,6 +5,12 @@
 #define DEG2RAD(a)   ((a)*M_PI/180.0f)
 #define RAD2DEG(a)   ((a)*180.0f/M_PI)
 
+typedef struct vec2f_t
+{
+   float x;
+   float y;
+} vec2f_t;
+
 typedef struct vec3f_t
 {
    float x;

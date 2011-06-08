@@ -1,13 +1,13 @@
 #pragma once
 
-struct shader_t;
+typedef struct material_t
+{
+   char name[64];
+   char shader[64];
+   char texture[64];
+} material_t;
 
-typedef struct material_t material_t;
-
-int material_load(material_t** m, const char* fname);
-void material_free(material_t* m);
-void material_show(const material_t* m);
-void material_use(const material_t* m, int sampler_id);
-void material_unuse(const material_t* m);
-struct shader_t* material_get_shader(const material_t* m);
+void material_show(const material_t* material);
+void material_bind(const material_t* material, int sampler_id);
+void material_unbind(const material_t* material);
 

@@ -2,28 +2,23 @@
 
 #include "mathlib.h"
 
-typedef struct cam_t
+typedef struct camera_t
 {
-   vec3f_t pos;
-   vec3f_t up;
-   vec3f_t view_dir;
+   char name[64];
 
-   vec3f_t speed;
-   vec3f_t target;
+   enum
+   {
+      CAMERA_PERSPECTIVE = 0,
+      CAMERA_ORTHO,
+   } type;
 
-   vec3f_t max_speed;
-   vec3f_t acceleration;
-   vec3f_t decceleration;
+   float fovx;
+   float fovy;
+   float aspect;
+   float znear;
+   float zfar;
 
    mat4f_t proj;
    mat4f_t view;
-} cam_t;
-
-void cam_init(cam_t* c, float fov, float aspect, float znear, float zfar);
-void cam_slide(cam_t* c, const vec3f_t* offset);
-void cam_set_pos(cam_t* c, const vec3f_t* pos);
-void cam_set_up(cam_t* c, const vec3f_t* up);
-void cam_set_view_dir(cam_t* c, const vec3f_t* view_dir);
-void cam_look_at(cam_t* c, const vec3f_t* at);
-void cam_update(float dt, cam_t* c);
+} camera_t;
 

@@ -26,3 +26,6 @@
 #define LOGE(...) { printf(__VA_ARGS__); putchar('\n'); }
 #endif
 
+void outGLString(const char* name, GLenum e);
+void checkGLError(const char* op);
+

@@ -1,7 +1,6 @@
 #include "shader.h"
 #include "common.h"
 #include "stream.h"
-#include "gl.h"
 
 #define MAX_SHADER_VARS 32
 

@@ -1,12 +1,11 @@
 #include "frustum.h"
 #include "common.h"
 #include "bbox.h"
-#include "camera.h"
 
-void frustum_set(frustum_t* frustum, const cam_t* camera)
+void frustum_set(frustum_t* frustum, const mat4f_t* proj, const mat4f_t* view)
 {
    mat4f_t clip;
-   mat4_mult(&clip, &camera->proj, &camera->view);
+   mat4_mult(&clip, proj, view);
 
    // right plane
    frustum->planes[0].x = clip.m41 - clip.m11;

@@ -1,9 +1,8 @@
 #include "resman.h"
 #include "shader.h"
 #include "tex2d.h"
-#include "model.h"
-#include "octree.h"
-#include "material.h"
+#include "world.h"
+#include "image.h"
 
 typedef struct entry_t
 {
@@ -13,23 +12,16 @@ typedef struct entry_t
 
 #define MAX_SHADERS  64
 #define MAX_TEXTURES 64
-#define MAX_MODELS   256
-#define MAX_OCTREES  32
-#define MAX_MATERIALS 64
 
 struct resman_t
 {
+   const world_t* world;
+
    long nshaders;
    long ntextures;
-   long nmodels;
-   long noctrees;
-   long nmaterials;
 
    entry_t shaders[MAX_SHADERS];
    entry_t textures[MAX_TEXTURES];
-   entry_t models[MAX_MODELS];
-   entry_t octrees[MAX_OCTREES];
-   entry_t materials[MAX_MATERIALS];
 };
 
 static void* entry_get(const entry_t* entries, long nentries, const char* key)
@@ -47,10 +39,79 @@ static void* entry_get(const entry_t* entries, long nentries, const char* key)
    return NULL;
 }
 
-int resman_init(resman_t** prm)
+int add_texture(resman_t* rm, const struct texture_t* texture)
+{
+   if (resman_get_texture(rm, texture->name) == NULL)
+   {
+      image_t* image = NULL;
+      if (image_load_from_png(&image, texture->path) != 0)
+      {
+         return -1;
+      }
+
+      tex2d_t* tex2d = NULL;
+      if (tex2d_create(&tex2d, image, texture->min_filter, texture->mag_filter, texture->wrap_s, texture->wrap_t) != 0)
+      {
+         image_free(image);
+         return -1;
+      }
+
+      image_free(image);
+
+      strcpy(rm->textures[rm->ntextures].key, texture->name);
+      rm->textures[rm->ntextures].value = tex2d;
+      ++rm->ntextures;
+   }
+   return 0;
+}
+
+int add_shader(resman_t* rm, const char* name)
+{
+   shader_t* shader = resman_get_shader(rm, name);
+   if (shader == NULL)
+   {
+      if (shader_load(&shader, name) != 0)
+      {
+         return -1;
+      }
+
+      strcpy(rm->shaders[rm->nshaders].key, name);
+      rm->shaders[rm->nshaders].value = shader;
+      ++rm->nshaders;
+   }
+   return 0;
+}
+
+int resman_init(resman_t** prm, const world_t* world)
 {
    resman_t* rm = (resman_t*)malloc(sizeof(resman_t));
    memset(rm, 0, sizeof(resman_t));
+   rm->world = world;
+
+   long l = 0;
+
+   struct texture_t* texture = &world->textures[0];
+   for (l = 0; l < world->ntextures; ++l, ++texture)
+   {
+      if (add_texture(rm, texture) != 0)
+      {
+         resman_free(rm);
+         return -1;
+      }
+   }
+
+   const struct material_t* material = &world->materials[0];
+   for (l = 0; l < world->nmaterials; ++l, ++material)
+   {
+      if (add_shader(rm, material->shader) != 0)
+      {
+         resman_free(rm);
+         return -1;
+      }
+   }
+
+   add_shader(rm, "//shaders/bbox");
+
    (*prm) = rm;
    return 0;
 }
@@ -74,33 +135,12 @@ void resman_free(resman_t* rm)
       ++e;
    }
 
-   e = &rm->models[0];
-   for (l = 0; l < rm->nmodels; ++l)
-   {
-      model_free((model_t*)e->value);
-      ++e;
-   }
-
-   e = &rm->octrees[0];
-   for (l = 0; l < rm->noctrees; ++l)
-   {
-      octree_free((octree_t*)e->value);
-      ++e;
-   }
-
-   e = &rm->materials[0];
-   for (l = 0; l < rm->nmaterials; ++l)
-   {
-      material_free((material_t*)e->value);
-      ++e;
-   }
-
    free(rm);
 }
 
 void resman_show(const resman_t* rm)
 {
-   LOGI("Resman [%ld shaders, %ld textures, %ld models, %ld octrees]", rm->nshaders, rm->ntextures, rm->nmodels, rm->noctrees);
+   LOGI("Resman [%ld shaders, %ld textures]", rm->nshaders, rm->ntextures);
    long l = 0;
    const entry_t* e = NULL;
 
@@ -119,139 +159,43 @@ void resman_show(const resman_t* rm)
       LOGI("\t\t#%04ld:\t%s", l, e->key);
       ++e;
    }
-
-   LOGI("\tModels:");
-   e = &rm->models[0];
-   for (l = 0; l < rm->nmodels; ++l)
-   {
-      LOGI("\t\t#%04ld:\t%s", l, e->key);
-      ++e;
-   }
-
-   LOGI("\tOctrees:");
-   e = &rm->octrees[0];
-   for (l = 0; l < rm->noctrees; ++l)
-   {
-      LOGI("\t\t#%04ld:\t%s", l, e->key);
-      ++e;
-   }
-
-   LOGI("\tMaterials:");
-   e = &rm->materials[0];
-   for (l = 0; l < rm->nmaterials; ++l)
-   {
-      LOGI("\t\t#%04ld:\t%s", l, e->key);
-      ++e;
-   }
 }
 
 shader_t* resman_get_shader(resman_t* rm, const char* name)
 {
-   shader_t* v = (shader_t*)entry_get(rm->shaders, rm->nshaders, name);
-   if (v != NULL)
-      return v;
-
-   if (rm->nshaders >= MAX_SHADERS - 1)
-   {
-      LOGE("Shaders count overflow");
-      return NULL;
-   }
-
-   if (shader_load(&v, name) != 0)
-      return NULL;
-
-   strcpy(rm->shaders[rm->nshaders].key, name);
-   rm->shaders[rm->nshaders].value = v;
-   ++rm->nshaders;
-
-   return v;
+   return (shader_t*)entry_get(rm->shaders, rm->nshaders, name);
 }
 
 struct tex2d_t* resman_get_texture(resman_t* rm, const char* name)
 {
-   tex2d_t* v = (tex2d_t*)entry_get(rm->textures, rm->ntextures, name);
-   if (v != NULL)
-      return v;
-
-   if (rm->ntextures >= MAX_TEXTURES - 1)
-   {
-      LOGE("Textures count overflow");
-      return NULL;
-   }
-
-   if (tex2d_load_from_png(&v, name) != 0)
-      return NULL;
-
-   strcpy(rm->textures[rm->ntextures].key, name);
-   rm->textures[rm->ntextures].value = v;
-   ++rm->ntextures;
-
-   return v;
-}
-
-struct model_t* resman_get_model(resman_t* rm, const char* name)
-{
-   model_t* v = (model_t*)entry_get(rm->models, rm->nmodels, name);
-   if (v != NULL)
-      return v;
-
-   if (rm->nmodels >= MAX_MODELS - 1)
-   {
-      LOGE("Models count overflow");
-      return NULL;
-   }
-
-   if (model_load(&v, name) != 0)
-      return NULL;
-
-   strcpy(rm->models[rm->nmodels].key, name);
-   rm->models[rm->nmodels].value = v;
-   ++rm->nmodels;
-
-   return v;
-}
-
-struct octree_t* resman_get_octree(resman_t* rm, const char* name)
-{
-   octree_t* v = (octree_t*)entry_get(rm->octrees, rm->noctrees, name);
-   if (v != NULL)
-      return v;
-
-   if (rm->noctrees >= MAX_OCTREES - 1)
-   {
-      LOGE("Octrees count overflow");
-      return NULL;
-   }
-
-   if (octree_load(&v, name) != 0)
-      return NULL;
-
-   strcpy(rm->octrees[rm->noctrees].key, name);
-   rm->octrees[rm->noctrees].value = v;
-   ++rm->noctrees;
-
-   return v;
+   return (tex2d_t*)entry_get(rm->textures, rm->ntextures, name);
 }
 
 struct material_t* resman_get_material(resman_t* rm, const char* name)
 {
-   material_t* v = (material_t*)entry_get(rm->materials, rm->nmaterials, name);
-   if (v != NULL)
-      return v;
-
-   if (rm->nmaterials >= MAX_MATERIALS - 1)
+   long l = 0;
+   struct material_t* material = &rm->world->materials[0];
+   for (l = 0; l < rm->world->nmaterials; ++l, ++material)
    {
-      LOGE("materials count overflow");
-      return NULL;
+      if (strcmp(material->name, name) == 0)
+      {
+         return material;
+      }
    }
+   return NULL;
+}
 
-   if (material_load(&v, name) != 0)
-      return NULL;
-
-   strcpy(rm->materials[rm->nmaterials].key, name);
-   rm->materials[rm->nmaterials].value = v;
-   ++rm->nmaterials;
-
-   return v;
+struct mesh_t* resman_get_mesh(resman_t* rm, const char* name)
+{
+   long l = 0;
+   struct mesh_t* mesh = &rm->world->meshes[0];
+   for (l = 0; l < rm->world->nmeshes; ++l, ++mesh)
+   {
+      if (strcmp(mesh->name, name) == 0)
+      {
+         return mesh;
+      }
+   }
+   return NULL;
 }
 

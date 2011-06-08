@@ -54,19 +54,27 @@ int stream_open_reader(stream_t** pstream, const char* fname)
       return -1;
    }
 
+   // remove leading slashes
+   const char* path = fname;
+   while (*path == '/' && *path != '\0') ++path;
+
+   char name[256] = {0};
+   strcpy(name, "assets/");
+   strcat(name, path);
+
    stream_t* stream = (stream_t*)malloc(sizeof(stream_t));
 
-   if (zip_stat(g_archive, fname, 0, &stream->stat))
+   if (zip_stat(g_archive, name, 0, &stream->stat))
    {
-      LOGE("Unable to stat file %s: %s", fname, zip_strerror(g_archive));
+      LOGE("Unable to stat file %s: %s", name, zip_strerror(g_archive));
       free(stream);
       return -1;
    }
 
-   stream->zip = zip_fopen(g_archive, fname, 0);
+   stream->zip = zip_fopen(g_archive, name, 0);
    if (stream->zip == NULL)
    {
-      LOGE("Unable to open file %s: %s", fname, zip_strerror(g_archive));
+      LOGE("Unable to open file %s: %s", name, zip_strerror(g_archive));
       free(stream);
       return -1;
    }
