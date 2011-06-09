@@ -78,6 +78,9 @@ int rigidbody_create(rigidbody_t** pb, const struct phys_t* phys, const mesh_t* 
       return -1;
    }
 
+   long l = 0;
+   long k = 0;
+
    const struct shape_t* sp = &phys->shape;
    plCollisionShapeHandle s = NULL;
    switch (sp->type)
@@ -91,10 +94,8 @@ int rigidbody_create(rigidbody_t** pb, const struct phys_t* phys, const mesh_t* 
       break;
 
    case SHAPE_CONVEX:
+   {
       s = plNewConvexHullShape();
-      long l = 0;
-      long k = 0;
-
       const struct submesh_t* submesh = &mesh->submeshes[0];
       for (l = 0; l < mesh->nsubmeshes; ++l, ++submesh)
       {
@@ -105,16 +106,24 @@ int rigidbody_create(rigidbody_t** pb, const struct phys_t* phys, const mesh_t* 
          }
       }
       break;
+   }
 
-      /*case SHAPE_CONCAVE:
+   case SHAPE_CONCAVE:
+   {
+      const struct submesh_t* submesh = &mesh->submeshes[0];
+      for (l = 0; l < mesh->nsubmeshes; ++l, ++submesh)
+      {
+         vertex_t* vert = &submesh->vertices[0];
          s = plNewBvhTriangleMeshShape(
-                sp->params.bvh_trimesh.nindices,
-                sp->params.bvh_trimesh.indices,
-                sp->params.bvh_trimesh.indices_stride,
-                sp->params.bvh_trimesh.nvertices,
-                sp->params.bvh_trimesh.vertices,
-                sp->params.bvh_trimesh.vertices_stride);
-         break;*/
+                submesh->nindices,
+                &submesh->indices[0],
+                3*sizeof(int),
+                submesh->nvertices,
+                (plReal*)&submesh->vertices[0].point,
+                sizeof(vertex_t));
+      }
+      break;
+   }
 
    default:
       LOGE("Unknown shape type: %d", sp->type);
