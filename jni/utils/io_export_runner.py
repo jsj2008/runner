@@ -238,13 +238,39 @@ GL_MIRRORED_REPEAT         = 0x8370
 
 def pack_texture(texture):
    print("Texture: " + texture.name)
+
+   if texture.use_interpolation:
+      mag_filter = GL_LINEAR
+      if texture.use_mipmap:
+         min_filter = GL_LINEAR_MIPMAP_LINEAR
+      else:
+         min_filter = GL_LINEAR
+   else:
+      mag_filter = GL_NEAREST
+      if texture.use_mipmap:
+         min_filter = GL_NEAREST_MIPMAP_NEAREST
+      else:
+         min_filter = GL_NEAREST
+
+   if texture.extension == "REPEAT":
+      if texture.use_mirror_x:
+         wrap_s = GL_MIRRORED_REPEAT
+      else:
+         wrap_s = GL_REPEAT
+
+      if texture.use_mirror_y:
+         wrap_t = GL_MIRRORED_REPEAT
+      else:
+         wrap_t = GL_REPEAT
+   else:
+      wrap_s = GL_CLAMP_TO_EDGE
+      wrap_t = GL_CLAMP_TO_EDGE
+
    return texture_t.pack(
          texture.name.encode('utf-8'),
          texture.image.filepath.encode('utf-8'),
-         GL_LINEAR_MIPMAP_LINEAR,
-         GL_LINEAR,
-         GL_REPEAT,
-         GL_REPEAT)
+         min_filter, mag_filter,
+         wrap_s, wrap_t)
 
 def pack_textures(textures, offset):
    data = bytes()
