@@ -355,7 +355,7 @@ void plSetGravity(plDynamicsWorldHandle world, const plVector3 gravity)
 	dynamicsWorld->setGravity(g);
 }
 
-plCollisionShapeHandle plNewBvhTriangleMeshShape(long nindices, int* indices, long indices_stride, long nvertices, plReal* vertices, long vertices_stride)
+plCollisionShapeHandle plNewBvhTriangleMeshShape(long nindices, unsigned int* indices, long indices_stride, long nvertices, plReal* vertices, long vertices_stride)
 {
    btIndexedMesh mesh;
    mesh.m_numTriangles = nindices / 3;
@@ -405,6 +405,28 @@ void plSetSleepingThresholds(plRigidBodyHandle object, plReal linear, plReal ang
    body->setSleepingThresholds(linear, angular);
 }
 
+void plSetLinearFactor(plRigidBodyHandle object, const plVector3 factor)
+{
+   btRigidBody* body = reinterpret_cast< btRigidBody* >(object);
+   btAssert(body);
+   btVector3 f (factor[0], factor[1], factor[2]);
+   body->setLinearFactor(f);
+}
+
+void plSetAngularFactor(plRigidBodyHandle object, const plVector3 factor)
+{
+   btRigidBody* body = reinterpret_cast< btRigidBody* >(object);
+   btAssert(body);
+   btVector3 f (factor[0], factor[1], factor[2]);
+   body->setAngularFactor(f);
+}
+
+void plSetMargin(plCollisionShapeHandle cshape, plReal margin)
+{
+   btCollisionShape* shape = reinterpret_cast<btCollisionShape*>(cshape);
+   btAssert(shape);
+   shape->setMargin(margin);
+}
 //plRigidBodyHandle plRayCast(plDynamicsWorldHandle world, const plVector3 rayStart, const plVector3 rayEnd, plVector3 hitpoint, plVector3 normal);
 
 //	extern  plRigidBodyHandle plObjectCast(plDynamicsWorldHandle world, const plVector3 rayStart, const plVector3 rayEnd, plVector3 hitpoint, plVector3 normal);

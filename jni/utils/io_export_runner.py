@@ -26,9 +26,9 @@ material_t = struct.Struct("<64s64s64s")
 texture_t = struct.Struct("<64s64s4L")
 mesh_t = struct.Struct("<64s2L")
 submesh_t = struct.Struct("<64s4L")
-node_t = struct.Struct("<64s64sL64s24s56sl")
+node_t = struct.Struct("<64s64sL64s24s80sl")
 shape_t = struct.Struct("<L2f12s")
-phys_t = struct.Struct("<L7f24s")
+phys_t = struct.Struct("<L7f12s12s24s")
 scene_t = struct.Struct("<64s64s12s2L")
 world_t = struct.Struct("<64s10L")
 
@@ -358,15 +358,30 @@ def pack_shape(shape):
    (type, margin, radius, extents) = shape
    return shape_t.pack(type, margin, radius, pack_vector(extents))
 
+def lock_value(lock):
+   if lock:
+      return 0.0
+   else:
+      return 1.0
+
 def pack_phys(phys, bbox):
    (bbox_min, bbox_max) = bbox
-   extents = [bbox_max[0] - bbox_min[0], bbox_max[1] - bbox_min[1], bbox_max[2] - bbox_min[2]]
-   print("Extents %.2f %.2f %.2f"%(extents[0], extents[1], extents[2]))
+   extents = [ bbox_max[0] - bbox_min[0],
+               bbox_max[1] - bbox_min[1],
+               bbox_max[2] - bbox_min[2]]
+   linear_factor = [ lock_value(phys.lock_location_x),
+                     lock_value(phys.lock_location_y),
+                     lock_value(phys.lock_location_z)]
+   angular_factor = [lock_value(phys.lock_rotation_x),
+                     lock_value(phys.lock_rotation_y),
+                     lock_value(phys.lock_rotation_z)]
    return phys_t.pack(
          get_phys_type(phys.physics_type),
          phys.mass, phys.friction_coefficients[0], 0.01,
          phys.damping, phys.rotation_damping,
          0.0, 0.0,
+         pack_vector(linear_factor),
+         pack_vector(angular_factor),
          pack_shape((get_shape_type(phys.collision_bounds_type), phys.collision_margin, phys.radius, extents)))
 
 def pack_world(name, world):

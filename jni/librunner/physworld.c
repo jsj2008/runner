@@ -52,7 +52,7 @@ void physworld_free(physworld_t* w)
 void physworld_update(physworld_t* w, float dt)
 {
    const float internal_dt = 1.0f / 60.0f;
-   int steps = 5;//(int)(dt / internal_dt + 0.5f);
+   int steps = (int)(dt / internal_dt + 0.5f);
    plStepSimulationPrecise(w->handle, dt, steps, internal_dt);
 }
 
@@ -113,7 +113,6 @@ int rigidbody_create(rigidbody_t** pb, const struct phys_t* phys, const mesh_t* 
       const struct submesh_t* submesh = &mesh->submeshes[0];
       for (l = 0; l < mesh->nsubmeshes; ++l, ++submesh)
       {
-         vertex_t* vert = &submesh->vertices[0];
          s = plNewBvhTriangleMeshShape(
                 submesh->nindices,
                 &submesh->indices[0],
@@ -136,6 +135,8 @@ int rigidbody_create(rigidbody_t** pb, const struct phys_t* phys, const mesh_t* 
       return -1;
    }
 
+   plSetMargin(s, sp->margin);
+
    float mass = (phys->type == PHYS_RIGID) ? phys->mass : 0.0f;
 
    plRigidBodyHandle handle = plCreateRigidBody(NULL, mass, s);
@@ -152,6 +153,8 @@ int rigidbody_create(rigidbody_t** pb, const struct phys_t* phys, const mesh_t* 
    rigidbody_set_restitution(*pb, phys->restitution);
    rigidbody_set_damping(*pb, phys->linear_damping, phys->angular_damping);
    //rigidbody_set_sleeping_thresholds(*pb, phys->linear_sleeping_threshold, phys->angular_sleeping_threshold);
+   rigidbody_set_linear_factor(*pb, &phys->linear_factor);
+   rigidbody_set_angular_factor(*pb, &phys->angular_factor);
 
    return 0;
 }
@@ -190,6 +193,16 @@ void rigidbody_set_damping(rigidbody_t* b, float linear, float angular)
 void rigidbody_set_sleeping_thresholds(rigidbody_t* b, float linear, float angular)
 {
    plSetSleepingThresholds((plRigidBodyHandle)b, linear, angular);
+}
+
+void rigidbody_set_linear_factor(rigidbody_t* b, const vec3f_t* factor)
+{
+   plSetLinearFactor((plRigidBodyHandle)b, (float*)factor);
+}
+
+void rigidbody_set_angular_factor(rigidbody_t* b, const vec3f_t* factor)
+{
+   plSetAngularFactor((plRigidBodyHandle)b, (float*)factor);
 }
 
 void rigidbody_apply_central_impulse(rigidbody_t* b, const vec3f_t* impulse)

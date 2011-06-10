@@ -68,6 +68,9 @@ typedef struct phys_t
    float linear_sleeping_threshold;
    float angular_sleeping_threshold;
 
+   vec3f_t linear_factor;
+   vec3f_t angular_factor;
+
    struct shape_t shape;
 } phys_t;
 

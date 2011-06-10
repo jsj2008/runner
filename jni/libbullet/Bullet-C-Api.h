@@ -170,12 +170,16 @@ extern "C" {
    extern void plStepSimulationPrecise(plDynamicsWorldHandle world, plReal timeStep, int maxSteps, plReal internalTimeStep);
    extern void plSetGravity(plDynamicsWorldHandle world, const plVector3 gravity);
    extern void plApplyCentralImpulse(plRigidBodyHandle object, const plVector3 impulse);
-   extern plCollisionShapeHandle plNewBvhTriangleMeshShape(long nindices, int* indices, long indices_stride, long nvertices, plReal* vertices, long vertices_stride);
+   extern plCollisionShapeHandle plNewBvhTriangleMeshShape(long nindices, unsigned int* indices, long indices_stride, long nvertices, plReal* vertices, long vertices_stride);
 
-	extern void plSetFriction(plRigidBodyHandle object, plReal friction);
-	extern void plSetRestitution(plRigidBodyHandle object, plReal restitution);
-	extern void plSetDamping(plRigidBodyHandle object, plReal linear, plReal angular);
-	extern void plSetSleepingThresholds(plRigidBodyHandle object, plReal linear, plReal angular);
+   extern  void plSetMargin(plCollisionShapeHandle shape, plReal margin);
+
+   extern void plSetFriction(plRigidBodyHandle object, plReal friction);
+   extern void plSetRestitution(plRigidBodyHandle object, plReal restitution);
+   extern void plSetDamping(plRigidBodyHandle object, plReal linear, plReal angular);
+   extern void plSetSleepingThresholds(plRigidBodyHandle object, plReal linear, plReal angular);
+   extern void plSetLinearFactor(plRigidBodyHandle object, const plVector3 factor);
+   extern void plSetAngularFactor(plRigidBodyHandle object, const plVector3 factor);
 #ifdef __cplusplus
 }
 #endif

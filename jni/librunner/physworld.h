@@ -23,5 +23,7 @@ void rigidbody_set_friction(rigidbody_t* b, float friction);
 void rigidbody_set_restitution(rigidbody_t* b, float restitution);
 void rigidbody_set_damping(rigidbody_t* b, float linear, float angular);
 void rigidbody_set_sleeping_thresholds(rigidbody_t* b, float linear, float angular);
+void rigidbody_set_linear_factor(rigidbody_t* b, const vec3f_t* factor);
+void rigidbody_set_angular_factor(rigidbody_t* b, const vec3f_t* factor);
 void rigidbody_apply_central_impulse(rigidbody_t* b, const vec3f_t* impulse);
 
