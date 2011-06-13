@@ -91,7 +91,9 @@ extern "C" {
 
 /* Dynamics World */
 
-	extern  plDynamicsWorldHandle plCreateDynamicsWorld(plPhysicsSdkHandle physicsSdk);
+   typedef void (*DebugDrawLinePtr)(const plReal* from, const plReal* to, const plReal* color);
+
+	extern  plDynamicsWorldHandle plCreateDynamicsWorld(plPhysicsSdkHandle physicsSdk, DebugDrawLinePtr draw_line);
 
 	extern  void           plDeleteDynamicsWorld(plDynamicsWorldHandle world);
 
@@ -104,7 +106,10 @@ extern "C" {
 
 /* Rigid Body  */
 
-	extern  plRigidBodyHandle plCreateRigidBody(	void* user_data,  float mass, plCollisionShapeHandle cshape );
+   typedef void (*motionstate_getter)(plRigidBodyHandle body, plReal* transform, void* user_data);
+   typedef void (*motionstate_setter)(plRigidBodyHandle body, const plReal* transform, void* user_data);
+
+	extern  plRigidBodyHandle plCreateRigidBody(void* user_data, plReal mass, plCollisionShapeHandle cshape, plReal form_factor, motionstate_setter setter, motionstate_getter getter);
 
 	extern  void plDeleteRigidBody(plRigidBodyHandle body);
 
@@ -180,6 +185,8 @@ extern "C" {
    extern void plSetSleepingThresholds(plRigidBodyHandle object, plReal linear, plReal angular);
    extern void plSetLinearFactor(plRigidBodyHandle object, const plVector3 factor);
    extern void plSetAngularFactor(plRigidBodyHandle object, const plVector3 factor);
+
+   extern void plWorldDebugDraw(plDynamicsWorldHandle world);
 #ifdef __cplusplus
 }
 #endif
