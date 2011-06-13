@@ -110,7 +110,8 @@ int resman_init(resman_t** prm, const world_t* world)
       }
    }
 
-   add_shader(rm, "//shaders/bbox");
+   add_shader(rm, "shaders/bbox");
+   add_shader(rm, "shaders/physics");
 
    (*prm) = rm;
    return 0;

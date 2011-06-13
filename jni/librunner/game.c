@@ -8,23 +8,6 @@
 void game_update(struct game_t* game, float dt)
 {
    physworld_update(game->phys, dt);
-
-   long l = 0;
-   struct node_t* node = &game->scene->nodes[0];
-   for (l = 0; l < game->scene->nnodes; ++l, ++node)
-   {
-      if (game->bodies[l] != NULL)
-      {
-         rigidbody_get_transform(game->bodies[l], &node->transform);
-
-         if (node->type == NODE_CAMERA)
-         {
-            struct camera_t* camera = world_get_camera(game->world, node->data);
-            mat4_inverted(&camera->view, &node->transform);
-            mat4_set_perspective(&camera->proj, camera->fovy, camera->aspect, camera->znear, camera->zfar);
-         }
-      }
-   }
 }
 
 void game_render(const struct game_t* game)
@@ -39,6 +22,8 @@ void game_render(const struct game_t* game)
          world_render_mesh(game->world, game->camera, mesh, &node->transform);
       }
    }
+
+   //physworld_render(game->phys, game->camera);
 }
 
 int game_init(game_t** pgame, const char* fname)
@@ -104,6 +89,19 @@ void game_free(game_t* game)
    free(game);
 }
 
+void node_transform_setter(const rigidbody_t* b, const mat4f_t* transform, void* user_data)
+{
+   struct node_t* node = (struct node_t*)(user_data);
+   //rigidbody_get_transform(b, &node->transform);
+   node->transform = *transform;
+}
+
+void node_transform_getter(const rigidbody_t* b, mat4f_t* transform, void* user_data)
+{
+   struct node_t* node = (struct node_t*)(user_data);
+   *transform = node->transform;
+}
+
 void game_set_scene(game_t* game, const char* scenename)
 {
    LOGI("game_set_scene: '%s'", scenename);
@@ -132,6 +130,10 @@ void game_set_scene(game_t* game, const char* scenename)
       return;
    }
 
+   struct camera_t* camera = game->camera;
+   mat4_inverted(&camera->view, &camera_node->transform);
+   mat4_set_perspective(&camera->proj, camera->fovy / 2.0f, camera->aspect, camera->znear, camera->zfar);
+
    game->bodies = (rigidbody_t**)malloc(game->scene->nnodes * sizeof(rigidbody_t*));
    memset(&game->bodies[0], 0, game->scene->nnodes * sizeof(rigidbody_t*));
 
@@ -145,7 +147,7 @@ void game_set_scene(game_t* game, const char* scenename)
       struct mesh_t* mesh = world_get_mesh(game->world, node->data);
 
       LOGI("rigidbody_create");
-      if (rigidbody_create(&game->bodies[l], &node->phys, mesh, &node->transform) == 0)
+      if (rigidbody_create(&game->bodies[l], &node->phys, mesh, node_transform_setter, node_transform_getter, node) == 0)
       {
          LOGI("physworld_add_rigidbody");
          physworld_add_rigidbody(game->phys, game->bodies[l]);

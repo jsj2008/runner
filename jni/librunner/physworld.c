@@ -2,6 +2,9 @@
 #include <Bullet-C-Api.h>
 #include "common.h"
 #include "world.h"
+#include "game.h"
+#include "shader.h"
+#include "resman.h"
 
 struct physworld_t
 {
@@ -10,6 +13,26 @@ struct physworld_t
 };
 
 struct rigidbody_t { };
+
+
+extern game_t* game;
+
+#define MAX_LINES 8192
+int nlines;
+vec3f_t vertices[MAX_LINES * 2];
+vec3f_t colors[MAX_LINES * 2];
+
+void dd_draw_line(const vec3f_t* from, const vec3f_t* to, const vec3f_t* color)
+{
+   if (nlines >= MAX_LINES)
+      return;
+
+   vertices[nlines * 2] = *from;
+   vertices[nlines * 2 + 1] = *to;
+   colors[nlines * 2] = *color;
+   colors[nlines * 2 + 1] = *color;
+   ++nlines;
+}
 
 int physworld_create(physworld_t** pw)
 {
@@ -24,7 +47,7 @@ int physworld_create(physworld_t** pw)
       return -1;
    }
 
-   w->handle = plCreateDynamicsWorld(w->sdk);
+   w->handle = plCreateDynamicsWorld(w->sdk, (DebugDrawLinePtr)dd_draw_line);
    if (w->handle == NULL)
    {
       LOGE("Unable to create dynamics world");
@@ -52,7 +75,7 @@ void physworld_free(physworld_t* w)
 void physworld_update(physworld_t* w, float dt)
 {
    const float internal_dt = 1.0f / 60.0f;
-   int steps = (int)(dt / internal_dt + 0.5f);
+   int steps = (int)(dt / internal_dt + 1.0f);
    plStepSimulationPrecise(w->handle, dt, steps, internal_dt);
 }
 
@@ -71,7 +94,30 @@ void physworld_set_gravity(physworld_t* w, const vec3f_t* gravity)
    plSetGravity(w->handle, (float*)gravity);
 }
 
-int rigidbody_create(rigidbody_t** pb, const struct phys_t* phys, const mesh_t* mesh, const mat4f_t* transform)
+void physworld_render(const physworld_t* w, const camera_t* camera)
+{
+   shader_t* shader = resman_get_shader(game->resman, "shaders/physics");
+   if (shader == NULL)
+      return;
+
+   nlines = 0;
+   plWorldDebugDraw(w->handle);
+
+   mat4f_t mvp;
+   mat4_mult(&mvp, &camera->proj, &camera->view);
+
+   shader_use(shader);
+   shader_set_uniform_matrices(shader, "uMVP", 1, mat4_data(&mvp));
+   shader_set_attrib_vertices(shader, "aPos", 3, GL_FLOAT, 0, &vertices[0]);
+   shader_set_attrib_vertices(shader, "aColor", 3, GL_FLOAT, 0, &colors[0]);
+
+   glLineWidth(2);
+   glDrawArrays(GL_LINES, 0, nlines * 2);
+
+   shader_unuse(shader);
+}
+
+int rigidbody_create(rigidbody_t** pb, const struct phys_t* phys, const struct mesh_t* mesh, transform_setter setter, transform_getter getter, void* user_data)
 {
    if (phys->type == PHYS_NOCOLLISION)
    {
@@ -87,6 +133,11 @@ int rigidbody_create(rigidbody_t** pb, const struct phys_t* phys, const mesh_t* 
    {
    case SHAPE_SPHERE:
       s = plNewSphereShape(sp->radius);
+      break;
+
+   case SHAPE_CYLINDER:
+      LOGI("CYLINDER: %.2f %.2f", sp->radius, sp->extents.z);
+      s = plNewCylinderShape(sp->radius, sp->extents.z / 2.0f);
       break;
 
    case SHAPE_BOX:
@@ -138,8 +189,11 @@ int rigidbody_create(rigidbody_t** pb, const struct phys_t* phys, const mesh_t* 
    plSetMargin(s, sp->margin);
 
    float mass = (phys->type == PHYS_RIGID) ? phys->mass : 0.0f;
+   LOGI("MASS: %.2f INERTIA FACTOR: %.2f", mass, phys->inertia_factor);
+   LOGI("SLEEPING THRESHOLDS: %.2f %.2f", phys->linear_sleeping_threshold, phys->angular_sleeping_threshold);
+   LOGI("FRICTION: %.2f RESTITUTION: %.2f", phys->friction, phys->restitution);
 
-   plRigidBodyHandle handle = plCreateRigidBody(NULL, mass, s);
+   plRigidBodyHandle handle = plCreateRigidBody(user_data, mass, s, phys->inertia_factor, (motionstate_setter)setter, (motionstate_getter)getter);
    if (handle == NULL)
    {
       LOGE("Unable to create rigid body");
@@ -148,7 +202,6 @@ int rigidbody_create(rigidbody_t** pb, const struct phys_t* phys, const mesh_t* 
 
    (*pb) = (rigidbody_t*)handle;
 
-   rigidbody_set_transform(*pb, transform);
    rigidbody_set_friction(*pb, phys->friction);
    rigidbody_set_restitution(*pb, phys->restitution);
    rigidbody_set_damping(*pb, phys->linear_damping, phys->angular_damping);

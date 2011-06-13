@@ -23,6 +23,7 @@ subject to the following restrictions:
 #include "Bullet-C-Api.h"
 #include "btBulletDynamicsCommon.h"
 #include "LinearMath/btAlignedAllocator.h"
+#include "LinearMath/btIDebugDraw.h"
 
 
 
@@ -83,9 +84,50 @@ void		plDeletePhysicsSdk(plPhysicsSdkHandle	physicsSdk)
 	btAlignedFree(phys);	
 }
 
+class DebugDrawer : public btIDebugDraw
+{
+public:
+   DebugDrawer(DebugDrawLinePtr _drawLine)
+      : mDebugMode (btIDebugDraw::DBG_DrawWireframe | btIDebugDraw::DBG_DrawAabb | btIDebugDraw::DBG_DrawContactPoints)
+      , mDrawLine (_drawLine)
+   { }
+
+   virtual void drawLine(const btVector3& from,const btVector3& to,const btVector3& color)
+   {
+      mDrawLine(from, to, color);
+   }
+
+   virtual void draw3dText(const btVector3& location,const char* textString)
+   {
+   }
+
+   virtual void drawContactPoint(const btVector3& pointOnB,const btVector3& normalOnB,btScalar distance,int lifeTime,const btVector3& color)
+   {
+      drawLine(pointOnB, pointOnB + normalOnB, color);
+   }
+
+   virtual int getDebugMode() const
+   {
+      return mDebugMode;
+   }
+
+   virtual void setDebugMode(int debugMode)
+   {
+      mDebugMode = debugMode;
+   }
+
+   virtual void reportErrorWarning(const char* warningString)
+   {
+      printf(warningString);
+   }
+
+private:
+   int mDebugMode;
+   DebugDrawLinePtr mDrawLine;
+};
 
 /* Dynamics World */
-plDynamicsWorldHandle plCreateDynamicsWorld(plPhysicsSdkHandle physicsSdkHandle)
+plDynamicsWorldHandle plCreateDynamicsWorld(plPhysicsSdkHandle physicsSdkHandle, DebugDrawLinePtr drawLine)
 {
 	btPhysicsSdk* physicsSdk = reinterpret_cast<btPhysicsSdk*>(physicsSdkHandle);
 	void* mem = btAlignedAlloc(sizeof(btDefaultCollisionConfiguration),16);
@@ -98,7 +140,9 @@ plDynamicsWorldHandle plCreateDynamicsWorld(plPhysicsSdkHandle physicsSdkHandle)
 	btConstraintSolver*			constraintSolver = new(mem) btSequentialImpulseConstraintSolver();
 
 	mem = btAlignedAlloc(sizeof(btDiscreteDynamicsWorld),16);
-	return (plDynamicsWorldHandle) new (mem)btDiscreteDynamicsWorld(dispatcher,pairCache,constraintSolver,collisionConfiguration);
+	btDiscreteDynamicsWorld* world = new (mem)btDiscreteDynamicsWorld(dispatcher,pairCache,constraintSolver,collisionConfiguration);
+   world->setDebugDrawer(new DebugDrawer(drawLine));
+   return (plDynamicsWorldHandle)world;
 }
 void           plDeleteDynamicsWorld(plDynamicsWorldHandle world)
 {
@@ -136,10 +180,40 @@ void plRemoveRigidBody(plDynamicsWorldHandle world, plRigidBodyHandle object)
 
 /* Rigid Body  */
 
-plRigidBodyHandle plCreateRigidBody(	void* user_data,  float mass, plCollisionShapeHandle cshape )
+class MotionStateProxy : public btMotionState
 {
-	btTransform trans;
-	trans.setIdentity();
+   motionstate_setter mSetter;
+   motionstate_getter mGetter;
+   void* mUserData;
+
+public:
+   plRigidBodyHandle mBody;
+
+public:
+   MotionStateProxy(motionstate_setter setter, motionstate_getter getter, void* user_data)
+   {
+      mSetter = setter;
+      mGetter = getter;
+      mUserData = user_data;
+   }
+
+   virtual void getWorldTransform(btTransform &worldTrans) const
+   {
+      plReal transform[16];
+      (*mGetter)(mBody, &transform[0], mUserData);
+	   worldTrans.setFromOpenGLMatrix(&transform[0]);
+   }
+
+   virtual void setWorldTransform(const btTransform &worldTrans)
+   {
+      plReal transform[16];
+      worldTrans.getOpenGLMatrix(&transform[0]);
+      (*mSetter)(mBody, &transform[0], mUserData);
+   }
+};
+
+plRigidBodyHandle plCreateRigidBody(void* user_data, plReal mass, plCollisionShapeHandle cshape, plReal inertia_factor, motionstate_setter setter, motionstate_getter getter)
+{
 	btVector3 localInertia(0,0,0);
 	btCollisionShape* shape = reinterpret_cast<btCollisionShape*>( cshape);
 	btAssert(shape);
@@ -147,11 +221,12 @@ plRigidBodyHandle plCreateRigidBody(	void* user_data,  float mass, plCollisionSh
 	{
 		shape->calculateLocalInertia(mass,localInertia);
 	}
-	void* mem = btAlignedAlloc(sizeof(btRigidBody),16);
-	btRigidBody::btRigidBodyConstructionInfo rbci(mass, 0,shape,localInertia);
+	void* mem = btAlignedAlloc(sizeof(btRigidBody) + sizeof(MotionStateProxy), 16);
+   MotionStateProxy* ms = new ((char*)mem + sizeof(btRigidBody)) MotionStateProxy(setter, getter, user_data);
+	btRigidBody::btRigidBodyConstructionInfo rbci(mass, ms, shape, localInertia/* * inertia_factor*/);
 	btRigidBody* body = new (mem)btRigidBody(rbci);
-	body->setWorldTransform(trans);
 	body->setUserPointer(user_data);
+   ms->mBody = (plRigidBodyHandle)body;
 	return (plRigidBodyHandle) body;
 }
 
@@ -196,8 +271,8 @@ plCollisionShapeHandle plNewConeShape(plReal radius, plReal height)
 
 plCollisionShapeHandle plNewCylinderShape(plReal radius, plReal height)
 {
-	void* mem = btAlignedAlloc(sizeof(btCylinderShape),16);
-	return (plCollisionShapeHandle) new (mem)btCylinderShape(btVector3(radius,height,radius));
+	void* mem = btAlignedAlloc(sizeof(btCylinderShapeZ),16);
+	return (plCollisionShapeHandle) new (mem)btCylinderShapeZ(btVector3(radius,radius,height));
 }
 
 /* Convex Meshes */
@@ -375,6 +450,13 @@ plCollisionShapeHandle plNewBvhTriangleMeshShape(long nindices, unsigned int* in
    btBvhTriangleMeshShape* shape = new (mem) btBvhTriangleMeshShape(data, true, true);
 
    return (plCollisionShapeHandle)shape;
+}
+
+void plWorldDebugDraw(plDynamicsWorldHandle world)
+{
+   btDynamicsWorld* dynamicsWorld = reinterpret_cast< btDynamicsWorld* >(world);
+   btAssert(dynamicsWorld);
+   dynamicsWorld->debugDrawWorld();
 }
 
 void plSetFriction(plRigidBodyHandle object, plReal friction)

@@ -258,6 +258,14 @@ void shader_set_uniform_matrices(shader_t* shader, const char* name, long count,
    checkGLError("glUniformMatrix4fv");
 }
 
+void shader_set_uniform_vectors(shader_t* shader, const char* name, long count, const float* values)
+{
+   const shader_var_t* var = get_uniform_var(shader, name);
+
+   glUniform3fv(var->location, count, values);
+   checkGLError("glUniform3iv");
+}
+
 void shader_set_uniform_integers(shader_t* shader, const char* name, long count, const int* values)
 {
    const shader_var_t* var = get_uniform_var(shader, name);
