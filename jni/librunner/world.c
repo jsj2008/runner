@@ -196,6 +196,14 @@ void world_render_mesh(const world_t* world, const camera_t* camera, const mesh_
 {
    long l = 0;
 
+   vec3f_t globalLightPos;
+   globalLightPos.x = -7.0f;
+   globalLightPos.y = -20.0f;
+   globalLightPos.z = 11.0f;
+
+   vec3f_t lightPos = globalLightPos;
+   mat4_mult_vec3(&lightPos, &camera->view, &globalLightPos);
+
    struct submesh_t* submesh = &mesh->submeshes[0];
    for (; l < mesh->nsubmeshes; ++l, ++submesh)
    {
@@ -207,9 +215,18 @@ void world_render_mesh(const world_t* world, const camera_t* camera, const mesh_
       mat4_mult(&mv, &camera->view, transform);
       mat4_mult(&mvp, &camera->proj, &mv);
 
+      mat4f_t mvi = *transform;
+      mat4_inverted(&mvi, &mv);
+      mat4_transpose(&mvi);
+      mvi.m41 = mvi.m42 = mvi.m43 = 0.0f;
+      mvi.m44 = 1.0f;
+
       material_bind(material, 0);
 
       shader_set_uniform_matrices(shader, "uMVP", 1, mat4_data(&mvp));
+      shader_set_uniform_matrices(shader, "uMV", 1, mat4_data(&mv));
+      shader_set_uniform_matrices(shader, "uMVI", 1, mat4_data(&mvi));
+      shader_set_uniform_vectors(shader, "uLightPos", 1, &lightPos.x);
       shader_set_attrib_vertices(shader, "aPos", 3, GL_FLOAT, sizeof(vertex_t), &submesh->vertices[0].point);
       shader_set_attrib_vertices(shader, "aNormal", 3, GL_FLOAT, sizeof(vertex_t), &submesh->vertices[0].normal);
       shader_set_attrib_vertices(shader, "aTexCoord", 2, GL_FLOAT, sizeof(vertex_t), &submesh->vertices[0].uv);

@@ -1,10 +1,18 @@
 precision mediump float;
-varying vec4 vNormal;
+varying vec3 N;
+varying vec3 vPoint;
 varying vec2 vTexCoord;
+uniform vec3 uLightPos;
 uniform sampler2D uTex;
 
 void main()
 {
-   gl_FragColor = texture2D(uTex, vTexCoord);
+   vec3 L = normalize(uLightPos - vPoint);
+   vec3 E = normalize(-vPoint);
+   vec3 R = normalize(-reflect(L, N));
+
+   // diffuse
+   float lambertTerm = max(dot(N, L), 0.0);
+   gl_FragColor = texture2D(uTex, vTexCoord) * lambertTerm;
 }
 
