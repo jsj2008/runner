@@ -26,9 +26,9 @@ material_t = struct.Struct("<64s64s64s")
 texture_t = struct.Struct("<64s64s4L")
 mesh_t = struct.Struct("<64s2L")
 submesh_t = struct.Struct("<64s4L")
-node_t = struct.Struct("<64s64sL64s24s80sl")
+node_t = struct.Struct("<64s64sL64s24s84sl")
 shape_t = struct.Struct("<L2f12s")
-phys_t = struct.Struct("<L7f12s12s24s")
+phys_t = struct.Struct("<L8f12s12s24s")
 scene_t = struct.Struct("<64s64s12s2L")
 world_t = struct.Struct("<64s10L")
 
@@ -53,9 +53,15 @@ def pack_vertex(v):
    (point, normal, uv) = v
    return vertex_t.pack(pack_vector(point), pack_vector(normal), pack_uv(uv))
 
-def add_vertex(vertices, mesh, index, uv):
+def add_vertex(vertices, mesh, index, face, uv):
    v = mesh.vertices[index]
-   vert = (v.co, v.normal, uv)
+
+   if face.use_smooth:
+      normal = v.normal
+   else:
+      normal = face.normal
+
+   vert = (v.co, normal, uv)
    (point, normal, uv) = vert
 
    for i in range(0, len(vertices)):
@@ -73,11 +79,11 @@ def process_face(mesh, face, uv, vertices, indices):
    if count < 3:
       return
 
-   i0 = add_vertex(vertices, mesh, face.vertices[0], uv[0])
-   i1 = add_vertex(vertices, mesh, face.vertices[1], uv[1])
+   i0 = add_vertex(vertices, mesh, face.vertices[0], face, uv[0])
+   i1 = add_vertex(vertices, mesh, face.vertices[1], face, uv[1])
 
    for i in range(2, len(face.vertices)):
-      i2 = add_vertex(vertices, mesh, face.vertices[i], uv[i])
+      i2 = add_vertex(vertices, mesh, face.vertices[i], face, uv[i])
 
       indices.append(i0)
       indices.append(i1)
@@ -377,9 +383,10 @@ def pack_phys(phys, bbox):
                      lock_value(phys.lock_rotation_z)]
    return phys_t.pack(
          get_phys_type(phys.physics_type),
-         phys.mass, phys.friction_coefficients[0], 0.01,
+         phys.mass, 0.5, 0.1,
          phys.damping, phys.rotation_damping,
-         0.0, 0.0,
+         0.8, 1.0,
+         phys.form_factor,
          pack_vector(linear_factor),
          pack_vector(angular_factor),
          pack_shape((get_shape_type(phys.collision_bounds_type), phys.collision_margin, phys.radius, extents)))

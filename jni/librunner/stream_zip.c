@@ -56,11 +56,22 @@ int stream_open_reader(stream_t** pstream, const char* fname)
 
    // remove leading slashes
    const char* path = fname;
-   while (*path == '/' && *path != '\0') ++path;
+   while ((*path == '/' || *path == '\\') && *path != '\0') ++path;
 
    char name[256] = {0};
    strcpy(name, "assets/");
    strcat(name, path);
+
+   // normalize path separators
+   char* ptr =& name[0];
+   while (*ptr != '\0')
+   {
+      if (*ptr == '\\')
+      {
+         *ptr = '/';
+      }
+      ++ptr;
+   }
 
    stream_t* stream = (stream_t*)malloc(sizeof(stream_t));
 
