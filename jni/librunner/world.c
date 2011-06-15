@@ -197,9 +197,9 @@ void world_render_mesh(const world_t* world, const camera_t* camera, const mesh_
    long l = 0;
 
    vec3f_t globalLightPos;
-   globalLightPos.x = -7.0f;
-   globalLightPos.y = -20.0f;
-   globalLightPos.z = 11.0f;
+   globalLightPos.x = 4.0f;
+   globalLightPos.y = -2.5f;
+   globalLightPos.z = 6.0f;
 
    vec3f_t lightPos = globalLightPos;
    mat4_mult_vec3(&lightPos, &camera->view, &globalLightPos);
