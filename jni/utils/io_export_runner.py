@@ -1,6 +1,7 @@
 import os
 import struct
 import bpy
+import math
 from bpy.props import StringProperty
 from io_utils import ExportHelper
 
@@ -26,17 +27,21 @@ material_t = struct.Struct("<64s64s64s")
 texture_t = struct.Struct("<64s64s4L")
 mesh_t = struct.Struct("<64s2L")
 submesh_t = struct.Struct("<64s4L")
+lamp_t = struct.Struct("<64s2L4f12s")
 node_t = struct.Struct("<64s64sL64s24s84sl")
 shape_t = struct.Struct("<L2f12s")
 phys_t = struct.Struct("<L8f12s12s24s")
 scene_t = struct.Struct("<64s64s12s2L")
-world_t = struct.Struct("<64s10L")
+world_t = struct.Struct("<64s12L")
 
 def pack_uv(uv):
    return texcoord_t.pack(uv[0], uv[1])
 
 def pack_vector(vec):
    return vec3f_t.pack(vec[0], vec[1], vec[2])
+
+def pack_color(color):
+   return pack_vector(color)
 
 def pack_bbox(bbox):
    (bbox_min, bbox_max) = bbox
@@ -53,6 +58,21 @@ def pack_vertex(v):
    (point, normal, uv) = v
    return vertex_t.pack(pack_vector(point), pack_vector(normal), pack_uv(uv))
 
+def arr_equal(v1, v2):
+   if len(v1) != len(v2):
+      return False
+
+   for i in range(0, len(v1)):
+      diff = v1[i] - v2[i]
+      if math.fabs(diff) > 0.0001:
+         return False
+   return True
+
+def vertices_equal(v1, v2):
+   (p1, n1, uv1) = v1
+   (p2, n2, uv2) = v2
+   return arr_equal(p1, p2) and arr_equal(n1, n2) and arr_equal(uv1, uv2)
+
 def add_vertex(vertices, mesh, index, face, uv):
    v = mesh.vertices[index]
 
@@ -62,11 +82,9 @@ def add_vertex(vertices, mesh, index, face, uv):
       normal = face.normal
 
    vert = (v.co, normal, uv)
-   (point, normal, uv) = vert
 
    for i in range(0, len(vertices)):
-      (vpoint, vnormal, vuv) = vertices[i]
-      if vpoint == point and vnormal == normal and vuv == uv:
+      if vertices_equal(vert, vertices[i]):
          #print("Using vertex: #%d"%i)
          return i
 
@@ -197,6 +215,8 @@ def get_node_type(typename):
       return 0
    if (typename == 'CAMERA'):
       return 1
+   if (typename == 'LAMP'):
+      return 2
    return -1
 
 def pack_camera(camera):
@@ -285,6 +305,49 @@ def pack_textures(textures, offset):
 
    return (data, len(textures))
 
+def get_lamp_type(typename):
+   if (typename == 'POINT'):
+      return 0
+   if (typename == 'SPOT'):
+      return 1
+   return -1
+
+def get_falloff_type(typename):
+   if (typename == 'INVERSE_LINEAR'):
+      return 0
+   if (typename == 'INVERSE_SQUARE'):
+      return 1
+   if (typename == 'CONSTANT'):
+      return 2
+   return -1
+
+def pack_lamp(lamp):
+   print("Lamp: " + lamp.name)
+
+   type = get_lamp_type(lamp.type)
+   falloff_type = get_falloff_type(lamp.falloff_type)
+
+   if issubclass(lamp.__class__, bpy.types.SpotLamp):
+      spot_size = lamp.spot_size
+      spot_blend = lamp.spot_blend
+   else:
+      spot_size = 0.0
+      spot_blend = 0.0
+
+   return lamp_t.pack(
+         lamp.name.encode('utf-8'),
+         type, falloff_type,
+         lamp.energy, lamp.distance,
+         spot_size, spot_blend,
+         pack_color(lamp.color))
+
+def pack_lamps(lamps, offset):
+   data = bytes()
+   for lamp in lamps:
+      data += pack_lamp(lamp)
+
+   return (data, len(lamps))
+
 def get_bbox(node):
    bbox_min = [999999, 999999, 999999]
    bbox_max = [-999999, -999999, -999999]
@@ -319,14 +382,13 @@ def build_nodes_list(root_nodes, offset):
       (_, root_node) = root_nodes[i];
       parent_index = offset + i
       for child in root_node.children:
-         if child.type == 'MESH':
-            nodes.append((parent_index, child))
+         nodes.append((parent_index, child))
 
    nodes.extend(build_nodes_list(nodes, offset + len(root_nodes)))
    return nodes
 
 def pack_scene_nodes(nodes, offset):
-   sorted_nodes = [(-1, node) for node in nodes if node.type in ['MESH','CAMERA'] and node.parent == None]
+   sorted_nodes = [(-1, node) for node in nodes if node.type in ['MESH','CAMERA', 'LAMP'] and node.parent == None]
    sorted_nodes.extend(build_nodes_list(sorted_nodes, 0))
 
    print("Nodes count: %d"%(len(sorted_nodes)))
@@ -406,11 +468,18 @@ def pack_world(name, world):
    pmeshes = ptextures + len(textures)
    (meshes, nmeshes)  = pack_meshes(world.meshes, pmeshes)
 
-   pscenes = pmeshes + len(meshes)
+   plamps = pmeshes + len(meshes)
+   (lamps, nlamps) = pack_lamps(world.lamps, plamps)
+
+   pscenes = plamps + len(lamps)
    (scenes, nscenes) = pack_scenes(world.scenes, pscenes)
 
-   header = world_t.pack(name.encode('utf-8'), ncameras, nmaterials, ntextures, nmeshes, nscenes, pcameras, pmaterials, ptextures, pmeshes, pscenes)
-   return header + cameras + materials + textures + meshes + scenes
+   header = world_t.pack(
+      name.encode('utf-8'),
+      ncameras, nmaterials, ntextures, nmeshes, nlamps, nscenes,
+      pcameras, pmaterials, ptextures, pmeshes, plamps, pscenes)
+
+   return header + cameras + materials + textures + meshes + lamps + scenes
 
 def export_runner_world(context, filepath):
    print("EXPORT RUNNER WORLD TO: " + filepath)

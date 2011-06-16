@@ -107,6 +107,31 @@ typedef struct texture_t
    unsigned long wrap_t;
 } texture_t;
 
+typedef struct lamp_t
+{
+   char name[64];
+
+   enum
+   {
+      LAMP_POINT = 0,
+      LAMP_SPOT,
+   } type;
+
+   enum
+   {
+      FALLOFF_INV_LINEAR = 0,
+      FALLOFF_INV_SQUARED,
+      FALLOFF_CONST,
+   } falloff_type;
+
+   float energy;
+   float distance;
+   float spot_size;
+   float spot_blend;
+
+   vec3f_t color;
+} lamp_t;
+
 typedef struct scene_t
 {
    char name[64];
@@ -126,12 +151,14 @@ typedef struct world_t
    unsigned long nmaterials;
    unsigned long ntextures;
    unsigned long nmeshes;
+   unsigned long nlamps;
    unsigned long nscenes;
 
    struct camera_t* cameras;
    struct material_t* materials;
    struct texture_t* textures;
    struct mesh_t* meshes;
+   struct lamp_t* lamps;
    struct scene_t* scenes;
 } world_t;
 
@@ -143,8 +170,11 @@ camera_t* world_get_camera(const world_t* world, const char* name);
 material_t* world_get_material(const world_t* world, const char* name);
 texture_t* world_get_texture(const world_t* world, const char* name);
 mesh_t* world_get_mesh(const world_t* world, const char* name);
+lamp_t* world_get_lamp(const world_t* world, const char* name);
 scene_t* world_get_scene(const world_t* world, const char* name);
 node_t* scene_get_node(const scene_t* scene, const char* name);
 
 void world_render_mesh(const world_t* world, const struct camera_t* camera, const mesh_t* mesh, const mat4f_t* transform);
+void world_render_camera(const world_t* world, const camera_t* camera, const camera_t* cam, const mat4f_t* transform);
+void world_render_lamp(const world_t* world, const camera_t* camera, const lamp_t* lamp, const mat4f_t* transform);
 

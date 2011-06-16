@@ -60,10 +60,11 @@ int world_init(world_t** pworld, char* data)
    world->materials = (struct material_t*)(data + (long)world->materials);
    world->textures = (struct texture_t*)(data + (long)world->textures);
    world->meshes = (struct mesh_t*)(data + (long)world->meshes);
+   world->lamps = (struct lamp_t*)(data + (long)world->lamps);
    world->scenes = (struct scene_t*)(data + (long)world->scenes);
 
-   LOGI("World %s has %ld cameras, %ld materials, %ld textures, %ld meshes, %ld scenes",
-        world->name, world->ncameras, world->nmaterials, world->ntextures, world->nmeshes, world->nscenes);
+   LOGI("World %s has %ld cameras %ld materials %ld textures %ld meshes %ld lamps %ld scenes",
+        world->name, world->ncameras, world->nmaterials, world->ntextures, world->nmeshes, world->nlamps, world->nscenes);
 
    long l = 0;
    long k = 0;
@@ -84,6 +85,12 @@ int world_init(world_t** pworld, char* data)
    for (l = 0; l < world->ntextures; ++l, ++texture)
    {
       LOGI("Texture '%s' path '%s'", texture->name, texture->path);
+   }
+
+   struct lamp_t* lamp = &world->lamps[0];
+   for (l = 0; l < world->nlamps; ++l, ++lamp)
+   {
+      LOGI("Lamp '%s' distance %.2f energy %.2f type %d falloff_type %d", lamp->name, lamp->distance, lamp->energy, lamp->type, lamp->falloff_type);
    }
 
    struct mesh_t* mesh = &world->meshes[0];
@@ -168,6 +175,17 @@ mesh_t* world_get_mesh(const world_t* world, const char* name)
    return NULL;
 }
 
+lamp_t* world_get_lamp(const world_t* world, const char* name)
+{
+   long l = 0;
+   for (; l < world->nlamps; ++l)
+   {
+      if (strcmp(world->lamps[l].name, name) == 0)
+         return &world->lamps[l];
+   }
+   return NULL;
+}
+
 scene_t* world_get_scene(const world_t* world, const char* name)
 {
    long l = 0;
@@ -246,5 +264,20 @@ void world_render_mesh(const world_t* world, const camera_t* camera, const mesh_
       }
       bbox_draw(&b, camera);*/
    }
+}
+
+void world_render_camera(const world_t* world, const camera_t* camera, const camera_t* cam, const mat4f_t* transform)
+{
+   if (camera == cam)
+   {
+      return;
+   }
+
+   // TODO
+}
+
+void world_render_lamp(const world_t* world, const camera_t* camera, const lamp_t* lamp, const mat4f_t* transform)
+{
+   // TODO
 }
 

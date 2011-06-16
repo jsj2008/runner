@@ -16,10 +16,26 @@ void game_render(const struct game_t* game)
    struct node_t* node = &game->scene->nodes[0];
    for (l = 0; l < game->scene->nnodes; ++l, ++node)
    {
-      if (node->type == NODE_MESH)
+      switch (node->type)
       {
-         struct mesh_t* mesh = resman_get_mesh(game->resman, node->data);
-         world_render_mesh(game->world, game->camera, mesh, &node->transform);
+         case NODE_MESH:
+         {
+            struct mesh_t* mesh = resman_get_mesh(game->resman, node->data);
+            world_render_mesh(game->world, game->camera, mesh, &node->transform);
+            break;
+         }
+         case NODE_CAMERA:
+         {
+            struct camera_t* camera = world_get_camera(game->world, node->data);
+            world_render_camera(game->world, game->camera, camera, &node->transform);
+            break;
+         }
+         case NODE_LAMP:
+         {
+            struct lamp_t* lamp = world_get_lamp(game->world, node->data);
+            world_render_lamp(game->world, game->camera, lamp, &node->transform);
+            break;
+         }
       }
    }
 
