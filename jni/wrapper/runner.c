@@ -289,6 +289,8 @@ void update()
 
    skybox_render();
    game_render(game);
+
+   glFinish();
 }
 
 void scroll(long dt, float dx1, float dy1, float dx2, float dy2)

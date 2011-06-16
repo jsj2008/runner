@@ -1,33 +1,24 @@
 precision mediump float;
 varying vec3 N;
-varying vec3 vPoint;
+varying vec3 L;
+varying vec3 E;
+varying vec3 R;
 varying vec2 vTexCoord;
-uniform vec3 uLightPos;
+varying float vDist;
 uniform sampler2D uTex;
 
 void main()
 {
-   vec4 color;
-
-   vec3 aux = uLightPos - vPoint;
-   float dist = length(aux);
-   vec3 L = normalize(aux);
-   vec3 E = normalize(-vPoint);
-   vec3 R = normalize(-reflect(L, N));
-
-   const vec4 ambientColor = vec4(0.0, 0.0, 0.0, 0.0);
-   const vec4 diffuseColor = vec4(0.8, 0.8, 0.8, 1.0);
-   const vec4 specularColor = vec4(0.5, 0.5, 0.5, 1.0);
+   const vec4 diffuseColor = vec4(0.8, 0.8, 0.8, 0.0);
+   const vec4 specularColor = vec4(0.5, 0.5, 0.5, 0.0);
    const float shininess = 50.0;
-   const float falloffStrength = 10.0;
    const float falloffDistance = 30.0;
-
-   color = ambientColor;
 
    // diffuse
    float lambertTerm = max(dot(N, L), 0.0);
-   float attenuation = clamp(1.0 - pow(dist / falloffDistance, falloffStrength), 0.0, 1.0);
-   color += diffuseColor * texture2D(uTex, vTexCoord) * lambertTerm * attenuation;
+   float coeff = vDist / falloffDistance;
+   float attenuation = clamp(1.0 - coeff * coeff, 0.0, 1.0);
+   vec4 color = diffuseColor * texture2D(uTex, vTexCoord) * lambertTerm * attenuation;
 
    // specular
    float specular = pow(max(0.0, dot(R, E)), shininess);
@@ -35,4 +26,3 @@ void main()
 
    gl_FragColor = color;
 }
-
