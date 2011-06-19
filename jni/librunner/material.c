@@ -14,6 +14,9 @@ void material_bind(const material_t* material, int sampler_id)
 
    shader_use(shader);
    shader_set_uniform_integers(shader, "uTex", 1, &sampler_id);
+   shader_set_uniform_vectors(shader, "uMatDiffuse", 1, &material->diffuse.x);
+   shader_set_uniform_vectors(shader, "uMatSpecular", 1, &material->specular.x);
+   shader_set_uniform_floats(shader, "uMatShininess", 1, &material->shininess);
 
    tex2d_bind(tex2d, sampler_id);
 }

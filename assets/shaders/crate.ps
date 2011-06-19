@@ -6,23 +6,23 @@ varying vec3 R;
 varying vec2 vTexCoord;
 varying float vDist;
 uniform sampler2D uTex;
+uniform vec3 uMatDiffuse;
+uniform vec3 uMatSpecular;
+uniform float uMatShininess;
 
 void main()
 {
-   const vec4 diffuseColor = vec4(0.8, 0.8, 0.8, 0.0);
-   const vec4 specularColor = vec4(0.5, 0.5, 0.5, 0.0);
-   const float shininess = 50.0;
    const float falloffDistance = 30.0;
 
    // diffuse
    float lambertTerm = max(dot(N, L), 0.0);
    float coeff = vDist / falloffDistance;
    float attenuation = clamp(1.0 - coeff * coeff, 0.0, 1.0);
-   vec4 color = diffuseColor * texture2D(uTex, vTexCoord) * lambertTerm * attenuation;
+   vec4 color = vec4(uMatDiffuse.rgb, 1.0) * texture2D(uTex, vTexCoord) * lambertTerm * attenuation;
 
    // specular
-   float specular = pow(max(0.0, dot(R, E)), shininess);
-   color += specularColor * specular;
+   float specular = pow(max(0.0, dot(R, E)), uMatShininess);
+   color += vec4(uMatSpecular.rgb, 1.0) * specular;
 
    gl_FragColor = color;
 }

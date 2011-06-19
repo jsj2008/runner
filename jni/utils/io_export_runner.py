@@ -23,7 +23,7 @@ bbox_t = struct.Struct("<12s12s")
 mat4f_t = struct.Struct("<16f")
 vertex_t = struct.Struct("<12s12s8s")
 camera_t = struct.Struct("<64sL5f64s64s")
-material_t = struct.Struct("<64s64s64s")
+material_t = struct.Struct("<64s64s64s12s12sf")
 texture_t = struct.Struct("<64s64s4L")
 mesh_t = struct.Struct("<64s2L")
 submesh_t = struct.Struct("<64s4L")
@@ -239,11 +239,20 @@ def pack_cameras(cameras, offset):
 
    return (data, len(cameras))
 
+def pack_color_scaled(color, scale):
+   return pack_color([c * scale for c in color])
+
 def pack_material(material):
    print("Material: " + material.name)
    shader = material['shader']
    texture = material.texture_slots[0].texture
-   return material_t.pack(material.name.encode('utf-8'), shader.encode('utf-8'), texture.name.encode('utf-8'))
+   return material_t.pack(
+         material.name.encode('utf-8'),
+         shader.encode('utf-8'),
+         texture.name.encode('utf-8'),
+         pack_color_scaled(material.diffuse_color, material.diffuse_intensity),
+         pack_color_scaled(material.specular_color, material.specular_intensity),
+         material.specular_hardness)
 
 def pack_materials(materials, offset):
    data = bytes()

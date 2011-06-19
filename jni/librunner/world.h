@@ -129,7 +129,7 @@ typedef struct lamp_t
    float spot_size;
    float spot_blend;
 
-   vec3f_t color;
+   color_t color;
 } lamp_t;
 
 typedef struct scene_t

@@ -4,15 +4,15 @@ varying vec3 L;
 varying vec2 vTexCoord;
 varying float vDist;
 uniform sampler2D uTex;
+uniform vec3 uMatDiffuse;
 
 void main()
 {
-   const vec4 diffuseColor = vec4(0.8, 0.8, 0.8, 0.0);
    const float falloffDistance = 30.0;
 
    // diffuse
    float lambertTerm = max(dot(N, L), 0.0);
-   float coeff = vDist / falloffDistance;
-   float attenuation = clamp(1.0 - coeff * coeff, 0.0, 1.0);
-   gl_FragColor = diffuseColor * texture2D(uTex, vTexCoord) * lambertTerm * attenuation;
+   //float coeff = vDist / falloffDistance;
+   //float attenuation = clamp(1.0 - coeff * coeff, 0.0, 1.0);
+   gl_FragColor = vec4(uMatDiffuse.rgb, 1.0) * texture2D(uTex, vTexCoord) * lambertTerm;// * attenuation;
 }

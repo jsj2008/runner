@@ -7,7 +7,10 @@
 
 void game_update(struct game_t* game, float dt)
 {
-   physworld_update(game->phys, dt);
+   if (game_is_option_set(game, GAME_UPDATE_PHYSICS))
+   {
+      physworld_update(game->phys, dt);
+   }
 }
 
 void game_render(const struct game_t* game)
@@ -18,28 +21,40 @@ void game_render(const struct game_t* game)
    {
       switch (node->type)
       {
-         case NODE_MESH:
+      case NODE_MESH:
+      {
+         if (game_is_option_set(game, GAME_DRAW_MESHES))
          {
             struct mesh_t* mesh = resman_get_mesh(game->resman, node->data);
             world_render_mesh(game->world, game->camera, mesh, &node->transform);
-            break;
          }
-         case NODE_CAMERA:
+         break;
+      }
+      case NODE_CAMERA:
+      {
+         if (game_is_option_set(game, GAME_DRAW_CAMERAS))
          {
             struct camera_t* camera = world_get_camera(game->world, node->data);
             world_render_camera(game->world, game->camera, camera, &node->transform);
-            break;
          }
-         case NODE_LAMP:
+         break;
+      }
+      case NODE_LAMP:
+      {
+         if (game_is_option_set(game, GAME_DRAW_LAMPS))
          {
             struct lamp_t* lamp = world_get_lamp(game->world, node->data);
             world_render_lamp(game->world, game->camera, lamp, &node->transform);
-            break;
          }
+         break;
+      }
       }
    }
 
-   //physworld_render(game->phys, game->camera);
+   if (game_is_option_set(game, GAME_DRAW_PHYSICS))
+   {
+      physworld_render(game->phys, game->camera);
+   }
 }
 
 int game_init(game_t** pgame, const char* fname)
@@ -55,6 +70,7 @@ int game_init(game_t** pgame, const char* fname)
    memset(game, 0, sizeof(game_t));
    game->world = world;
    game_set_scene(game, world->scenes[0].name);
+   game_set_option(game, GAME_DRAW_MESHES | GAME_DRAW_LAMPS | GAME_UPDATE_PHYSICS);
 
    if (resman_init(&game->resman, game->world) != 0)
    {
@@ -169,5 +185,15 @@ void game_set_scene(game_t* game, const char* scenename)
          physworld_add_rigidbody(game->phys, game->bodies[l]);
       }
    }
+}
+
+int game_is_option_set(const game_t* game, int option)
+{
+   return (game->game_options & option);
+}
+
+void game_set_option(game_t* game, int option)
+{
+   game->game_options |= option;
 }
 

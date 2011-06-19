@@ -11,4 +11,5 @@ void shader_set_attrib_vertices(shader_t* shader, const char* name, long compone
 void shader_set_uniform_matrices(shader_t* shader, const char* name, long count, const float* values);
 void shader_set_uniform_vectors(shader_t* shader, const char* name, long count, const float* values);
 void shader_set_uniform_integers(shader_t* shader, const char* name, long count, const int* values);
+void shader_set_uniform_floats(shader_t* shader, const char* name, long count, const float* values);
 

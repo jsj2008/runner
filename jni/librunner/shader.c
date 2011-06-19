@@ -274,3 +274,11 @@ void shader_set_uniform_integers(shader_t* shader, const char* name, long count,
    checkGLError("glUniform1iv");
 }
 
+void shader_set_uniform_floats(shader_t* shader, const char* name, long count, const float* values)
+{
+   const shader_var_t* var = get_uniform_var(shader, name);
+
+   glUniform1fv(var->location, count, values);
+   checkGLError("glUniform1fv");
+}
+

@@ -276,8 +276,64 @@ void world_render_camera(const world_t* world, const camera_t* camera, const cam
    // TODO
 }
 
+void diamond_render(float size, const vec3f_t* color, shader_t* shader)
+{
+   float hs = size / 2.0f;
+   const vec3f_t left   = {.x = -hs,   .y = 0.0f,  .z = 0.0f };
+   const vec3f_t right  = {.x = hs,    .y = 0.0f,  .z = 0.0f };
+   const vec3f_t top    = {.x = 0.0f,  .y = 0.0f,  .z = hs };
+   const vec3f_t bottom = {.x = 0.0f,  .y = 0.0f,  .z = -hs };
+   const vec3f_t front  = {.x = 0.0f,  .y = hs,    .z = 0.0f };
+   const vec3f_t back   = {.x = 0.0f,  .y = -hs,   .z = 0.0f };
+
+   const vec3f_t vertices[] =
+   {
+      left, right, top, bottom, front, back,
+   };
+
+   const vec3f_t colors[] =
+   {
+      *color, *color, *color, *color, *color, *color,
+   };
+
+   const unsigned int indices[] =
+   {
+      0, 2,
+      2, 1,
+      1, 3,
+      3, 0,
+
+      0, 4,
+      4, 1,
+      1, 5,
+      5, 0,
+
+      2, 4,
+      4, 3,
+      3, 5,
+      5, 2,
+   };
+
+   shader_set_attrib_vertices(shader, "aPos", 3, GL_FLOAT, 0, &vertices[0]);
+   shader_set_attrib_vertices(shader, "aColor", 3, GL_FLOAT, 0, &colors[0]);
+   glDrawElements(GL_LINES, sizeof(indices)/sizeof(indices[0]), GL_UNSIGNED_INT, &indices[0]);
+   checkGLError("glDrawElements");
+}
+
 void world_render_lamp(const world_t* world, const camera_t* camera, const lamp_t* lamp, const mat4f_t* transform)
 {
-   // TODO
+   shader_t* shader = resman_get_shader(game->resman, "shaders/physics");
+   if (shader == NULL)
+      return;
+
+   mat4f_t mv;
+   mat4f_t mvp;
+   mat4_mult(&mv, &camera->view, transform);
+   mat4_mult(&mvp, &camera->proj, &mv);
+
+   shader_use(shader);
+   shader_set_uniform_matrices(shader, "uMVP", 1, mat4_data(&mvp));
+   diamond_render(0.25f, &lamp->color, shader);
+   shader_unuse(shader);
 }
 
