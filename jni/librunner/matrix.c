@@ -193,6 +193,29 @@ void mat4_set_perspective(mat4f_t* m, float fovy, float aspect, float znear, flo
    mat4_set_frustum(m, xmin, xmax, ymin, ymax, znear, zfar);
 }
 
+void mat4_set_orthographic(mat4f_t* m, float left, float right, float bottom, float top, float znear, float zfar)
+{
+   m->m11 = 2.0f / (right - left);
+   m->m12 = 0.0f;
+   m->m13 = 0.0f;
+   m->m14 = - (right + left) / (right - left);
+
+   m->m21 = 0.0f;
+   m->m22 = 2.0f / (top - bottom);
+   m->m23 = 0.0f;
+   m->m24 = - (top + bottom) / (top - bottom);
+
+   m->m31 = 0.0f;
+   m->m32 = 0.0f;
+   m->m33 = -2.0f / (zfar - znear);
+   m->m34 = - (zfar + znear) / (zfar - znear);
+
+   m->m41 = 0.0f;
+   m->m42 = 0.0f;
+   m->m43 = 0.0f;
+   m->m44 = 1.0f;
+}
+
 void mat4_set_lookat(mat4f_t* m, const vec3f_t* eye, const vec3f_t* at, const vec3f_t* up)
 {
    vec3f_t f, s, u;

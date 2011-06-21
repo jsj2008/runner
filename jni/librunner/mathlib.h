@@ -65,6 +65,7 @@ void mat4_set_translation(mat4f_t* m, float x, float y, float z);
 void mat4_show(const mat4f_t* m);
 void mat4_set_frustum(mat4f_t* m, float left, float right, float bottom, float top, float znear, float zfar);
 void mat4_set_perspective(mat4f_t* m, float fovy, float aspect, float znear, float zfar);
+void mat4_set_orthographic(mat4f_t* m, float left, float right, float bottom, float top, float znear, float zfar);
 void mat4_set_lookat(mat4f_t* m, const vec3f_t* eye, const vec3f_t* at, const vec3f_t* up);
 const float* mat4_data(const mat4f_t* m);
 void mat4_from_quaternion(mat4f_t* m, const quat_t* q);
