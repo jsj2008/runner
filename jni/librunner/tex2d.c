@@ -21,7 +21,9 @@ int tex2d_create(tex2d_t** ptexture, const struct image_t* image, int min_filter
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t);
    //glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_HINT, GL_NICEST);
 
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image->width, image->height, 0, GL_RGB, GL_UNSIGNED_BYTE, image->data);
+   GLint format = (image->bpp == 32) ? GL_RGBA : GL_RGB;
+
+   glTexImage2D(GL_TEXTURE_2D, 0, format, image->width, image->height, 0, format, GL_UNSIGNED_BYTE, image->data);
    checkGLError("glTexImage2D");
 
    glGenerateMipmap(GL_TEXTURE_2D);
