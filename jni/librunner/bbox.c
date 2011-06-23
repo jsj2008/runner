@@ -44,6 +44,47 @@ int bbox_tri_intersection(const bbox_t* bbox, const vec3f_t* a, const vec3f_t* b
    return 0;
 }
 
+int ray_slab_intersection(float start, float dir, float min, float max, float* pfirst, float* plast)
+{
+   if (fabs(dir) < 1.0E-8)
+   {
+      return (start < max && start > min) ? 1 : 0;
+   }
+
+   float tmin = (min - start) / dir;
+   float tmax = (max - start) / dir;
+
+   //LOGI("min %.2f max %.2f start %.2f dir %.2f tmin %.2f tmax %.2f first %.2f last %.2f", min, max, start, dir, tmin, tmax, *pfirst, *plast);
+
+   if (tmin > tmax)
+   {
+      float t = tmin;
+      tmin = tmax;
+      tmax = t;
+   }
+
+   int res = (tmax < *pfirst || tmin > *plast) ? 0 : 1;
+   if (res == 1)
+   {
+      if (tmin > *pfirst) *pfirst = tmin;
+      if (tmax < *plast)  *plast  = tmax;
+   }
+   return res;
+}
+
+int bbox_ray_intersection(const bbox_t* bbox, const vec3f_t* pos, const vec3f_t* dir, float* pt)
+{
+   float first = 0.0f;
+   float last = 99999999.0f;
+
+   if (!ray_slab_intersection(pos->x, dir->x, bbox->min.x, bbox->max.x, &first, &last)) return 0;
+   if (!ray_slab_intersection(pos->y, dir->y, bbox->min.y, bbox->max.y, &first, &last)) return 0;
+   if (!ray_slab_intersection(pos->z, dir->z, bbox->min.x, bbox->max.z, &first, &last)) return 0;
+
+   *pt = first;
+   return 1;
+}
+
 extern struct game_t* game;
 
 void bbox_draw(const bbox_t* b, const camera_t* camera)
