@@ -4,6 +4,7 @@
 #include "shader.h"
 #include "common.h"
 #include "resman.h"
+#include "gui.h"
 
 void game_update(struct game_t* game, float dt)
 {
@@ -55,6 +56,8 @@ void game_render(const struct game_t* game)
    {
       physworld_render(game->phys, game->camera);
    }
+
+   gui_render(game->gui);
 }
 
 int game_init(game_t** pgame, const char* fname)
@@ -66,10 +69,18 @@ int game_init(game_t** pgame, const char* fname)
       return -1;
    }
 
+   gui_t* gui = NULL;
+   if (gui_init(&gui) != 0)
+   {
+      world_free(world);
+      return -1;
+   }
+
    game_t* game = (game_t*)malloc(sizeof(game_t));
    memset(game, 0, sizeof(game_t));
    game->world = world;
-   game_set_scene(game, world->scenes[0].name);
+   game->gui = gui;
+   game_set_scene(game, /*world->scenes[0].name*/"w01d01s01");
    game_set_option(game, GAME_DRAW_MESHES | GAME_DRAW_LAMPS | GAME_UPDATE_PHYSICS);
 
    if (resman_init(&game->resman, game->world) != 0)
@@ -117,6 +128,7 @@ void game_free(game_t* game)
       game->resman = NULL;
    }
 
+   gui_free(game->gui);
    world_free(game->world);
    free(game);
 }

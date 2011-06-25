@@ -6,6 +6,7 @@ struct world_t;
 struct scene_t;
 struct camera_t;
 struct resman_t;
+struct gui_t;
 
 typedef struct game_t
 {
@@ -15,6 +16,7 @@ typedef struct game_t
    struct scene_t* scene;
    struct rigidbody_t** bodies;
    struct camera_t* camera;
+   struct gui_t* gui;
 
    enum option_t
    {

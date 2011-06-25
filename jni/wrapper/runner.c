@@ -334,6 +334,13 @@ void pointer_down(int pointerId, float x, float y)
 {
    LOGI("pointer #%d down: %.2f %.2f", pointerId, x, y);
 
+   vec2f_t point =
+   {
+      .x = x * 2.0f - 1.0f,
+      .y = 1.0f - y * 2.0f,
+   };
+   gui_dispatch_click(game->gui, &point);
+
    if (y >= 0.80f)
    {
       if (x <= 0.15f)
