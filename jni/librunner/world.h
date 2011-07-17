@@ -9,25 +9,38 @@ typedef struct vertex_t
 {
    vec3f_t point;
    vec3f_t normal;
-   vec2f_t uv;
 } vertex_t;
+
+typedef struct uvmap_t
+{
+   char name[64];
+
+   unsigned long nuvs;
+
+   vec2f_t* uvs;
+} uvmap_t;
 
 typedef struct submesh_t
 {
    char material[64];
 
    unsigned long nindices;
-   unsigned long nvertices;
 
    unsigned int* indices;
-   struct vertex_t* vertices;
 } submesh_t;
 
 typedef struct mesh_t
 {
    char name[64];
 
+   unsigned long active_uvmap;
+
+   unsigned long nvertices;
+   unsigned long nuvmaps;
    unsigned long nsubmeshes;
+
+   struct vertex_t* vertices;
+   struct uvmap_t* uvmaps;
    struct submesh_t* submeshes;
 } mesh_t;
 
@@ -173,6 +186,7 @@ mesh_t* world_get_mesh(const world_t* world, const char* name);
 lamp_t* world_get_lamp(const world_t* world, const char* name);
 scene_t* world_get_scene(const world_t* world, const char* name);
 node_t* scene_get_node(const scene_t* scene, const char* name);
+node_t* scene_pick_node(const world_t* world, const scene_t* scene, const vec2f_t* point);
 
 void world_render_mesh(const world_t* world, const struct camera_t* camera, const mesh_t* mesh, const mat4f_t* transform);
 void world_render_camera(const world_t* world, const camera_t* camera, const camera_t* cam, const mat4f_t* transform);

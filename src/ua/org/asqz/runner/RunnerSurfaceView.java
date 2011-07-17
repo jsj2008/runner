@@ -17,6 +17,8 @@ import javax.microedition.khronos.egl.EGLDisplay;
 class RunnerSurfaceView extends GLSurfaceView {
    private static final String TAG = "RunnerSurfaceView";
 
+   private static final float M_EPSILON = 0.005f;
+
    public interface Handler {
       public void handleError(String error);
    }
@@ -51,8 +53,10 @@ class RunnerSurfaceView extends GLSurfaceView {
                dy2 = event.getY(1) - mPrevPositions[3];
             }
 
-            Wrapper.scroll(dt, dx1, dy1, dx2, dy2);
-            Log.i(TAG, "Pointer moved on [" + dx1 + "," + dy1 + "] [" + dx2 + "," + dy2 +  "] in " + dt + "ms");
+            if (dx1 > M_EPSILON || dy1 > M_EPSILON || dx2 > M_EPSILON || dy2 > M_EPSILON) {
+               Wrapper.scroll(dt, dx1, dy1, dx2, dy2);
+               Log.i(TAG, "Pointer moved on [" + dx1 + "," + dy1 + "] [" + dx2 + "," + dy2 +  "] in " + dt + "ms");
+            }
          }
       }
       else if (actionCode == MotionEvent.ACTION_DOWN || actionCode == MotionEvent.ACTION_POINTER_DOWN) {

@@ -125,7 +125,6 @@ int rigidbody_create(rigidbody_t** pb, const struct phys_t* phys, const struct m
    }
 
    long l = 0;
-   long k = 0;
 
    const struct shape_t* sp = &phys->shape;
    plCollisionShapeHandle s = NULL;
@@ -147,14 +146,10 @@ int rigidbody_create(rigidbody_t** pb, const struct phys_t* phys, const struct m
    case SHAPE_CONVEX:
    {
       s = plNewConvexHullShape();
-      const struct submesh_t* submesh = &mesh->submeshes[0];
-      for (l = 0; l < mesh->nsubmeshes; ++l, ++submesh)
+      vertex_t* vert = &mesh->vertices[0];
+      for (l = 0; l < mesh->nvertices; ++l, ++vert)
       {
-         vertex_t* vert = &submesh->vertices[0];
-         for (k = 0; k < submesh->nvertices; ++k, ++vert)
-         {
-            plAddVertex(s, vert->point.x, vert->point.y, vert->point.z);
-         }
+         plAddVertex(s, vert->point.x, vert->point.y, vert->point.z);
       }
       break;
    }
@@ -168,8 +163,8 @@ int rigidbody_create(rigidbody_t** pb, const struct phys_t* phys, const struct m
                 submesh->nindices,
                 &submesh->indices[0],
                 3*sizeof(int),
-                submesh->nvertices,
-                (plReal*)&submesh->vertices[0].point,
+                mesh->nvertices,
+                (plReal*)&mesh->vertices[0].point,
                 sizeof(vertex_t));
       }
       break;

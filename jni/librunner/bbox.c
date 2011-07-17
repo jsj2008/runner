@@ -79,7 +79,7 @@ int bbox_ray_intersection(const bbox_t* bbox, const vec3f_t* pos, const vec3f_t*
 
    if (!ray_slab_intersection(pos->x, dir->x, bbox->min.x, bbox->max.x, &first, &last)) return 0;
    if (!ray_slab_intersection(pos->y, dir->y, bbox->min.y, bbox->max.y, &first, &last)) return 0;
-   if (!ray_slab_intersection(pos->z, dir->z, bbox->min.x, bbox->max.z, &first, &last)) return 0;
+   if (!ray_slab_intersection(pos->z, dir->z, bbox->min.z, bbox->max.z, &first, &last)) return 0;
 
    *pt = first;
    return 1;
@@ -141,5 +141,57 @@ void bbox_draw(const bbox_t* b, const camera_t* camera)
    shader_set_attrib_vertices(shader, "aPos", 3, GL_FLOAT, 0, &vertices[0]);
    glDrawArrays(GL_LINES, 0, sizeof(vertices)/sizeof(vertices[0])/3);
    shader_unuse(shader);
+}
+
+void bbox_transform(bbox_t* b, const mat4f_t* transform)
+{
+   float vertices[] =
+   {
+      0.0f, 0.0f, 0.0f,
+      0.0f, 0.0f, 1.0f,
+      0.0f, 0.0f, 0.0f,
+      0.0f, 1.0f, 0.0f,
+      0.0f, 0.0f, 0.0f,
+      1.0f, 0.0f, 0.0f,
+
+      1.0f, 1.0f, 1.0f,
+      1.0f, 1.0f, 0.0f,
+      1.0f, 1.0f, 1.0f,
+      1.0f, 0.0f, 1.0f,
+      1.0f, 1.0f, 1.0f,
+      0.0f, 1.0f, 1.0f,
+
+      0.0f, 0.0f, 1.0f,
+      0.0f, 1.0f, 1.0f,
+      0.0f, 0.0f, 1.0f,
+      1.0f, 0.0f, 1.0f,
+
+      0.0f, 1.0f, 0.0f,
+      1.0f, 1.0f, 0.0f,
+      0.0f, 1.0f, 0.0f,
+      0.0f, 1.0f, 1.0f,
+
+      1.0f, 0.0f, 0.0f,
+      1.0f, 1.0f, 0.0f,
+      1.0f, 0.0f, 0.0f,
+      1.0f, 0.0f, 1.0f,
+   };
+
+   bbox_t bbox;
+   bbox_reset(&bbox);
+   int i = 0;
+   for (i = 0; i < sizeof(vertices)/sizeof(vertices[0]); i += 3)
+   {
+      vec3f_t vert;
+      vert.x = b->min.x * (1.0f - vertices[i + 0]) + b->max.x * vertices[i + 0];
+      vert.y = b->min.y * (1.0f - vertices[i + 1]) + b->max.y * vertices[i + 1];
+      vert.z = b->min.z * (1.0f - vertices[i + 2]) + b->max.z * vertices[i + 2];
+
+      vec3f_t transformed;
+      mat4_mult_vec3(&transformed, transform, &vert);
+      bbox_inflate(&bbox, &transformed);
+   }
+
+   *b = bbox;
 }
 

@@ -3,13 +3,12 @@ import struct
 import bpy
 import math
 from bpy.props import StringProperty
-from io_utils import ExportHelper
 
 bl_info = {
     "name": "Runner Scenes Format (.runner)",
     "author": "asqz",
     "version": (0, 1),
-    "blender": (2, 5, 7),
+    "blender": (2, 5, 8),
     "api": 36302,
     "location": "File > Export > Runner (.runner)",
     "description": "Export Runner Scene Format (.runner)",
@@ -21,12 +20,13 @@ texcoord_t = struct.Struct("<2f")
 vec3f_t = struct.Struct("<3f")
 bbox_t = struct.Struct("<12s12s")
 mat4f_t = struct.Struct("<16f")
-vertex_t = struct.Struct("<12s12s8s")
+vertex_t = struct.Struct("<12s12s")
 camera_t = struct.Struct("<64sL5f64s64s")
 material_t = struct.Struct("<64s64s64s12s12sf")
 texture_t = struct.Struct("<64s64s4L")
-mesh_t = struct.Struct("<64s2L")
-submesh_t = struct.Struct("<64s4L")
+mesh_t = struct.Struct("<64s7L")
+submesh_t = struct.Struct("<64s2L")
+uvmap_t = struct.Struct("<64s2L")
 lamp_t = struct.Struct("<64s2L4f12s")
 node_t = struct.Struct("<64s64sL64s24s84sl")
 shape_t = struct.Struct("<L2f12s")
@@ -55,8 +55,8 @@ def pack_matrix(mat):
       mat[3][0],  mat[3][1],  mat[3][2],  mat[3][3])
 
 def pack_vertex(v):
-   (point, normal, uv) = v
-   return vertex_t.pack(pack_vector(point), pack_vector(normal), pack_uv(uv))
+   (point, normal) = v
+   return vertex_t.pack(pack_vector(point), pack_vector(normal))
 
 def arr_equal(v1, v2):
    if len(v1) != len(v2):
@@ -73,7 +73,7 @@ def vertices_equal(v1, v2):
    (p2, n2, uv2) = v2
    return arr_equal(p1, p2) and arr_equal(n1, n2) and arr_equal(uv1, uv2)
 
-def add_vertex(vertices, mesh, index, face, uv):
+def add_vertex(vertices, uvs, mesh, index, face, uv):
    v = mesh.vertices[index]
 
    if face.use_smooth:
@@ -81,90 +81,167 @@ def add_vertex(vertices, mesh, index, face, uv):
    else:
       normal = face.normal
 
-   vert = (v.co, normal, uv)
+   vert = (v.co, normal)
 
    for i in range(0, len(vertices)):
-      if vertices_equal(vert, vertices[i]):
+      if vertices_equal(vert, vertices[i]) and arr_equal(uv, uvs[i]):
          #print("Using vertex: #%d"%i)
          return i
 
    #print("point: " + str(point) + " norm: "+ str(normal))
    vertices.append(vert)
+   uvs.append(uv)
    return len(vertices) - 1
 
-def process_face(mesh, face, uv, vertices, indices):
-   count = len(face.vertices)
-   if count < 3:
-      return
-
-   i0 = add_vertex(vertices, mesh, face.vertices[0], face, uv[0])
-   i1 = add_vertex(vertices, mesh, face.vertices[1], face, uv[1])
-
-   for i in range(2, len(face.vertices)):
-      i2 = add_vertex(vertices, mesh, face.vertices[i], face, uv[i])
-
-      indices.append(i0)
-      indices.append(i1)
-      indices.append(i2)
-      #print("\t\tTriangle: %d %d %d"%(i0, i1, i2))
-
-      i1 = i2
-
-def pack_submesh(mesh, material, faces, uvtex, offset):
-   print("Submesh: %s %d faces"%(material.name, len(faces)))
-
-   inds = []
-   verts = []
-   for (i, f) in faces:
-      uv = uvtex.data[i].uv
-      process_face(mesh, f, uv, verts, inds)
+def pack_submesh(material, submesh_indices, offset):
+   nindices = len(submesh_indices)
+   print("Submesh: %s %d indices"%(material.name, nindices))
 
    indices = bytes()
-   for i in inds:
+   for i in submesh_indices:
       indices += struct.pack('<I', i)
 
-   vertices = bytes()
-   for v in verts:
-      vertices += pack_vertex(v)
-
-   print("%ld indices %ld vertices"%(len(inds), len(verts)))
-
    pindices = offset
-   pvertices = pindices + len(indices)
-   header = submesh_t.pack(material.name.encode('utf-8'), len(inds), len(verts), pindices, pvertices)
-   return (header, indices + vertices)
+   header = submesh_t.pack(material.name.encode('utf-8'), nindices, pindices)
+   return (header, indices)
 
-def pack_submeshes(mesh, uvtex, offset):
+def pack_submeshes(mesh, indices, offset):
    submeshes = []
    for i in range(0, len(mesh.materials)):
-      submesh_faces = [(index, face) for index, face in enumerate(mesh.faces) if face.material_index == i]
-      if len(submesh_faces) > 0:
-         submeshes.append((submesh_faces, mesh.materials[i]))
+      submesh_indices = [index for (material_index, index) in indices if material_index == i]
+      if len(submesh_indices) > 0:
+         submeshes.append((submesh_indices, mesh.materials[i]))
 
-   print("Submeshes count: %d"%(len(submeshes)))
+   print("Submeshes count: %d total indices %d"%(len(submeshes), len(indices)))
 
    offset += len(submeshes) * submesh_t.size
 
    header = bytes()
    data = bytes()
-   for (submesh_faces, material) in submeshes:
-      (h, d) = pack_submesh(mesh, material, submesh_faces, uvtex, offset)
+   for (submesh_indices, material) in submeshes:
+      (h, d) = pack_submesh(material, submesh_indices, offset)
       header += h
       data += d
       offset += len(d)
 
    return (header + data, len(submeshes))
 
+def pack_vertices(vertices, offset):
+   print("%d vertices"%len(vertices))
+   data = bytes()
+   for vert in vertices:
+      data += pack_vertex(vert)
+
+   return (data, len(vertices))
+
+def pack_uvmap(uvmap, offset):
+   (name, data) = uvmap
+   print("uvmap %s with %d items"%(name, len(data)))
+
+   nuvs = len(data)
+   puvs = offset
+
+   uvs = bytes()
+   for uv in data:
+      print("UV: ", uv[0], uv[1])
+      uvs += pack_uv(uv)
+
+   header = uvmap_t.pack(name.encode('utf-8'), nuvs, puvs)
+
+   return (header, uvs)
+
+def pack_uvmaps(uvmaps, offset):
+   print("%d uvmaps"%len(uvmaps))
+   offset += len(uvmaps) * uvmap_t.size
+
+   header = bytes()
+   data = bytes()
+   for uvmap in uvmaps:
+      (h, d) = pack_uvmap(uvmap, offset)
+      header += h
+      data += d
+      offset += len(d)
+
+   return (header + data, len(uvmaps))
+
+def uvs_equal(uvs1, uvs2):
+   for i in range(0, len(uvs1)):
+      if not arr_equal(uvs1[i], uvs2[i]):
+         return False
+   return True
+
+def vert_equal(v1, v2):
+   (p1, n1, uvs1) = v1
+   (p2, n2, uvs2) = v2
+   return arr_equal(p1, p2) and arr_equal(n1, n2) and uvs_equal(uvs1, uvs2)
+
+def build_vert(mesh, face, uvs, i):
+   v = mesh.vertices[face.vertices[i]]
+   if face.use_smooth:
+      normal = v.normal
+   else:
+      normal = face.normal
+
+   texcoords = []
+   for uv in uvs:
+      texcoords.append(uv[i])
+
+   return (v.co, normal, texcoords)
+
+def add_vert(verts, mesh, face, uvs, i):
+   v = build_vert(mesh, face, uvs, i)
+   for index, vert in enumerate(verts):
+      if vert_equal(v, vert):
+         return index
+
+   index = len(verts)
+   verts.append(v)
+   return index
+
+def build_vertices_uvmaps(mesh):
+   verts = []
+   mesh_indices = []
+   for index, face in enumerate(mesh.faces):
+      uvs = []
+      for uvmap in mesh.uv_textures:
+         uvs.append(uvmap.data[index].uv)
+
+      i0 = add_vert(verts, mesh, face, uvs, 0);
+      i1 = add_vert(verts, mesh, face, uvs, 1);
+      for i in range(2, len(face.vertices)):
+         i2 = add_vert(verts, mesh, face, uvs, i);
+
+         mesh_indices.append((face.material_index, i0))
+         mesh_indices.append((face.material_index, i1))
+         mesh_indices.append((face.material_index, i2))
+
+         i1 = i2
+
+   mesh_vertices = [(point, normal) for (point, normal, uvs) in verts]
+
+   mesh_uvmaps = []
+   for (index, uvmap) in enumerate(mesh.uv_textures):
+      m = [uvs[index] for (point, normal, uvs) in verts]
+      mesh_uvmaps.append((uvmap.name, m))
+
+   return (mesh_vertices, mesh_uvmaps, mesh_indices)
+
 def pack_mesh(mesh, offset):
    print("Mesh: " + mesh.name)
 
-   uvtex = mesh.uv_textures.active
+   (mesh_vertices, mesh_uvmaps, mesh_indices) = build_vertices_uvmaps(mesh)
 
-   psubmeshes = offset
-   (submeshes, nsubmeshes) = pack_submeshes(mesh, uvtex, psubmeshes)
+   pvertices = offset
+   (vertices, nvertices) = pack_vertices(mesh_vertices, pvertices)
 
-   header = mesh_t.pack(mesh.name.encode('utf-8'), nsubmeshes, psubmeshes)
-   return (header, submeshes)
+   puvmaps = pvertices + len(vertices)
+   (uvmaps, nuvmaps) = pack_uvmaps(mesh_uvmaps, puvmaps)
+
+   psubmeshes = puvmaps + len(uvmaps)
+   (submeshes, nsubmeshes) = pack_submeshes(mesh, mesh_indices, psubmeshes)
+
+   header = mesh_t.pack(mesh.name.encode('utf-8'), mesh.uv_textures.active_index, nvertices, nuvmaps, nsubmeshes, pvertices, puvmaps, psubmeshes)
+   return (header, vertices + uvmaps + submeshes)
 
 def pack_meshes(meshes, offset):
    offset += len(meshes) * mesh_t.size
@@ -507,25 +584,28 @@ def export_runner_world(context, filepath):
 
    return {"FINISHED"}
 
-class RunnerExporter(bpy.types.Operator, ExportHelper):
-    bl_idname = "export.runner"
-    bl_label = "Export Runner"
-    filename_ext = ".runner"
+class RunnerExporter(bpy.types.Operator):
+   bl_idname = "export.runner"
+   bl_label = "Export Runner"
+   filename_ext = ".runner"
+   filepath = StringProperty(name="File Path", subtype="FILE_PATH")
 
-    def execute(self, context):
-        return export_runner_world(context, self.filepath)
+   def execute(self, context):
+      return export_runner_world(context, self.filepath)
 
 def menu_func(self, context):
-    self.layout.operator(RunnerExporter.bl_idname, text="Runner (.runner)")
+   default_path = os.path.splitext(bpy.data.filepath)[0] + ".runner"
+   print("DEFAULT PATH: " + default_path)
+   self.layout.operator(RunnerExporter.bl_idname, text="Runner (.runner)").filepath = default_path
 
 def register():
-    bpy.utils.register_module(__name__)
-    bpy.types.INFO_MT_file_export.append(menu_func)
+   bpy.utils.register_module(__name__)
+   bpy.types.INFO_MT_file_export.append(menu_func)
 
 def unregister():
-    bpy.utils.unregister_module(__name__)
-    bpy.types.INFO_MT_file_export.remove(menu_func)
+   bpy.utils.unregister_module(__name__)
+   bpy.types.INFO_MT_file_export.remove(menu_func)
 
 if __name__ == "__main__":
-    register()
+   register()
 

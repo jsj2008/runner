@@ -8,6 +8,7 @@
 #include "resman.h"
 #include "physworld.h"
 #include "game.h"
+#include "world.h"
 #include "material.h"
 
 static GLfloat skybox_vertices[] =
@@ -165,6 +166,12 @@ long total_frames = 0;
 struct timeval prev_time;
 struct timeval fps_time;
 
+void on_draw_physics_click(game_t* game, const node_t* node, const vec2f_t* point, void* user_data)
+{
+   LOGI("on_draw_physics_click");
+   game_toggle_option(game, GAME_DRAW_PHYSICS);
+}
+
 void timers_init()
 {
    frames = 0;
@@ -229,6 +236,8 @@ int init(const char* apkPath)
 
    if (game_init(&game, "w01d01.runner") != 0)
       return -1;
+
+   game_add_click_handler(game, "GUI_BTN_DrawPhysics", on_draw_physics_click, NULL);
 
    return 0;
 }
@@ -320,16 +329,6 @@ void scroll(long dt, float dx1, float dy1, float dx2, float dy2)
    }
 }
 
-void perform_jump()
-{
-   LOGI("jump");
-}
-
-void perform_crouch()
-{
-   LOGI("crouch");
-}
-
 void pointer_down(int pointerId, float x, float y)
 {
    LOGI("pointer #%d down: %.2f %.2f", pointerId, x, y);
@@ -339,19 +338,8 @@ void pointer_down(int pointerId, float x, float y)
       .x = x * 2.0f - 1.0f,
       .y = 1.0f - y * 2.0f,
    };
-   gui_dispatch_click(game->gui, &point);
 
-   if (y >= 0.80f)
-   {
-      if (x <= 0.15f)
-      {
-         perform_crouch();
-      }
-      else if (x >= 0.85f)
-      {
-         perform_jump();
-      }
-   }
+   game_dispatch_click(game, &point);
 }
 
 void pointer_up(int pointerId, float x, float y)

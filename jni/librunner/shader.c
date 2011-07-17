@@ -228,7 +228,7 @@ void shader_unuse(const shader_t* shader)
    long i = 0;
    for (; i < shader->nvars; ++i)
    {
-      if (shader->vars[i].type == VAR_ATTRIB)
+      if (shader->vars[i].type == VAR_ATTRIB && shader->vars[i].location >= 0)
       {
          glDisableVertexAttribArray(shader->vars[i].location);
          checkGLError("glDisableVertexAttribArray");
@@ -242,6 +242,7 @@ void shader_unuse(const shader_t* shader)
 void shader_set_attrib_vertices(shader_t* shader, const char* name, long components, long type, long stride, const void* values)
 {
    const shader_var_t* var = get_attrib_var(shader, name);
+   if (var->location < 0) return;
 
    glVertexAttribPointer(var->location, components, type, GL_FALSE, stride, values);
    checkGLError("glVertexAttribPointer");
@@ -253,6 +254,7 @@ void shader_set_attrib_vertices(shader_t* shader, const char* name, long compone
 void shader_set_uniform_matrices(shader_t* shader, const char* name, long count, const float* values)
 {
    const shader_var_t* var = get_uniform_var(shader, name);
+   if (var->location < 0) return;
 
    glUniformMatrix4fv(var->location, count, GL_FALSE, values);
    checkGLError("glUniformMatrix4fv");
@@ -261,6 +263,8 @@ void shader_set_uniform_matrices(shader_t* shader, const char* name, long count,
 void shader_set_uniform_vectors(shader_t* shader, const char* name, long count, const float* values)
 {
    const shader_var_t* var = get_uniform_var(shader, name);
+   if (var->location < 0) return;
+
 
    glUniform3fv(var->location, count, values);
    checkGLError("glUniform3iv");
@@ -269,6 +273,7 @@ void shader_set_uniform_vectors(shader_t* shader, const char* name, long count, 
 void shader_set_uniform_integers(shader_t* shader, const char* name, long count, const int* values)
 {
    const shader_var_t* var = get_uniform_var(shader, name);
+   if (var->location < 0) return;
 
    glUniform1iv(var->location, count, values);
    checkGLError("glUniform1iv");
@@ -277,6 +282,7 @@ void shader_set_uniform_integers(shader_t* shader, const char* name, long count,
 void shader_set_uniform_floats(shader_t* shader, const char* name, long count, const float* values)
 {
    const shader_var_t* var = get_uniform_var(shader, name);
+   if (var->location < 0) return;
 
    glUniform1fv(var->location, count, values);
    checkGLError("glUniform1fv");

@@ -1,0 +1,20 @@
+TARGET  := ./world_dump
+SOURCES := world_dump.c
+OBJECTS := $(SOURCES:.c=.o)
+
+CC      = gcc
+CFLAGS  = -O2 -Wall -Werror -I../libbullet -I../librunner
+LDFLAGS = -L. -L../librunner
+LIBS    = -lm -lGL -lpng -lrunner
+
+all: $(SOURCES) $(TARGET)
+
+clean:
+	rm -rf $(OBJECTS) $(TARGET)
+
+$(TARGET): $(OBJECTS)
+	$(CC) $(LDFLAGS) $(CFLAGS) -o $@ $(OBJECTS) $(LIBS)
+
+.c.o:
+	$(CC) -c $(CFLAGS) $(@:.o=.c)
+

@@ -4,7 +4,32 @@
 #include "shader.h"
 #include "common.h"
 #include "resman.h"
-#include "gui.h"
+
+camera_t* setup_camera(const struct game_t* game, const struct scene_t* scene, const char* camera_name)
+{
+   node_t* camera_node = scene_get_node(scene, camera_name);
+   if (camera_node == NULL)
+   {
+      LOGE("Unable to find camera node '%s'", camera_name);
+      return NULL;
+   }
+
+   camera_t* camera = world_get_camera(game->world, camera_node->data);
+   mat4_inverted(&camera->view, &camera_node->transform);
+
+   if (camera->type == CAMERA_PERSPECTIVE)
+   {
+      mat4_set_perspective(&camera->proj, camera->fovy / 2.0f, camera->aspect, camera->znear, camera->zfar);
+   }
+   else
+   {
+      float halfscale = 5.0f;
+      camera->aspect = 1280.0f/800.0f;
+      mat4_set_orthographic(&camera->proj, -halfscale, halfscale, -halfscale/camera->aspect, halfscale/camera->aspect, camera->znear, camera->zfar);
+   }
+
+   return camera;
+}
 
 void game_update(struct game_t* game, float dt)
 {
@@ -16,9 +41,22 @@ void game_update(struct game_t* game, float dt)
 
 void game_render(const struct game_t* game)
 {
+   game_render_scene(game, game->scene, game->camera);
+
+   glEnable(GL_BLEND);
+   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+   camera_t* gui_camera = setup_camera(game, game->gui, game->gui->camera);
+   game_render_scene(game, game->gui, gui_camera);
+
+   glDisable(GL_BLEND);
+}
+
+void game_render_scene(const struct game_t* game, const struct scene_t* scene, const struct camera_t* camera)
+{
    long l = 0;
-   struct node_t* node = &game->scene->nodes[0];
-   for (l = 0; l < game->scene->nnodes; ++l, ++node)
+   struct node_t* node = &scene->nodes[0];
+   for (l = 0; l < scene->nnodes; ++l, ++node)
    {
       switch (node->type)
       {
@@ -27,7 +65,7 @@ void game_render(const struct game_t* game)
          if (game_is_option_set(game, GAME_DRAW_MESHES))
          {
             struct mesh_t* mesh = resman_get_mesh(game->resman, node->data);
-            world_render_mesh(game->world, game->camera, mesh, &node->transform);
+            world_render_mesh(game->world, camera, mesh, &node->transform);
          }
          break;
       }
@@ -35,8 +73,8 @@ void game_render(const struct game_t* game)
       {
          if (game_is_option_set(game, GAME_DRAW_CAMERAS))
          {
-            struct camera_t* camera = world_get_camera(game->world, node->data);
-            world_render_camera(game->world, game->camera, camera, &node->transform);
+            struct camera_t* cam = world_get_camera(game->world, node->data);
+            world_render_camera(game->world, camera, cam, &node->transform);
          }
          break;
       }
@@ -45,7 +83,7 @@ void game_render(const struct game_t* game)
          if (game_is_option_set(game, GAME_DRAW_LAMPS))
          {
             struct lamp_t* lamp = world_get_lamp(game->world, node->data);
-            world_render_lamp(game->world, game->camera, lamp, &node->transform);
+            world_render_lamp(game->world, camera, lamp, &node->transform);
          }
          break;
       }
@@ -56,8 +94,6 @@ void game_render(const struct game_t* game)
    {
       physworld_render(game->phys, game->camera);
    }
-
-   gui_render(game->gui);
 }
 
 int game_init(game_t** pgame, const char* fname)
@@ -69,17 +105,10 @@ int game_init(game_t** pgame, const char* fname)
       return -1;
    }
 
-   gui_t* gui = NULL;
-   if (gui_init(&gui) != 0)
-   {
-      world_free(world);
-      return -1;
-   }
-
    game_t* game = (game_t*)malloc(sizeof(game_t));
    memset(game, 0, sizeof(game_t));
    game->world = world;
-   game->gui = gui;
+   game->gui = world_get_scene(world, "GUI_SCN_Default");
    game_set_scene(game, /*world->scenes[0].name*/"w01d01s01");
    game_set_option(game, GAME_DRAW_MESHES | GAME_DRAW_LAMPS | GAME_UPDATE_PHYSICS);
 
@@ -128,7 +157,6 @@ void game_free(game_t* game)
       game->resman = NULL;
    }
 
-   gui_free(game->gui);
    world_free(game->world);
    free(game);
 }
@@ -160,23 +188,17 @@ void game_set_scene(game_t* game, const char* scenename)
       return;
    }
 
-   node_t* camera_node = scene_get_node(game->scene, game->scene->camera);
-   if (camera_node == NULL)
+   game->camera = setup_camera(game, game->scene, game->scene->camera);
+   if (game->camera == NULL)
    {
-      LOGE("Unable to find camera node '%s'", game->scene->camera);
       return;
    }
-   game->camera = world_get_camera(game->world, camera_node->data);
 
    if (physworld_create(&game->phys) != 0)
    {
       LOGE("Unable to create physworld");
       return;
    }
-
-   struct camera_t* camera = game->camera;
-   mat4_inverted(&camera->view, &camera_node->transform);
-   mat4_set_perspective(&camera->proj, camera->fovy / 2.0f, camera->aspect, camera->znear, camera->zfar);
 
    game->bodies = (rigidbody_t**)malloc(game->scene->nnodes * sizeof(rigidbody_t*));
    memset(&game->bodies[0], 0, game->scene->nnodes * sizeof(rigidbody_t*));
@@ -207,5 +229,48 @@ int game_is_option_set(const game_t* game, int option)
 void game_set_option(game_t* game, int option)
 {
    game->game_options |= option;
+}
+
+void game_reset_option(game_t* game, int option)
+{
+   game->game_options &= ~option;
+}
+
+void game_toggle_option(game_t* game, int option)
+{
+   if (game_is_option_set(game, option))
+   {
+      game_reset_option(game, option);
+   }
+   else
+   {
+      game_set_option(game, option);
+   }
+}
+
+void game_add_click_handler(game_t* game, const char* node_name, click_handler_pf handler, void* user_data)
+{
+   struct click_handler_t* h = &game->click_handlers[game->nclick_handlers++];
+   strcpy(h->node_name, node_name);
+   h->handler = handler;
+   h->user_data = user_data;
+}
+
+void game_dispatch_click(game_t* game, const vec2f_t* point)
+{
+   node_t* node = scene_pick_node(game->world, game->gui, point);
+   if (node != NULL)
+   {
+      LOGI("CLICK ON %s", node->name);
+      long l = 0;
+      const click_handler_t* handler = &game->click_handlers[0];
+      for (l = 0; l < game->nclick_handlers; ++l, ++handler)
+      {
+         if (strcmp(handler->node_name, node->name) == 0)
+         {
+            (*handler->handler)(game, node, point, handler->user_data);
+         }
+      }
+   }
 }
 

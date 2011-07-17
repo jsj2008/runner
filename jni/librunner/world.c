@@ -96,15 +96,23 @@ int world_init(world_t** pworld, char* data)
    struct mesh_t* mesh = &world->meshes[0];
    for (l = 0; l < world->nmeshes; ++l, ++mesh)
    {
-      LOGI("Mesh '%s' has %ld submeshes", mesh->name, mesh->nsubmeshes);
+      LOGI("Mesh '%s' has %ld submeshes, %ld vertices and %ld uvmaps", mesh->name, mesh->nsubmeshes, mesh->nvertices, mesh->nuvmaps);
       mesh->submeshes = (struct submesh_t*)(data + (long)mesh->submeshes);
+      mesh->vertices = (struct vertex_t*)(data + (long)mesh->vertices);
+      mesh->uvmaps = (struct uvmap_t*)(data + (long)mesh->uvmaps);
 
       struct submesh_t* submesh = &mesh->submeshes[0];
       for (k = 0; k < mesh->nsubmeshes; ++k, ++submesh)
       {
-         LOGI("\tSubmesh with material '%s' has %ld indices and %ld vertices", submesh->material, submesh->nindices, submesh->nvertices);
+         LOGI("\tSubmesh with material '%s' has %ld indices", submesh->material, submesh->nindices);
          submesh->indices = (unsigned int*)(data + (long)submesh->indices);
-         submesh->vertices = (struct vertex_t*)(data + (long)submesh->vertices);
+      }
+
+      struct uvmap_t* uvmap = &mesh->uvmaps[0];
+      for (k = 0; k < mesh->nuvmaps; ++k, ++uvmap)
+      {
+         LOGI("\tUVmap '%s' has %ld entries", uvmap->name, uvmap->nuvs);
+         uvmap->uvs = (vec2f_t*)(data + (long)uvmap->uvs);
       }
    }
 
@@ -208,6 +216,62 @@ node_t* scene_get_node(const scene_t* scene, const char* name)
    return NULL;
 }
 
+node_t* scene_pick_node(const world_t* world, const scene_t* scene, const vec2f_t* point)
+{
+   node_t* picked_node = NULL;
+   float pick_dist = 999999.0f;
+
+   camera_t* camera = world_get_camera(world, scene->camera);
+
+   mat4f_t transform;
+   mat4_mult(&transform, &camera->proj, &camera->view);
+   mat4_invert(&transform);
+
+   vec3f_t from = { .x = point->x, .z = -10.0f, .y = point->y };
+   vec3f_t to = { .x = point->x, .z = 10.0f, .y = point->y };
+   vec3f_t from_global;
+   vec3f_t to_global;
+
+   mat4_mult_vec3(&from_global, &transform, &from);
+   mat4_mult_vec3(&to_global, &transform, &to);
+
+   vec3f_t dir;
+   vec3_sub(&dir, &to_global, &from_global);
+   vec3_normalize(&dir);
+
+   LOGI("FROM: %.2f %.2f %.2f -> %.2f %.2f %.2f", from.x, from.y, from.z, from_global.x, from_global.y, from_global.z);
+   LOGI("TO:   %.2f %.2f %.2f -> %.2f %.2f %.2f", to.x, to.y, to.z, to_global.x, to_global.y, to_global.z);
+   LOGI("DIR:  %.2f %.2f %.2f", dir.x, dir.y, dir.z);
+
+   long l = 0;
+   struct node_t* node = &scene->nodes[0];
+   for (; l < scene->nnodes; ++l, ++node)
+   {
+      bbox_t bbox = node->bbox;
+      bbox.min.y -= 1.0f;
+      bbox.max.y += 1.0f;
+      bbox_transform(&bbox, &node->transform);
+
+      LOGI("NODE: %s", node->name);
+      //mat4_show(&node->transform);
+      //bbox_show(&node->bbox);
+      bbox_show(&bbox);
+
+      float dist = 0.0f;
+      if (bbox_ray_intersection(&bbox, &from_global, &dir, &dist))
+      {
+         LOGI("INTERSECTION: %.2f", dist);
+         if (dist < pick_dist)
+         {
+            picked_node = node;
+            pick_dist = dist;
+         }
+      }
+   }
+
+   return picked_node;
+}
+
 extern struct game_t* game;
 
 void world_render_mesh(const world_t* world, const camera_t* camera, const mesh_t* mesh, const mat4f_t* transform)
@@ -245,9 +309,9 @@ void world_render_mesh(const world_t* world, const camera_t* camera, const mesh_
       shader_set_uniform_matrices(shader, "uMV", 1, mat4_data(&mv));
       shader_set_uniform_matrices(shader, "uMVI", 1, mat4_data(&mvi));
       shader_set_uniform_vectors(shader, "uLightPos", 1, &lightPos.x);
-      shader_set_attrib_vertices(shader, "aPos", 3, GL_FLOAT, sizeof(vertex_t), &submesh->vertices[0].point);
-      shader_set_attrib_vertices(shader, "aNormal", 3, GL_FLOAT, sizeof(vertex_t), &submesh->vertices[0].normal);
-      shader_set_attrib_vertices(shader, "aTexCoord", 2, GL_FLOAT, sizeof(vertex_t), &submesh->vertices[0].uv);
+      shader_set_attrib_vertices(shader, "aPos", 3, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].point);
+      shader_set_attrib_vertices(shader, "aNormal", 3, GL_FLOAT, sizeof(vertex_t), &mesh->vertices[0].normal);
+      shader_set_attrib_vertices(shader, "aTexCoord", 2, GL_FLOAT, 2*sizeof(float), &mesh->uvmaps[mesh->active_uvmap].uvs[0]);
 
       glDrawElements(GL_TRIANGLES, submesh->nindices, GL_UNSIGNED_INT, submesh->indices);
 
