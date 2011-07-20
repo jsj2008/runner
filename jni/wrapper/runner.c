@@ -170,6 +170,18 @@ void on_draw_physics_click(game_t* game, const node_t* node, const vec2f_t* poin
 {
    LOGI("on_draw_physics_click");
    game_toggle_option(game, GAME_DRAW_PHYSICS);
+
+   int active_uv = 0;
+   if (game_is_option_set(game, GAME_DRAW_PHYSICS))
+   {
+      active_uv = 1;
+   }
+
+   mesh_t* mesh = world_get_mesh(game->world, node->data);
+   if (mesh != NULL)
+   {
+      mesh->active_uvmap = active_uv;
+   }
 }
 
 void timers_init()
