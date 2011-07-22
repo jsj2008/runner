@@ -46,8 +46,8 @@ void game_render(const struct game_t* game)
    glEnable(GL_BLEND);
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-   camera_t* gui_camera = setup_camera(game, game->gui, game->gui->camera);
-   game_render_scene(game, game->gui, gui_camera);
+   camera_t* gui_camera = setup_camera(game, game->gui.scene, game->gui.scene->camera);
+   game_render_scene(game, game->gui.scene, gui_camera);
 
    glDisable(GL_BLEND);
 }
@@ -107,8 +107,9 @@ int game_init(game_t** pgame, const char* fname)
 
    game_t* game = (game_t*)malloc(sizeof(game_t));
    memset(game, 0, sizeof(game_t));
+   gui_reset(&game->gui);
    game->world = world;
-   game->gui = world_get_scene(world, "GUI_SCN_Default");
+   game->gui.scene = world_get_scene(world, "GUI_SCN_Default");;
    game_set_scene(game, /*world->scenes[0].name*/"w01d01s01");
    game_set_option(game, GAME_DRAW_MESHES | GAME_DRAW_LAMPS | GAME_UPDATE_PHYSICS);
 
@@ -245,32 +246,6 @@ void game_toggle_option(game_t* game, int option)
    else
    {
       game_set_option(game, option);
-   }
-}
-
-void game_add_click_handler(game_t* game, const char* node_name, click_handler_pf handler, void* user_data)
-{
-   struct click_handler_t* h = &game->click_handlers[game->nclick_handlers++];
-   strcpy(h->node_name, node_name);
-   h->handler = handler;
-   h->user_data = user_data;
-}
-
-void game_dispatch_click(game_t* game, const vec2f_t* point)
-{
-   node_t* node = scene_pick_node(game->world, game->gui, point);
-   if (node != NULL)
-   {
-      LOGI("CLICK ON %s", node->name);
-      long l = 0;
-      const click_handler_t* handler = &game->click_handlers[0];
-      for (l = 0; l < game->nclick_handlers; ++l, ++handler)
-      {
-         if (strcmp(handler->node_name, node->name) == 0)
-         {
-            (*handler->handler)(game, node, point, handler->user_data);
-         }
-      }
    }
 }
 

@@ -41,105 +41,6 @@ static GLfloat skybox_tex_coords[] =
    0.25f, 0.9f,
 };
 
-static GLfloat vertices[] =
-{
-   -0.5f, -0.5f, -0.5f,
-   -0.5f, -0.5f, 0.5f,
-   0.5f, -0.5f, 0.5f,
-   0.5f, -0.5f, -0.5f,
-   -0.5f, 0.5f, -0.5f,
-   -0.5f, 0.5f, 0.5f,
-   0.5f, 0.5f, 0.5f,
-   0.5f, 0.5f, -0.5f,
-   -0.5f, -0.5f, -0.5f,
-   -0.5f, 0.5f, -0.5f,
-   0.5f, 0.5f, -0.5f,
-   0.5f, -0.5f, -0.5f,
-   -0.5f, -0.5f, 0.5f,
-   -0.5f, 0.5f, 0.5f,
-   0.5f, 0.5f, 0.5f,
-   0.5f, -0.5f, 0.5f,
-   -0.5f, -0.5f, -0.5f,
-   -0.5f, -0.5f, 0.5f,
-   -0.5f, 0.5f, 0.5f,
-   -0.5f, 0.5f, -0.5f,
-   0.5f, -0.5f, -0.5f,
-   0.5f, -0.5f, 0.5f,
-   0.5f, 0.5f, 0.5f,
-   0.5f, 0.5f, -0.5f
-};
-
-static GLfloat texCoords[] =
-{
-   0.0f, 0.0f,
-   0.0f, 1.0f,
-   1.0f, 1.0f,
-   1.0f, 0.0f,
-   1.0f, 0.0f,
-   1.0f, 1.0f,
-   0.0f, 1.0f,
-   0.0f, 0.0f,
-   0.0f, 0.0f,
-   0.0f, 1.0f,
-   1.0f, 1.0f,
-   1.0f, 0.0f,
-   0.0f, 0.0f,
-   0.0f, 1.0f,
-   1.0f, 1.0f,
-   1.0f, 0.0f,
-   0.0f, 0.0f,
-   0.0f, 1.0f,
-   1.0f, 1.0f,
-   1.0f, 0.0f,
-   0.0f, 0.0f,
-   0.0f, 1.0f,
-   1.0f, 1.0f,
-   1.0f, 0.0f
-};
-static GLfloat normals[] =
-{
-   0.0f, -1.0f, 0.0f,
-   0.0f, -1.0f, 0.0f,
-   0.0f, -1.0f, 0.0f,
-   0.0f, -1.0f, 0.0f,
-   0.0f, 1.0f, 0.0f,
-   0.0f, 1.0f, 0.0f,
-   0.0f, 1.0f, 0.0f,
-   0.0f, 1.0f, 0.0f,
-   0.0f, 0.0f, -1.0f,
-   0.0f, 0.0f, -1.0f,
-   0.0f, 0.0f, -1.0f,
-   0.0f, 0.0f, -1.0f,
-   0.0f, 0.0f, 1.0f,
-   0.0f, 0.0f, 1.0f,
-   0.0f, 0.0f, 1.0f,
-   0.0f, 0.0f, 1.0f,
-   -1.0f, 0.0f, 0.0f,
-   -1.0f, 0.0f, 0.0f,
-   -1.0f, 0.0f, 0.0f,
-   -1.0f, 0.0f, 0.0f,
-   1.0f, 0.0f, 0.0f,
-   1.0f, 0.0f, 0.0f,
-   1.0f, 0.0f, 0.0f,
-   1.0f, 0.0f, 0.0f
-};
-
-static GLubyte indices[] =
-{
-   0, 2, 1,
-   0, 3, 2,
-   4, 5, 6,
-   4, 6, 7,
-   8, 9, 10,
-   8, 10, 11,
-   12, 15, 14,
-   12, 14, 13,
-   16, 17, 18,
-   16, 18, 19,
-   20, 23, 22,
-   20, 22, 21
-};
-
 game_t* game = NULL;
 
 vec3f_t* vec3(float x, float y, float z)
@@ -166,21 +67,52 @@ long total_frames = 0;
 struct timeval prev_time;
 struct timeval fps_time;
 
-void on_draw_physics_click(game_t* game, const node_t* node, const vec2f_t* point, void* user_data)
+void update_control_state(int option, gui_t* gui, control_t* control)
 {
-   LOGI("on_draw_physics_click");
-   game_toggle_option(game, GAME_DRAW_PHYSICS);
-
-   int active_uv = 0;
-   if (game_is_option_set(game, GAME_DRAW_PHYSICS))
+   if (control == NULL)
    {
-      active_uv = 1;
+      return;
    }
 
-   mesh_t* mesh = world_get_mesh(game->world, node->data);
-   if (mesh != NULL)
+   int state = CONTROL_NORMAL;
+   if (game_is_option_set(game, option))
    {
-      mesh->active_uvmap = active_uv;
+      state = CONTROL_PRESSED;
+   }
+
+   gui_set_control_state(gui, control, state);
+}
+
+void toggle_game_option(int option, gui_t* gui, control_t* control)
+{
+   game_toggle_option(game, option);
+   update_control_state(option, gui, control);
+}
+
+void update_control(int option, gui_t* gui, const char* name)
+{
+   control_t* control = gui_get_control(gui, name);
+   update_control_state(option, gui, control);
+}
+
+void on_gui_action(gui_t* gui, control_t* control, gui_action_t action, const vec2f_t* point, void* user_data)
+{
+   LOGI("on_gui_action");
+   if (strcmp(control->name, "GUI_BTN_DrawPhysics") == 0)
+   {
+      toggle_game_option(GAME_DRAW_PHYSICS, gui, control);
+   }
+   else if (strcmp(control->name, "GUI_BTN_DrawLamps") == 0)
+   {
+      toggle_game_option(GAME_DRAW_LAMPS, gui, control);
+   }
+   else if (strcmp(control->name, "GUI_BTN_DrawMeshes") == 0)
+   {
+      toggle_game_option(GAME_DRAW_MESHES, gui, control);
+   }
+   else if (strcmp(control->name, "GUI_BTN_EnablePhysics") == 0)
+   {
+      toggle_game_option(GAME_UPDATE_PHYSICS, gui, control);
    }
 }
 
@@ -249,7 +181,11 @@ int init(const char* apkPath)
    if (game_init(&game, "w01d01.runner") != 0)
       return -1;
 
-   game_add_click_handler(game, "GUI_BTN_DrawPhysics", on_draw_physics_click, NULL);
+   gui_add_handler(&game->gui, on_gui_action, ACTION_DOWN, NULL);
+   update_control(GAME_UPDATE_PHYSICS, &game->gui, "GUI_BTN_EnablePhysics");
+   update_control(GAME_DRAW_PHYSICS, &game->gui, "GUI_BTN_DrawPhysics");
+   update_control(GAME_DRAW_LAMPS, &game->gui, "GUI_BTN_DrawLamps");
+   update_control(GAME_DRAW_MESHES, &game->gui, "GUI_BTN_DrawMeshes");
 
    return 0;
 }
@@ -351,16 +287,28 @@ void pointer_down(int pointerId, float x, float y)
       .y = 1.0f - y * 2.0f,
    };
 
-   game_dispatch_click(game, &point);
+   gui_dispatch_pointer_down(&game->gui, pointerId, &point);
 }
 
 void pointer_up(int pointerId, float x, float y)
 {
    LOGI("pointer #%d up: %.2f %.2f", pointerId, x, y);
+   vec2f_t point =
+   {
+      .x = x * 2.0f - 1.0f,
+      .y = 1.0f - y * 2.0f,
+   };
+   gui_dispatch_pointer_up(&game->gui, pointerId, &point);
 }
 
 void pointer_move(int pointerId, float dx, float dy)
 {
    //LOGI("pointer #%d move: %.2f %.2f", pointerId, dx, dy);
+   vec2f_t movement =
+   {
+      .x = dx,
+      .y = dy,
+   };
+   gui_dispatch_pointer_move(&game->gui, pointerId, &movement);
 }
 
