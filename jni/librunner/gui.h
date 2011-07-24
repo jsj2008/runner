@@ -66,6 +66,6 @@ void gui_add_handler(gui_t* gui, handler_pf handler, long action_filter, void* u
 void gui_set_control_state(gui_t* gui, control_t* control, control_state_t state);
 void gui_dispatch_pointer_down(gui_t* gui, long pointer_id, const struct vec2f_t* point);
 void gui_dispatch_pointer_up(gui_t* gui, long pointer_id, const struct vec2f_t* point);
-void gui_dispatch_pointer_move(gui_t* gui, long pointer_id, const struct vec2f_t* movement);
+void gui_dispatch_pointer_move(gui_t* gui, long pointer_id, const struct vec2f_t* point);
 control_t* gui_get_control(gui_t* gui, const char* name);
 

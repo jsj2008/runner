@@ -40,8 +40,8 @@ JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_pointer_1up (JNIEnv* env,
    pointer_up(pointerId, x, y);
 }
 
-JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_pointer_1move (JNIEnv* env, jclass wrapper, jint pointerId, jfloat dx, jfloat dy)
+JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_pointer_1move (JNIEnv* env, jclass wrapper, jint pointerId, jfloat x, jfloat y)
 {
-   pointer_move(pointerId, dx, dy);
+   pointer_move(pointerId, x, y);
 }
 

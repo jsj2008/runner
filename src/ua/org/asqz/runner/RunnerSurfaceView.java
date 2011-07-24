@@ -58,6 +58,10 @@ class RunnerSurfaceView extends GLSurfaceView {
                Log.i(TAG, "Pointer moved on [" + dx1 + "," + dy1 + "] [" + dx2 + "," + dy2 +  "] in " + dt + "ms");
             }
          }
+
+         float x = event.getX(pointerIndex) / getWidth();
+         float y = event.getY(pointerIndex) / getHeight();
+         Wrapper.pointer_move(event.getPointerId(pointerIndex), x, y);
       }
       else if (actionCode == MotionEvent.ACTION_DOWN || actionCode == MotionEvent.ACTION_POINTER_DOWN) {
          float x = event.getX(pointerIndex) / getWidth();

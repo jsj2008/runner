@@ -87,21 +87,23 @@ void gui_dispatch_pointer_up(gui_t* gui, long pointer_id, const struct vec2f_t* 
    }
 }
 
-void gui_dispatch_pointer_move(gui_t* gui, long pointer_id, const struct vec2f_t* movement)
+void gui_dispatch_pointer_move(gui_t* gui, long pointer_id, const struct vec2f_t* point)
 {
    pointer_t* pointer = gui_get_pointer_by_id(gui, pointer_id);
    if (pointer == NULL) return;
 
    control_t* old_control = pointer->control;
 
-   pointer->point.x += movement->x;
-   pointer->point.y += movement->y;
+   pointer->point = *point;
    pointer->control = (control_t*)scene_pick_node(game->world, gui->scene, &pointer->point);
 
-   if (old_control != NULL && old_control != pointer->control)
+   if (old_control != pointer->control)
    {
-      LOGI("POINTER LEAVED FROM %s", old_control->name);
-      gui_invoke_handlers(gui, old_control, ACTION_LEAVE, &pointer->point);
+      if (old_control != NULL)
+      {
+         LOGI("POINTER LEAVED FROM %s", old_control->name);
+         gui_invoke_handlers(gui, old_control, ACTION_LEAVE, &pointer->point);
+      }
 
       if (pointer->control != NULL)
       {

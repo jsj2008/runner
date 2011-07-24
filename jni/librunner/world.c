@@ -239,9 +239,9 @@ node_t* scene_pick_node(const world_t* world, const scene_t* scene, const vec2f_
    vec3_sub(&dir, &to_global, &from_global);
    vec3_normalize(&dir);
 
-   LOGI("FROM: %.2f %.2f %.2f -> %.2f %.2f %.2f", from.x, from.y, from.z, from_global.x, from_global.y, from_global.z);
-   LOGI("TO:   %.2f %.2f %.2f -> %.2f %.2f %.2f", to.x, to.y, to.z, to_global.x, to_global.y, to_global.z);
-   LOGI("DIR:  %.2f %.2f %.2f", dir.x, dir.y, dir.z);
+   //LOGI("FROM: %.2f %.2f %.2f -> %.2f %.2f %.2f", from.x, from.y, from.z, from_global.x, from_global.y, from_global.z);
+   //LOGI("TO:   %.2f %.2f %.2f -> %.2f %.2f %.2f", to.x, to.y, to.z, to_global.x, to_global.y, to_global.z);
+   //LOGI("DIR:  %.2f %.2f %.2f", dir.x, dir.y, dir.z);
 
    long l = 0;
    struct node_t* node = &scene->nodes[0];
@@ -252,15 +252,10 @@ node_t* scene_pick_node(const world_t* world, const scene_t* scene, const vec2f_
       bbox.max.y += 1.0f;
       bbox_transform(&bbox, &node->transform);
 
-      LOGI("NODE: %s", node->name);
-      //mat4_show(&node->transform);
-      //bbox_show(&node->bbox);
-      bbox_show(&bbox);
-
       float dist = 0.0f;
       if (bbox_ray_intersection(&bbox, &from_global, &dir, &dist))
       {
-         LOGI("INTERSECTION: %.2f", dist);
+         //LOGI("INTERSECTION: %.2f", dist);
          if (dist < pick_dist)
          {
             picked_node = node;

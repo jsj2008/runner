@@ -95,24 +95,46 @@ void update_control(int option, gui_t* gui, const char* name)
    update_control_state(option, gui, control);
 }
 
-void on_gui_action(gui_t* gui, control_t* control, gui_action_t action, const vec2f_t* point, void* user_data)
+int get_game_option(const control_t* control)
 {
-   LOGI("on_gui_action");
    if (strcmp(control->name, "GUI_BTN_DrawPhysics") == 0)
    {
-      toggle_game_option(GAME_DRAW_PHYSICS, gui, control);
+      return GAME_DRAW_PHYSICS;
    }
    else if (strcmp(control->name, "GUI_BTN_DrawLamps") == 0)
    {
-      toggle_game_option(GAME_DRAW_LAMPS, gui, control);
+      return GAME_DRAW_LAMPS;
    }
    else if (strcmp(control->name, "GUI_BTN_DrawMeshes") == 0)
    {
-      toggle_game_option(GAME_DRAW_MESHES, gui, control);
+      return GAME_DRAW_MESHES;
    }
    else if (strcmp(control->name, "GUI_BTN_EnablePhysics") == 0)
    {
-      toggle_game_option(GAME_UPDATE_PHYSICS, gui, control);
+      return GAME_UPDATE_PHYSICS;
+   }
+   return 0;
+}
+
+void on_gui_action(gui_t* gui, control_t* control, gui_action_t action, const vec2f_t* point, void* user_data)
+{
+   LOGI("on_gui_action");
+
+   int option = get_game_option(control);
+
+   switch (action)
+   {
+   case ACTION_DOWN:
+   case ACTION_ENTER:
+      gui_set_control_state(gui, control, CONTROL_SELECTED);
+      break;
+   case ACTION_UP:
+      toggle_game_option(option, gui, control);
+      break;
+
+   case ACTION_LEAVE:
+      update_control_state(option, gui, control);
+      break;
    }
 }
 
@@ -181,7 +203,7 @@ int init(const char* apkPath)
    if (game_init(&game, "w01d01.runner") != 0)
       return -1;
 
-   gui_add_handler(&game->gui, on_gui_action, ACTION_DOWN, NULL);
+   gui_add_handler(&game->gui, on_gui_action, ACTION_DOWN | ACTION_UP | ACTION_ENTER | ACTION_LEAVE, NULL);
    update_control(GAME_UPDATE_PHYSICS, &game->gui, "GUI_BTN_EnablePhysics");
    update_control(GAME_DRAW_PHYSICS, &game->gui, "GUI_BTN_DrawPhysics");
    update_control(GAME_DRAW_LAMPS, &game->gui, "GUI_BTN_DrawLamps");
@@ -301,14 +323,14 @@ void pointer_up(int pointerId, float x, float y)
    gui_dispatch_pointer_up(&game->gui, pointerId, &point);
 }
 
-void pointer_move(int pointerId, float dx, float dy)
+void pointer_move(int pointerId, float x, float y)
 {
-   //LOGI("pointer #%d move: %.2f %.2f", pointerId, dx, dy);
-   vec2f_t movement =
+   LOGI("pointer #%d move: %.2f %.2f", pointerId, x, y);
+   vec2f_t point =
    {
-      .x = dx,
-      .y = dy,
+      .x = x * 2.0f - 1.0f,
+      .y = 1.0f - y * 2.0f,
    };
-   gui_dispatch_pointer_move(&game->gui, pointerId, &movement);
+   gui_dispatch_pointer_move(&game->gui, pointerId, &point);
 }
 

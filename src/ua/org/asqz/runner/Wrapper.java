@@ -8,7 +8,7 @@ class Wrapper {
    public static native void scroll(long dt, float dx1, float dy1, float dx2, float dy2);
    public static native void pointer_down(int pointerId, float x, float y);
    public static native void pointer_up(int pointerId, float x, float y);
-   public static native void pointer_move(int pointerId, float dx, float dy);
+   public static native void pointer_move(int pointerId, float x, float y);
 
    static {
       System.loadLibrary("wrapper");
