@@ -12,7 +12,8 @@ void main()
 
    // diffuse
    float lambertTerm = max(dot(N, L), 0.0);
-   //float coeff = vDist / falloffDistance;
-   //float attenuation = clamp(1.0 - coeff * coeff, 0.0, 1.0);
-   gl_FragColor = vec4(uMatDiffuse.rgb, 1.0) * texture2D(uTex, vTexCoord) * lambertTerm;// * attenuation;
+   float coeff = vDist / falloffDistance;
+   float attenuation = clamp(1.0 - coeff * coeff, 0.0, 1.0);
+   float diffuse = min(lambertTerm * attenuation + 0.5, 1.0);
+   gl_FragColor = vec4(uMatDiffuse.rgb, 1.0) * texture2D(uTex, vTexCoord) * diffuse;
 }

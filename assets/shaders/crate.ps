@@ -18,7 +18,8 @@ void main()
    float lambertTerm = max(dot(N, L), 0.0);
    float coeff = vDist / falloffDistance;
    float attenuation = clamp(1.0 - coeff * coeff, 0.0, 1.0);
-   vec4 color = vec4(uMatDiffuse.rgb, 1.0) * texture2D(uTex, vTexCoord) * lambertTerm * attenuation;
+   float diffuse = min(lambertTerm * attenuation + 0.5, 1.0);
+   vec4 color = vec4(uMatDiffuse.rgb, 1.0) * texture2D(uTex, vTexCoord) * diffuse;
 
    // specular
    float specular = pow(max(0.0, dot(R, E)), uMatShininess);
