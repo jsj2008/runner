@@ -13,11 +13,10 @@ import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
+import java.lang.Math;
 
 class RunnerSurfaceView extends GLSurfaceView {
    private static final String TAG = "RunnerSurfaceView";
-
-   private static final float M_EPSILON = 0.005f;
 
    public interface Handler {
       public void handleError(String error);
@@ -53,10 +52,8 @@ class RunnerSurfaceView extends GLSurfaceView {
                dy2 = event.getY(1) - mPrevPositions[3];
             }
 
-            if (dx1 > M_EPSILON || dy1 > M_EPSILON || dx2 > M_EPSILON || dy2 > M_EPSILON) {
-               Wrapper.scroll(dt, dx1, dy1, dx2, dy2);
-               Log.i(TAG, "Pointer moved on [" + dx1 + "," + dy1 + "] [" + dx2 + "," + dy2 +  "] in " + dt + "ms");
-            }
+            Wrapper.scroll(dt, dx1, dy1, dx2, dy2);
+            Log.i(TAG, "Pointer moved on [" + dx1 + "," + dy1 + "] [" + dx2 + "," + dy2 +  "] in " + dt + "ms");
          }
 
          float x = event.getX(pointerIndex) / getWidth();

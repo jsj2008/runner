@@ -277,12 +277,13 @@ void scroll(long dt, float dx1, float dy1, float dx2, float dy2)
    static float speed = 1;
 
    float interval = (float)dt / 1000.0f;
-   float coef = 0.05;//interval * speed;
+   float coef = 0.025;//interval * speed;
 
    if (dx2 == 0.0f && dy2 == 0.0f)
    {
       // single finger sliding - strafe
-      //cam_slide(&game->camera, vec3(-coef * dx1, coef * dy1, 0.0f));
+      game->camera->view.m14 += dx1 * coef;
+      game->camera->view.m24 -= dy1 * coef;
 
       int i = 0;
       for (i = 0; i < 4; ++i)
@@ -295,7 +296,7 @@ void scroll(long dt, float dx1, float dy1, float dx2, float dy2)
    {
       // two finger sliding - move forward
       float v = coef * dy1;
-      //cam_slide(&game->camera, vec3(game->camera.view_dir.x * v, game->camera.view_dir.y * v, game->camera.view_dir.z * v));
+      game->camera->view.m34 += v;
    }
 }
 
