@@ -44,9 +44,21 @@ int add_texture(resman_t* rm, const struct texture_t* texture)
    if (resman_get_texture(rm, texture->name) == NULL)
    {
       image_t* image = NULL;
-      if (image_load_from_png(&image, texture->path) != 0)
+
+      char fname[256] = {0};
+      strcpy(fname, texture->path);
+      char* end = strrchr(fname, '.');
+      if (end != NULL)
       {
-         return -1;
+         strcpy(end, ".texture");
+      }
+
+      if (image_load(&image, fname) != 0)
+      {
+         if (image_load_from_png(&image, texture->path) != 0)
+         {
+            return -1;
+         }
       }
 
       tex2d_t* tex2d = NULL;

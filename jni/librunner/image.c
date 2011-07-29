@@ -95,13 +95,24 @@ int image_load_from_png(image_t** pimage, const char* fname)
 
    png_read_update_info(png_ptr, info_ptr);
    const unsigned int rowbytes = png_get_rowbytes(png_ptr, info_ptr);
-   unsigned char* img = (unsigned char*)malloc(rowbytes * height);
+   int data_size = rowbytes * height;
+
+   image_t* image = (image_t*)malloc(sizeof(image_t) + sizeof(mipmap_t) + data_size);
+   image->format = IMAGE_RAW;
+   image->bpp = channels * 8;
+   image->nmipmaps = 1;
+   image->mipmaps = (mipmap_t*)((unsigned char*)image + sizeof(image_t));
+   mipmap_t* mipmap = &image->mipmaps[0];
+   mipmap->size = data_size;
+   mipmap->width = width;
+   mipmap->height = height;
+   mipmap->data = ((unsigned char*)image->mipmaps + sizeof(mipmap_t));
 
    png_bytep* row_pointers = (png_bytep*)malloc(sizeof(png_bytep) * height);
    int i = 0;
    for (i = 0; i < height; ++i)
    {
-      row_pointers[height - i - 1] = (png_bytep)img + i * rowbytes;
+      row_pointers[height - i - 1] = (png_bytep)mipmap->data + i * rowbytes;
    }
 
    png_read_image(png_ptr, row_pointers);
@@ -109,20 +120,130 @@ int image_load_from_png(image_t** pimage, const char* fname)
    free(row_pointers);
    free(data);
 
-   image_t* image = (image_t*)malloc(sizeof(image_t));
-   image->data = img;
-   image->width = width;
-   image->height = height;
-   image->bpp = channels * 8;
-
    (*pimage) = image;
 
    return 0;
 }
 
+struct file_header_t
+{
+   char magic[8];
+   long version;
+   long data_offset;
+   long data_size;
+};
+
+int image_load(image_t** pimage, const char* fname)
+{
+   LOGI("Loading image from %s", fname);
+
+   stream_t* f = NULL;
+   if (stream_open_reader(&f, fname) != 0)
+   {
+      return -1;
+   }
+
+   struct file_header_t header;
+   stream_read(f, &header, sizeof(header));
+   if (memcmp(header.magic, "RNNRTXTR", sizeof(header.magic)) != 0)
+   {
+      LOGE("Invalid file signature: %s", header.magic);
+      stream_close(f);
+      return -1;
+   }
+
+   long fsize = stream_size(f);
+
+   if (header.data_offset + header.data_size < fsize)
+   {
+      LOGE("Invalid file size [offset: %ld size: %ld filesize: %ld]", header.data_offset, header.data_size, fsize);
+      stream_close(f);
+      return -1;
+   }
+
+   LOGI("Header [offset: %ld size: %ld]", header.data_offset, header.data_size);
+
+   stream_seek(f, header.data_offset, SEEK_SET);
+   char* data = malloc(header.data_size);
+   stream_read(f, data, header.data_size);
+   stream_close(f);
+
+   image_t* image = (image_t*)data;
+   image->mipmaps = (mipmap_t*)(data + (long)image->mipmaps);
+
+   LOGI("Image '%s' [bpp %ld] format %d has %ld mipmaps", fname, image->bpp, image->format, image->nmipmaps);
+
+   long l = 0;
+   mipmap_t* mipmap = &image->mipmaps[0];
+   for (l = 0; l < image->nmipmaps; ++l, ++mipmap)
+   {
+      LOGI("\tMipmap [%ldx%ld] %ld bytes [offset %ld next %ld]", mipmap->width, mipmap->height, mipmap->size, (long)mipmap->data, mipmap->size + (long)mipmap->data);
+      mipmap->data = (void*)(data + (long)mipmap->data);
+
+      /*char name[1024];
+      sprintf(name, "./mipmap_%ld_%ld.pkm", mipmap->width, mipmap->height);
+      FILE* f = fopen(name, "wb");
+      fwrite(mipmap->data, 1, mipmap->size, f);
+      fclose(f);*/
+   }
+   (*pimage) = image;
+
+   return 0;
+}
+
+#define WRITE(n)     { header.data_size += stream_write(f, &n, sizeof(n)); }
+#define WRITEA(n, c) { header.data_size += stream_write(f, &n[0], c * sizeof(n[0])); }
+
+int image_save(image_t* image, const char* fname)
+{
+   stream_t* f = NULL;
+   if (stream_open_writer(&f, fname) != 0)
+   {
+      return -1;
+   }
+
+   struct file_header_t header =
+   {
+      .magic = "RNNRTXTR",
+      .version = 1,
+      .data_offset = sizeof(struct file_header_t),
+      .data_size = 0,
+   };
+
+   stream_seek(f, header.data_offset, SEEK_SET);
+
+   image_t img = (*image);
+   img.mipmaps = (mipmap_t*)sizeof(image_t);
+   WRITE(img);
+
+   long offset = (long)img.mipmaps + img.nmipmaps * sizeof(mipmap_t);
+
+   long l = 0;
+   mipmap_t* mipmap = &image->mipmaps[0];
+   for (l = 0; l < image->nmipmaps; ++l, ++mipmap)
+   {
+      mipmap_t mip = (*mipmap);
+      mip.data = (void*)offset;
+      offset += mip.size;
+      WRITE(mip);
+   }
+
+   mipmap = &image->mipmaps[0];
+   for (l = 0; l < image->nmipmaps; ++l, ++mipmap)
+   {
+      WRITEA(((char*)mipmap->data), mipmap->size);
+   }
+
+   // write header
+   stream_seek(f, 0, SEEK_SET);
+   WRITE(header);
+
+   stream_close(f);
+   return 0;
+}
+
 void image_free(image_t* image)
 {
-   free(image->data);
    free(image);
 }
 

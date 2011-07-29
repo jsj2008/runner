@@ -2,6 +2,18 @@
 #include "image.h"
 #include "common.h"
 
+void load_compressed_image(const struct image_t* image, int internalFormat)
+{
+   unsigned long level = 0;
+   const mipmap_t* mipmap = &image->mipmaps[0];
+   for (level = 0; level < image->nmipmaps; ++level, ++mipmap)
+   {
+      //LOGI("glCompressedTexImage2D %ld [%ldx%ld] %ld bytes", level, mipmap->width, mipmap->height, mipmap->size);
+      glCompressedTexImage2D(GL_TEXTURE_2D, level, internalFormat, mipmap->width, mipmap->height, 0, mipmap->size, mipmap->data);
+      checkGLError("glCompressedTexImage2D");
+   }
+}
+
 int tex2d_create(tex2d_t** ptexture, const struct image_t* image, int min_filter, int mag_filter, int wrap_s, int wrap_t)
 {
    GLuint id = 0;
@@ -15,6 +27,17 @@ int tex2d_create(tex2d_t** ptexture, const struct image_t* image, int min_filter
    glBindTexture(GL_TEXTURE_2D, id);
    checkGLError("glBindTexture");
 
+   if (min_filter == GL_LINEAR_MIPMAP_LINEAR ||
+         min_filter == GL_NEAREST_MIPMAP_LINEAR ||
+         min_filter == GL_LINEAR_MIPMAP_NEAREST ||
+         min_filter == GL_NEAREST_MIPMAP_NEAREST)
+   {
+      if (image->format != IMAGE_RAW && image->nmipmaps == 1)
+      {
+         min_filter = GL_LINEAR;
+      }
+   }
+
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_filter);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag_filter);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s);
@@ -23,11 +46,50 @@ int tex2d_create(tex2d_t** ptexture, const struct image_t* image, int min_filter
 
    GLint format = (image->bpp == 32) ? GL_RGBA : GL_RGB;
 
-   glTexImage2D(GL_TEXTURE_2D, 0, format, image->width, image->height, 0, format, GL_UNSIGNED_BYTE, image->data);
-   checkGLError("glTexImage2D");
+   long level = 0;
+   const mipmap_t* mipmap = NULL;
 
-   glGenerateMipmap(GL_TEXTURE_2D);
-   checkGLError("glGenerateMipmap");
+   switch (image->format)
+   {
+   case IMAGE_RAW:
+      mipmap = &image->mipmaps[0];
+      for (level = 0; level < image->nmipmaps; ++level, ++mipmap)
+      {
+         glTexImage2D(GL_TEXTURE_2D, level, format, mipmap->width, mipmap->height, 0, format, GL_UNSIGNED_BYTE, mipmap->data);
+         checkGLError("glTexImage2D");
+      }
+
+      if (image->nmipmaps == 1)
+      {
+         glGenerateMipmap(GL_TEXTURE_2D);
+         checkGLError("glGenerateMipmap");
+      }
+      break;
+
+   case IMAGE_COMPRESSED_RGB_ETC1:
+      load_compressed_image(image, GL_ETC1_RGB8_OES);
+      break;
+
+   case IMAGE_COMPRESSED_RGB_DXT1:
+      load_compressed_image(image, GL_COMPRESSED_RGB_S3TC_DXT1_EXT);
+      break;
+
+   case IMAGE_COMPRESSED_RGBA_DXT1:
+      load_compressed_image(image, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT);
+      break;
+
+   case IMAGE_COMPRESSED_RGBA_DXT3:
+      load_compressed_image(image, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT);
+      break;
+
+   case IMAGE_COMPRESSED_RGBA_DXT5:
+      load_compressed_image(image, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT);
+      break;
+
+   default:
+      LOGE("Unsupported image format %d", image->format);
+      return -1;
+   }
 
    LOGI("Loaded texture id = %d", id);
 
