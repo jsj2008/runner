@@ -18,9 +18,13 @@
 #define DDPF_INDEXED                0x00000020
 #define DDPF_RGB                    0x00000040
 
-#define D3DFMT_DXT1                 0x31545844
-#define D3DFMT_DXT3                 0x33545844
-#define D3DFMT_DXT5                 0x35545844
+#define FOURCC_DXT1                 0x31545844
+#define FOURCC_DXT3                 0x33545844
+#define FOURCC_DXT5                 0x35545844
+#define FOURCC_ETC                  0x20435445
+#define FOURCC_ATC                  0x20435441
+#define FOURCC_ATCA                 0x41435441
+#define FOURCC_ATCI                 0x49435441
 
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 
@@ -92,19 +96,39 @@ int image_load_from_dds(image_t** pimage, const char* fname)
    unsigned long block_bytes = 0;
    unsigned long format = IMAGE_RAW;
 
-   if (header.pixel_format.fourcc == D3DFMT_DXT1)
+   if (header.pixel_format.fourcc == FOURCC_DXT1)
    {
       format = IMAGE_COMPRESSED_RGBA_DXT1;
       block_bytes = 8;
    }
-   else if (header.pixel_format.fourcc == D3DFMT_DXT3)
+   else if (header.pixel_format.fourcc == FOURCC_DXT3)
    {
       format = IMAGE_COMPRESSED_RGBA_DXT3;
       block_bytes = 16;
    }
-   else if (header.pixel_format.fourcc == D3DFMT_DXT5)
+   else if (header.pixel_format.fourcc == FOURCC_DXT5)
    {
       format = IMAGE_COMPRESSED_RGBA_DXT5;
+      block_bytes = 16;
+   }
+   else if (header.pixel_format.fourcc == FOURCC_ETC)
+   {
+      format = IMAGE_COMPRESSED_RGB_ETC1;
+      block_bytes = 8;
+   }
+   else if (header.pixel_format.fourcc == FOURCC_ATC)
+   {
+      format = IMAGE_COMPRESSED_RGB_ATC;
+      block_bytes = 8;
+   }
+   else if (header.pixel_format.fourcc == FOURCC_ATCA)
+   {
+      format = IMAGE_COMPRESSED_RGBA_ATCE;
+      block_bytes = 16;
+   }
+   else if (header.pixel_format.fourcc == FOURCC_ATCI)
+   {
+      format = IMAGE_COMPRESSED_RGBA_ATCI;
       block_bytes = 16;
    }
    else

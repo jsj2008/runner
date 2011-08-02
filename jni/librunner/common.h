@@ -20,9 +20,10 @@
 #include <GL/glext.h>
 #include <GL/glut.h>
 
-#ifndef GL_ETC1_RGB8_OES
-#define GL_ETC1_RGB8_OES 0x8D64
-#endif
+#define GL_ETC1_RGB8_OES                     0x8D64
+#define GL_ATC_RGB_AMD                       0x8C92
+#define GL_ATC_RGBA_EXPLICIT_ALPHA_AMD       0x8C93
+#define GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD   0x87EE
 
 #endif
 
