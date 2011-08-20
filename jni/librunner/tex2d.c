@@ -98,6 +98,22 @@ int tex2d_create(tex2d_t** ptexture, const struct image_t* image, int min_filter
       load_compressed_image(image, GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD);
       break;
 
+   case IMAGE_COMPRESSED_RGB_PVRTC2:
+      load_compressed_image(image, GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG);
+      break;
+
+   case IMAGE_COMPRESSED_RGB_PVRTC4:
+      load_compressed_image(image, GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG);
+      break;
+
+   case IMAGE_COMPRESSED_RGBA_PVRTC2:
+      load_compressed_image(image, GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG);
+      break;
+
+   case IMAGE_COMPRESSED_RGBA_PVRTC4:
+      load_compressed_image(image, GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG);
+      break;
+
    default:
       LOGE("Unsupported image format %d", image->format);
       return -1;
