@@ -22,6 +22,8 @@ struct resman_t
 
    entry_t shaders[MAX_SHADERS];
    entry_t textures[MAX_TEXTURES];
+
+   char texture_root[32];
 };
 
 static void* entry_get(const entry_t* entries, long nentries, const char* key)
@@ -39,6 +41,25 @@ static void* entry_get(const entry_t* entries, long nentries, const char* key)
    return NULL;
 }
 
+char* modify_texture_path(char* modified, const char* root, const char* original)
+{
+   char* fname = strrchr(original, '/');
+   if (fname == NULL)
+   {
+      return NULL;
+   }
+
+   ++fname;
+   strncpy(modified, original, fname - original);
+   strcat(modified, root);
+   strcat(modified, fname);
+
+   char* end = strrchr(modified, '.');
+   strcpy(end, ".texture");
+
+   return modified;
+}
+
 int add_texture(resman_t* rm, const struct texture_t* texture)
 {
    if (resman_get_texture(rm, texture->name) == NULL)
@@ -46,12 +67,7 @@ int add_texture(resman_t* rm, const struct texture_t* texture)
       image_t* image = NULL;
 
       char fname[256] = {0};
-      strcpy(fname, texture->path);
-      char* end = strrchr(fname, '.');
-      if (end != NULL)
-      {
-         strcpy(end, ".texture");
-      }
+      modify_texture_path(fname, rm->texture_root, texture->path);
 
       if (image_load(&image, fname) != 0)
       {
@@ -99,6 +115,23 @@ int resman_init(resman_t** prm, const world_t* world)
    resman_t* rm = (resman_t*)malloc(sizeof(resman_t));
    memset(rm, 0, sizeof(resman_t));
    rm->world = world;
+
+   if (isGLExtensionSupported("GL_EXT_texture_compression_s3tc"))
+   {
+      strcpy(rm->texture_root, "s3tc/");
+   }
+   else if (isGLExtensionSupported("GL_AMD_compressed_ATC_texture"))
+   {
+      strcpy(rm->texture_root, "atc/");
+   }
+   else if (isGLExtensionSupported("GL_IMG_texture_compression_pvrtc"))
+   {
+      strcpy(rm->texture_root, "pvrtc/");
+   }
+   else // GL_OES_compressed_ETC1_RGB8_texture
+   {
+      strcpy(rm->texture_root, "etc1/");
+   }
 
    long l = 0;
 

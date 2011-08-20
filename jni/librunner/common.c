@@ -15,3 +15,9 @@ void checkGLError(const char* op)
    }
 }
 
+int isGLExtensionSupported(const char* name)
+{
+   const char* extensions = (const char*)glGetString(GL_EXTENSIONS);
+   return (strstr(extensions, name) != NULL);
+}
+
