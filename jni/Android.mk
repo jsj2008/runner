@@ -1,3 +1,3 @@
 ROOT := $(call my-dir)
-ROOT := $(shell cygpath --mixed "$(ROOT)")
+ROOT := $(shell [ -f /usr/bin/cygpath ] && cygpath --mixed "$(ROOT)" || echo "$(ROOT)")
 include $(call all-subdir-makefiles)

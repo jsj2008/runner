@@ -1,11 +1,11 @@
 TARGET  := ./convert_pvr
-SOURCES := convert_pvr.cpp
-OBJECTS := $(SOURCES:.cpp=.o)
+SOURCES := convert_pvr.c
+OBJECTS := $(SOURCES:.c=.o)
 
-CC      = g++
-CFLAGS  = -O2 -Wall -Werror -I../libbullet -I../librunner -I3rdParty/pvr
+CC      = gcc
+CFLAGS  = -O2 -Wall -Werror -I../libbullet -I../librunner
 LDFLAGS = -L. -L../librunner -L3rdParty/pvr
-LIBS    = -lrunner -lm -lGL -lpng -lPVRTexLib
+LIBS    = -lrunner -lm -lGL -lpng
 
 all: $(SOURCES) $(TARGET)
 
@@ -15,6 +15,6 @@ clean:
 $(TARGET): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(CFLAGS) -o $@ $(OBJECTS) $(LIBS)
 
-.cpp.o:
-	$(CC) -c $(CFLAGS) $(@:.o=.cpp)
+.c.o:
+	$(CC) -c $(CFLAGS) $(@:.o=.c)
 
