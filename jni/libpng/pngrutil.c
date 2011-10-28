@@ -2396,7 +2396,7 @@ png_handle_unknown(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
                  (png_charp)png_ptr->chunk_name,
                  png_sizeof(png_ptr->unknown_chunk.name));
       png_ptr->unknown_chunk.name[png_sizeof(png_ptr->unknown_chunk.name)-1]
-      = '\0';
+         = '\0';
       png_ptr->unknown_chunk.size = (png_size_t)length;
       if (length == 0)
          png_ptr->unknown_chunk.data = NULL;

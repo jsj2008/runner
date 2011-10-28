@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     ua_org_asqz_runner_Wrapper
  * Method:    init
- * Signature: (Ljava/lang/String;)I
+ * Signature: (Landroid/content/res/AssetManager;)I
  */
 JNIEXPORT jint JNICALL Java_ua_org_asqz_runner_Wrapper_init
-  (JNIEnv *, jclass, jstring);
+  (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     ua_org_asqz_runner_Wrapper

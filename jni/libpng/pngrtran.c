@@ -409,7 +409,7 @@ png_set_dither(png_structp png_ptr, png_colorp palette,
 
                            num_new_palette--;
                            palette[png_ptr->index_to_palette[j]]
-                           = palette[num_new_palette];
+                              = palette[num_new_palette];
                            if (!full_dither)
                            {
                               int k;
@@ -430,7 +430,7 @@ png_set_dither(png_structp png_ptr, png_colorp palette,
                            png_ptr->index_to_palette[png_ptr->palette_to_index
                                                      [num_new_palette]] = png_ptr->index_to_palette[j];
                            png_ptr->palette_to_index[png_ptr->index_to_palette[j]]
-                           = png_ptr->palette_to_index[num_new_palette];
+                              = png_ptr->palette_to_index[num_new_palette];
 
                            png_ptr->index_to_palette[j] =
                               (png_byte)num_new_palette;

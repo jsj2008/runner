@@ -172,7 +172,7 @@ float timers_update()
    return dt;
 }
 
-int init(const char* apkPath)
+int init(struct AAssetManager* assetManager)
 {
    LOGI("init");
 
@@ -194,9 +194,9 @@ int init(const char* apkPath)
    glFrontFace(GL_CCW);
    checkGLError("glFrontFace");
 
-   if (stream_set_root(apkPath) != 0)
+   if (stream_init(assetManager) != 0)
    {
-      LOGE("Error setting APK path");
+      LOGE("Error initializing I/O system");
       return -1;
    }
 

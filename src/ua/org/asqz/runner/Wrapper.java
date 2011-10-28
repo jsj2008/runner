@@ -1,7 +1,9 @@
 package ua.org.asqz.runner;
 
+import android.content.res.AssetManager;
+
 class Wrapper {
-   public static native int init(String apkPath);
+   public static native int init(AssetManager manager);
    public static native void shutdown();
    public static native void resize(int width, int height);
    public static native void update();

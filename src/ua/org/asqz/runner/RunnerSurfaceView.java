@@ -1,9 +1,7 @@
 package ua.org.asqz.runner;
 
 import android.content.Context;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.opengl.GLSurfaceView;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -107,17 +105,9 @@ class RunnerSurfaceView extends GLSurfaceView {
 
    private GLSurfaceView.Renderer mRenderer = new GLSurfaceView.Renderer() {
       public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-         PackageManager pm = getContext().getPackageManager();
-         try {
-            ApplicationInfo info = pm.getApplicationInfo(getContext().getPackageName(), 0);
-            mInitialized = (Wrapper.init(info.sourceDir) == 0);
-            if (!mInitialized) {
-               mHandler.handleError("Unable to initialize");
-            }
-         }
-         catch (NameNotFoundException ex) {
-            ex.printStackTrace();
-            mHandler.handleError(ex.getMessage());
+         mInitialized = (Wrapper.init(getContext().getAssets()) == 0);
+         if (!mInitialized) {
+            mHandler.handleError("Unable to initialize");
          }
       }
 

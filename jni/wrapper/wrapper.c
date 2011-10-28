@@ -1,12 +1,13 @@
 #include <jni.h>
+#include <stdio.h>
 #include <android/log.h>
+#include <android/asset_manager_jni.h>
 #include "runner.h"
 
-JNIEXPORT jint JNICALL Java_ua_org_asqz_runner_Wrapper_init (JNIEnv* env, jclass wrapper, jstring apkPath)
+JNIEXPORT jint JNICALL Java_ua_org_asqz_runner_Wrapper_init (JNIEnv* env, jclass wrapper, jobject assetManager)
 {
-   const char* str = (*env)->GetStringUTFChars(env, apkPath, 0);
-   int res = init(str);
-   (*env)->ReleaseStringUTFChars(env, apkPath, str);
+   AAssetManager* manager = AAssetManager_fromJava(env, assetManager);
+   int res = init(manager);
    return res;
 }
 

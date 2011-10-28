@@ -4,7 +4,7 @@
 
 typedef struct stream_t stream_t;
 
-int stream_set_root(const char* root);
+int stream_init(void* data);
 void* stream_read_file(const char* fname, long* psize);
 
 int stream_open_reader(stream_t** pstream, const char* fname);
