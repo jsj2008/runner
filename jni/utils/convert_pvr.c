@@ -5,8 +5,11 @@
 #define TAG_PVR               0x21525650
 
 #define FLAG_TYPE_MASK        0xFF
-#define FLAG_TYPE_PVRTC2      24
-#define FLAG_TYPE_PVRTC4      25
+#define FLAG_TYPE_PVRTC2      12
+#define FLAG_TYPE_PVRTC4      13
+#define FLAG_TYPE_OGLPVRTC2   24
+#define FLAG_TYPE_OGLPVRTC4   25
+#define FLAG_TYPE_ETC         54
 
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 
@@ -54,7 +57,11 @@ int image_load_from_pvr(image_t** pimage, const char* fname)
    unsigned long block_height = 0;
    unsigned long block_bpp = 0;
 
-   if (type == FLAG_TYPE_PVRTC2)
+
+   switch (type)
+   {
+   case FLAG_TYPE_PVRTC2:
+   case FLAG_TYPE_OGLPVRTC2:
    {
       block_width = 8;
       block_height = 4;
@@ -68,8 +75,10 @@ int image_load_from_pvr(image_t** pimage, const char* fname)
       {
          format = IMAGE_COMPRESSED_RGB_PVRTC2;
       }
+      break;
    }
-   else if (type == FLAG_TYPE_PVRTC4)
+   case FLAG_TYPE_PVRTC4:
+   case FLAG_TYPE_OGLPVRTC4:
    {
       block_width = 4;
       block_height = 4;
@@ -83,12 +92,25 @@ int image_load_from_pvr(image_t** pimage, const char* fname)
       {
          format = IMAGE_COMPRESSED_RGB_PVRTC4;
       }
+      break;
    }
-   else
+
+   case FLAG_TYPE_ETC:
+   {
+      block_width = 4;
+      block_height = 4;
+      block_bpp = 4;
+
+      format = IMAGE_COMPRESSED_RGB_ETC1;
+      break;
+   }
+
+   default:
    {
       LOGE("unsupported format: 0x%02lX", type);
       stream_close(f);
       return -1;
+   }
    }
 
    LOGI("header_len=%ld data_len=%ld width=%ld height=%ld bpp=%ld type=%ld format=%ld", header.header_length, header.data_length, header.width, header.height, header.bpp, type, format);
