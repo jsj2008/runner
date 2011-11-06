@@ -128,9 +128,13 @@ int resman_init(resman_t** prm, const world_t* world)
    {
       strcpy(rm->texture_root, "pvrtc/");
    }
-   else // GL_OES_compressed_ETC1_RGB8_texture
+   else if (isGLExtensionSupported("GL_OES_compressed_ETC1_RGB8_texture"))
    {
-      strcpy(rm->texture_root, "etc1/");
+      strcpy(rm->texture_root, "etc/");
+   }
+   else
+   {
+      strcpy(rm->texture_root, "");
    }
 
    long l = 0;

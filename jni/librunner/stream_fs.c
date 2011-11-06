@@ -5,8 +5,11 @@ struct stream_t
    FILE* f;
 };
 
+static char root[256];
+
 int stream_init(void* data)
 {
+   strcpy(root, data);
    return 0;
 }
 
@@ -17,10 +20,14 @@ int stream_open_reader(stream_t** pstream, const char* fname)
       return -1;
    }
 
-   FILE* f = fopen(fname, "rb");
+   char path[256] = {0};
+   strcpy(path, root);
+   strcat(path, fname);
+
+   FILE* f = fopen(path, "rb");
    if(f == NULL)
    {
-      LOGE("Unable to open file for reading: %s", fname);
+      LOGE("Unable to open file for reading: %s", path);
       return -1;
    }
 
@@ -37,10 +44,14 @@ int stream_open_writer(stream_t** pstream, const char* fname)
       return -1;
    }
 
-   FILE* f = fopen(fname, "wb");
+   char path[256] = {0};
+   strcpy(path, root);
+   strcat(path, fname);
+
+   FILE* f = fopen(path, "wb");
    if(f == NULL)
    {
-      LOGE("Unable to open file for writing: %s", fname);
+      LOGE("Unable to open file for writing: %s", path);
       return -1;
    }
 

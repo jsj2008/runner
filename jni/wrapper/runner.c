@@ -1,15 +1,15 @@
-#include "runner.h"
-#include "common.h"
-#include "math.h"
-#include "stream.h"
-#include "camera.h"
-#include "shader.h"
-#include "material.h"
-#include "resman.h"
-#include "physworld.h"
 #include "game.h"
-#include "world.h"
-#include "material.h"
+#include <common.h>
+#include <math.h>
+#include <stream.h>
+#include <camera.h>
+#include <shader.h>
+#include <material.h>
+#include <resman.h>
+#include <physworld.h>
+#include <game.h>
+#include <world.h>
+#include <material.h>
 
 static GLfloat skybox_vertices[] =
 {
@@ -135,6 +135,8 @@ void on_gui_action(gui_t* gui, control_t* control, gui_action_t action, const ve
    case ACTION_LEAVE:
       update_control_state(option, gui, control);
       break;
+   default:
+      break;
    }
 }
 
@@ -172,7 +174,7 @@ float timers_update()
    return dt;
 }
 
-int init(struct AAssetManager* assetManager)
+int init(void* iodata)
 {
    LOGI("init");
 
@@ -194,7 +196,7 @@ int init(struct AAssetManager* assetManager)
    glFrontFace(GL_CCW);
    checkGLError("glFrontFace");
 
-   if (stream_init(assetManager) != 0)
+   if (stream_init(iodata) != 0)
    {
       LOGE("Error initializing I/O system");
       return -1;
@@ -208,6 +210,8 @@ int init(struct AAssetManager* assetManager)
    update_control(GAME_DRAW_PHYSICS, &game->gui, "GUI_BTN_DrawPhysics");
    update_control(GAME_DRAW_LAMPS, &game->gui, "GUI_BTN_DrawLamps");
    update_control(GAME_DRAW_MESHES, &game->gui, "GUI_BTN_DrawMeshes");
+
+   timers_init();
 
    return 0;
 }
@@ -233,8 +237,6 @@ void resize(int width, int height)
    game->camera->aspect = (float)width/(float)height;
    glDepthRangef(game->camera->znear, game->camera->zfar);
    checkGLError("glDepthRange");
-
-   timers_init();
 }
 
 void skybox_render()
@@ -274,9 +276,6 @@ void update()
 
 void scroll(long dt, float dx1, float dy1, float dx2, float dy2)
 {
-   static float speed = 1;
-
-   float interval = (float)dt / 1000.0f;
    float coef = 0.025;//interval * speed;
 
    if (dx2 == 0.0f && dy2 == 0.0f)

@@ -1,8 +1,6 @@
 #pragma once
 
-struct AAssetManager;
-
-int init(struct AAssetManager* assetManager);
+int init(void* iodata);
 void shutdown();
 void resize(int width, int height);
 void update();

@@ -29,15 +29,15 @@ int main(int argc, char** argv)
 
       switch (c)
       {
-         case 0:
-            LOGI("option_index: %d", option_index);
-            break;
-         case 'i':
-            strcpy(fin, optarg);
-            break;
-         case 'o':
-            strcpy(fout, optarg);
-            break;
+      case 0:
+         LOGI("option_index: %d", option_index);
+         break;
+      case 'i':
+         strcpy(fin, optarg);
+         break;
+      case 'o':
+         strcpy(fout, optarg);
+         break;
       }
    }
 
