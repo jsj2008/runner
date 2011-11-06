@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include "dds.h"
 #include <image.h>
 #include <stream.h>
 
@@ -180,35 +180,6 @@ int image_load_from_dds(image_t** pimage, const char* fname)
    (*pimage) = image;
 
    stream_close(f);
-   return 0;
-}
-
-int main(int argc, const char** argv)
-{
-   if (argc < 2)
-   {
-      printf("usage: ./convert_dds file.dds\n");
-      return 1;
-   }
-
-   int i = 0;
-   for (i = 1; i < argc; ++i)
-   {
-      image_t* img = NULL;
-      if (image_load_from_dds(&img, argv[i]) == 0)
-      {
-         char fname[256] = {0};
-         strcpy(fname, argv[i]);
-         char* end = strrchr(fname, '.');
-         if (end != NULL)
-         {
-            strcpy(end, ".texture");
-         }
-
-         image_save(img, fname);
-         image_free(img);
-      }
-   }
    return 0;
 }
 

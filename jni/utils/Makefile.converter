@@ -1,10 +1,10 @@
-TARGET  := ./convert_pvr
-SOURCES := convert_pvr.c
+TARGET  := ./converter
+SOURCES := converter.c converters/dds.c converters/pvr.c
 OBJECTS := $(SOURCES:.c=.o)
 
 CC      = gcc
-CFLAGS  = -O2 -Wall -Werror -I../libbullet -I../librunner
-LDFLAGS = -L. -L../librunner -L3rdParty/pvr
+CFLAGS  = -O2 -Wall -Werror -I../librunner
+LDFLAGS = -L. -L../librunner
 LIBS    = -lrunner -lm -lGL -lpng
 
 all: $(SOURCES) $(TARGET)
@@ -16,5 +16,5 @@ $(TARGET): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(CFLAGS) -o $@ $(OBJECTS) $(LIBS)
 
 .c.o:
-	$(CC) -c $(CFLAGS) $(@:.o=.c)
+	$(CC) -c $(CFLAGS) $(@:.o=.c) -o $@
 
