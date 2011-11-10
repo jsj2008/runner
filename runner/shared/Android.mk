@@ -1,0 +1,12 @@
+LOCAL_PATH:=$(call my-dir)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE		:= librunner
+LOCAL_CFLAGS		:= -Werror -O2
+LOCAL_SRC_FILES	:= runner.c
+LOCAL_STATIC_LIBRARIES	:= engine
+LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)
+
+include $(BUILD_STATIC_LIBRARY)
+
