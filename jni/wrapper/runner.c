@@ -6,7 +6,6 @@
 #include <shader.h>
 #include <material.h>
 #include <resman.h>
-#include <physworld.h>
 #include <game.h>
 #include <world.h>
 #include <material.h>

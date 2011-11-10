@@ -2,8 +2,8 @@
 
 #include "gui.h"
 
-struct physworld_t;
-struct rigidbody_t;
+struct physics_world_t;
+struct physics_rigid_body_t;
 struct world_t;
 struct scene_t;
 struct camera_t;
@@ -15,10 +15,10 @@ struct game_t;
 typedef struct game_t
 {
    struct resman_t* resman;
-   struct physworld_t* phys;
+   struct physics_world_t* phys;
    struct world_t* world;
    struct scene_t* scene;
-   struct rigidbody_t** bodies;
+   struct physics_rigid_body_t** bodies;
    struct camera_t* camera;
    struct gui_t gui;
 

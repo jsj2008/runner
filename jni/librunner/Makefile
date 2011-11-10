@@ -1,5 +1,5 @@
 TARGET  := ./librunner.a
-SOURCES := gui.c matrix.c vector.c quaternion.c frustum.c game.c world.c physworld.c image.c common.c tex2d.c shader.c stream_fs.c bbox.c resman.c material.c
+SOURCES := gui.c matrix.c vector.c quaternion.c frustum.c game.c world.c image.c common.c tex2d.c shader.c stream_fs.c bbox.c resman.c material.c
 OBJECTS := $(SOURCES:.c=.o)
 
 CC      = gcc

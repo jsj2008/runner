@@ -19,6 +19,8 @@ include $(CLEAR_VARS)
 LOCAL_CFLAGS := 
 
 LOCAL_MODULE    := libpng
+LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)
+LOCAL_EXPORT_LDLIBS := -lz
 LOCAL_SRC_FILES :=\
 	png.c \
 	pngerror.c \
@@ -35,8 +37,5 @@ LOCAL_SRC_FILES :=\
 	pngwrite.c \
 	pngwtran.c \
 	pngwutil.c 
-	
-LOCAL_LDLIBS := -lz
 
-#include $(BUILD_SHARED_LIBRARY)
 include $(BUILD_STATIC_LIBRARY)

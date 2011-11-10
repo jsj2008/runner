@@ -5,6 +5,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE		:= libbullet
 LOCAL_CPP_EXTENSION := cpp
 LOCAL_CFLAGS		:= -Werror -O2
+LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)
 LOCAL_SRC_FILES	:= \
    ./LinearMath/btGeometryUtil.cpp \
    ./LinearMath/btQuickprof.cpp \

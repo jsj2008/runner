@@ -1,9 +1,9 @@
 #include "game.h"
-#include "physworld.h"
 #include "world.h"
 #include "shader.h"
 #include "common.h"
 #include "resman.h"
+#include <physics.h>
 
 camera_t* setup_camera(const struct game_t* game, const struct scene_t* scene, const char* camera_name)
 {
@@ -35,13 +35,60 @@ void game_update(struct game_t* game, float dt)
 {
    if (game_is_option_set(game, GAME_UPDATE_PHYSICS))
    {
-      physworld_update(game->phys, dt);
+      float interval = 1.0f / 60.0f;
+      int maxSteps = (int)((dt / interval) + 1.0f);
+      physics_world_step(game->phys, dt, maxSteps, interval);
    }
+}
+
+#define MAX_LINES 8192
+int nlines;
+vec3f_t vertices[MAX_LINES * 2];
+vec3f_t colors[MAX_LINES * 2];
+
+void dd_draw_line(const vec3f_t* from, const vec3f_t* to, const vec3f_t* color)
+{
+   if (nlines >= MAX_LINES)
+      return;
+
+   vertices[nlines * 2] = *from;
+   vertices[nlines * 2 + 1] = *to;
+   colors[nlines * 2] = *color;
+   colors[nlines * 2 + 1] = *color;
+   ++nlines;
+}
+
+void game_render_physics(const struct game_t* game, const struct physics_world_t* world, const struct camera_t* camera)
+{
+   shader_t* shader = resman_get_shader(game->resman, "shaders/physics");
+   if (shader == NULL)
+      return;
+
+   nlines = 0;
+   physics_world_debug_draw(world);
+
+   mat4f_t mvp;
+   mat4_mult(&mvp, &camera->proj, &camera->view);
+
+   shader_use(shader);
+   shader_set_uniform_matrices(shader, "uMVP", 1, mat4_data(&mvp));
+   shader_set_attrib_vertices(shader, "aPos", 3, GL_FLOAT, 0, &vertices[0]);
+   shader_set_attrib_vertices(shader, "aColor", 3, GL_FLOAT, 0, &colors[0]);
+
+   glLineWidth(2);
+   glDrawArrays(GL_LINES, 0, nlines * 2);
+
+   shader_unuse(shader);
 }
 
 void game_render(const struct game_t* game)
 {
    game_render_scene(game, game->scene, game->camera);
+
+   if (game_is_option_set(game, GAME_DRAW_PHYSICS))
+   {
+      game_render_physics(game, game->phys, game->camera);
+   }
 
    glEnable(GL_BLEND);
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -90,10 +137,6 @@ void game_render_scene(const struct game_t* game, const struct scene_t* scene, c
       }
    }
 
-   if (game_is_option_set(game, GAME_DRAW_PHYSICS))
-   {
-      physworld_render(game->phys, game->camera);
-   }
 }
 
 int game_init(game_t** pgame, const char* fname)
@@ -131,7 +174,7 @@ void game_reset_physics(game_t* game)
       long l = 0;
       for (l = 0; l < game->scene->nnodes; ++l)
       {
-         rigidbody_free(game->bodies[l]);
+         physics_rigid_body_delete(game->bodies[l]);
       }
       free(game->bodies);
       game->bodies = NULL;
@@ -139,7 +182,7 @@ void game_reset_physics(game_t* game)
 
    if (game->phys != NULL)
    {
-      physworld_free(game->phys);
+      physics_world_delete(game->phys);
       game->phys = NULL;
    }
 }
@@ -162,14 +205,14 @@ void game_free(game_t* game)
    free(game);
 }
 
-void node_transform_setter(const rigidbody_t* b, const mat4f_t* transform, void* user_data)
+void node_transform_setter(const struct physics_rigid_body_t* b, const mat4f_t* transform, void* user_data)
 {
    struct node_t* node = (struct node_t*)(user_data);
    //rigidbody_get_transform(b, &node->transform);
    node->transform = *transform;
 }
 
-void node_transform_getter(const rigidbody_t* b, mat4f_t* transform, void* user_data)
+void node_transform_getter(const struct physics_rigid_body_t* b, mat4f_t* transform, void* user_data)
 {
    struct node_t* node = (struct node_t*)(user_data);
    *transform = node->transform;
@@ -195,16 +238,18 @@ void game_set_scene(game_t* game, const char* scenename)
       return;
    }
 
-   if (physworld_create(&game->phys) != 0)
+   vec3f_t worldMin = { -1000.0f, -1000.0f, -1000.0f };
+   vec3f_t worldMax = { 1000.0f, 1000.0f, 1000.0f };
+   if (physics_world_create(&game->phys, &worldMin, &worldMax, dd_draw_line) != 0)
    {
       LOGE("Unable to create physworld");
       return;
    }
 
-   game->bodies = (rigidbody_t**)malloc(game->scene->nnodes * sizeof(rigidbody_t*));
-   memset(&game->bodies[0], 0, game->scene->nnodes * sizeof(rigidbody_t*));
+   game->bodies = (struct physics_rigid_body_t**)malloc(game->scene->nnodes * sizeof(struct physics_rigid_body_t*));
+   memset(&game->bodies[0], 0, game->scene->nnodes * sizeof(struct physics_rigid_body_t*));
 
-   physworld_set_gravity(game->phys, &game->scene->gravity);
+   physics_world_set_gravity(game->phys, &game->scene->gravity);
    struct node_t* node = &game->scene->nodes[0];
    for (l = 0; l < game->scene->nnodes; ++l, ++node)
    {
@@ -213,11 +258,11 @@ void game_set_scene(game_t* game, const char* scenename)
 
       struct mesh_t* mesh = world_get_mesh(game->world, node->data);
 
-      LOGI("rigidbody_create");
-      if (rigidbody_create(&game->bodies[l], &node->phys, mesh, node_transform_setter, node_transform_getter, node) == 0)
+      LOGI("physics_rigid_body_create");
+      if (physics_rigid_body_create(&game->bodies[l], &node->phys, mesh, node_transform_setter, node_transform_getter, node) == 0)
       {
-         LOGI("physworld_add_rigidbody");
-         physworld_add_rigidbody(game->phys, game->bodies[l]);
+         LOGI("physics_world_add_rigid_body");
+         physics_world_add_rigid_body(game->phys, game->bodies[l]);
       }
    }
 }
