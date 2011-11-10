@@ -20,6 +20,8 @@ static void png_read(png_structp png_ptr, png_bytep data, png_size_t length)
 
 int image_load_from_png(image_t** pimage, const char* fname)
 {
+   LOGI("Loading image from %s", fname);
+
    long size = 0;
    char* data = (char*)stream_read_file(fname, &size);
    if (data == NULL)
