@@ -3,7 +3,7 @@
 #include <common.h>
 #include <btBulletDynamicsCommon.h>
 
-inline btVector3 vc(const vec3f_t* v)
+static inline btVector3 vc(const vec3f_t* v)
 {
    return btVector3(v->x, v->y, v->z);
 }
@@ -193,7 +193,7 @@ int physics_rigid_body_create(struct physics_rigid_body_t** pbody, const struct 
       return -1;
    }
 
-   long l = 0;
+   unsigned long l = 0;
 
    const struct shape_t* sp = &props->shape;
    physics_shape_t* s = NULL;
