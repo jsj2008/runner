@@ -20,7 +20,8 @@ add_library (engine
 
 include_directories (.)
 include_directories (../physics)
-include_directories (../3rdparty/png/png-1.5.6)
+include_directories (../3rdparty/png)
+include_directories (../3rdparty/png/libpng-1.5.6)
 
-target_link_libraries (engine physics png GL)
+target_link_libraries (engine physics png15_static GL)
 

@@ -18,7 +18,6 @@
 #define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
 #include <GL/glext.h>
-#include <GL/glut.h>
 
 #define GL_ETC1_RGB8_OES                     0x8D64
 #define GL_ATC_RGB_AMD                       0x8C92
