@@ -234,7 +234,7 @@ void resize(int width, int height)
    checkGLError("glViewport");
 
    game->camera->aspect = (float)width/(float)height;
-   glDepthRangef(game->camera->znear, game->camera->zfar);
+   glDepthRange(game->camera->znear, game->camera->zfar);
    checkGLError("glDepthRange");
 }
 
