@@ -15,3 +15,6 @@ target_link_libraries (runner shared ${GLUT_glut_LIBRARY})
 
 install (TARGETS runner DESTINATION bin)
 
+if (MINGW)
+   add_dependencies (runner backtrace-mingw)
+endif ()

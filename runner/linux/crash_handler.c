@@ -1,4 +1,7 @@
 #include "crash_handler.h"
+
+#ifdef LINUX
+
 #include <execinfo.h>
 #include <signal.h>
 #include <stdio.h>
@@ -19,3 +22,20 @@ void crash_handler_init()
    signal(SIGSEGV, sigsegv_handler);
 }
 
+#elif WIN32
+
+#include <windows.h>
+
+void crash_handler_init()
+{
+   LoadLibraryW(L"libbacktrace-mingw.dll");
+}
+
+#else
+
+void crash_handler_init()
+{
+   fprintf(stderr, "Unsupported platform. Unable to set crash handler.");
+}
+
+#endif
