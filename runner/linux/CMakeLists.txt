@@ -4,6 +4,7 @@ find_package (GLUT REQUIRED)
 
 add_executable (runner
    main.c
+   crash_handler.c
 )
 
 include_directories ("../../physics")

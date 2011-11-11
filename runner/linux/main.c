@@ -1,6 +1,7 @@
 #include <GL/glut.h>
 #include <runner.h>
 #include <common.h>
+#include "crash_handler.h"
 
 static int _width = 800;
 static int _height = 600;
@@ -44,6 +45,8 @@ void idle()
 
 int main(int argc, char** argv)
 {
+   crash_handler_init();
+
    glutInit(&argc, argv);
    glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
    glutInitWindowSize(_width, _height);
