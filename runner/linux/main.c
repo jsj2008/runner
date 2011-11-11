@@ -1,3 +1,4 @@
+#include <GL/glew.h>
 #include <GL/glut.h>
 #include <runner.h>
 #include <common.h>
@@ -52,6 +53,20 @@ int main(int argc, char** argv)
    glutInitWindowSize(_width, _height);
    glutInitWindowPosition(0, 0);
    glutCreateWindow("runner");
+
+   GLenum res = glewInit();
+   if (res != GLEW_OK)
+   {
+      LOGE("Glew error: %s", glewGetErrorString(res));
+      return -1;
+   }
+
+   if (!GLEW_VERSION_2_1)
+   {
+      LOGE("OpenGL 2.1 is not supported");
+      return -1;
+   }
+
    if (init("./data/") == 0)
    {
       glutDisplayFunc(display);
