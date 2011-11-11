@@ -1,6 +1,6 @@
 #include "crash_handler.h"
 
-#ifdef LINUX
+#ifdef __linux__
 
 #include <execinfo.h>
 #include <signal.h>
@@ -32,6 +32,8 @@ void crash_handler_init()
 }
 
 #else
+
+#include <stdio.h>
 
 void crash_handler_init()
 {
