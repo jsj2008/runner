@@ -18,3 +18,5 @@ install (TARGETS runner DESTINATION bin)
 if (MINGW)
    add_dependencies (runner backtrace-mingw)
 endif ()
+
+add_dependencies (runner assets)

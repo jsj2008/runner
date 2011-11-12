@@ -14,6 +14,6 @@ add_subdirectory ("../physics" ${PROJECT_BINARY_DIR}/physics)
 add_subdirectory ("../engine" ${PROJECT_BINARY_DIR}/engine)
 add_subdirectory ("../tools" ${PROJECT_BINARY_DIR}/tools)
 add_subdirectory ("shared" ${PROJECT_BINARY_DIR}/shared)
-
 add_subdirectory ("linux" ${PROJECT_BINARY_DIR}/linux)
+add_subdirectory ("assets" ${PROJECT_BINARY_DIR}/assets)
 
