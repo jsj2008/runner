@@ -13,51 +13,82 @@ set (RGBA_TEXTURES
    buttons.png 
 )
 
+macro (compress_textures
+   TEXTURES
+   S3TC_PARAMS
+   PVRTC_PARAMS
+   ATC_PARAMS
+   ETC_PARAMS
+)
+   foreach (_file ${TEXTURES})
+      set (FLIPPED_TEXTURE "${CMAKE_CURRENT_BINARY_DIR}/${_file}")
+      add_custom_command (
+         OUTPUT ${FLIPPED_TEXTURE}
+         COMMAND ${IMAGEMAGICK_CONVERT_EXECUTABLE} -flip "${CMAKE_CURRENT_SOURCE_DIR}/${_file}" "${FLIPPED_TEXTURE}"
+         DEPENDS ${_file}
+      )
+
+      if (NOT "${S3TC_PARAMS}" STREQUAL "")
+         # s3tc compression
+         string (REPLACE ".png" ".dds" OUT_NAME ${_file})
+         set (OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/s3tc")
+         file (MAKE_DIRECTORY "${OUT_DIR}")
+         set (OUT_PATH "${OUT_DIR}/${OUT_NAME}")
+         add_custom_command (
+            OUTPUT ${OUT_PATH}
+            COMMAND nvcompress ${S3TC_PARAMS} "${FLIPPED_TEXTURE}" "${OUT_PATH}" >/dev/null
+            DEPENDS ${FLIPPED_TEXTURE} ${OUT_DIR}
+         )
+         list (APPEND COMPRESSED_TEXTURES ${OUT_PATH})
+      endif (NOT "${S3TC_PARAMS}" STREQUAL "")
+
+      if (NOT "${PVRTC_PARAMS}" STREQUAL "")
+         # pvrtc compression
+         string (REPLACE ".png" ".pvr" OUT_NAME ${_file})
+         set (OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/pvrtc")
+         file (MAKE_DIRECTORY "${OUT_DIR}")
+         set (OUT_PATH "${OUT_DIR}/${OUT_NAME}")
+         add_custom_command (
+            OUTPUT ${OUT_PATH}
+            COMMAND ${PROJECT_SOURCE_DIR}/../tools/PVRTexTool ${PVRTC_PARAMS} -i "${FLIPPED_TEXTURE}" -o "${OUT_PATH}" >/dev/null
+            DEPENDS ${FLIPPED_TEXTURE} ${OUT_DIR}
+         )
+         list (APPEND COMPRESSED_TEXTURES ${OUT_PATH})
+      endif (NOT "${PVRTC_PARAMS}" STREQUAL "")
+
+      if (NOT "${ETC_PARAMS}" STREQUAL "")
+         # etc compression
+         string (REPLACE ".png" ".pvr" OUT_NAME ${_file})
+         set (OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/etc")
+         file (MAKE_DIRECTORY "${OUT_DIR}")
+         set (OUT_PATH "${OUT_DIR}/${OUT_NAME}")
+         add_custom_command (
+            OUTPUT ${OUT_PATH}
+            COMMAND ${PROJECT_SOURCE_DIR}/../tools/PVRTexTool ${ETC_PARAMS} -i "${FLIPPED_TEXTURE}" -o "${OUT_PATH}" >/dev/null
+            DEPENDS ${FLIPPED_TEXTURE} ${OUT_DIR}
+         )
+         list (APPEND COMPRESSED_TEXTURES ${OUT_PATH})
+      endif (NOT "${ETC_PARAMS}" STREQUAL "")
+   endforeach ()
+endmacro (compress_textures)
+
 set (COMPRESSED_TEXTURES)
-foreach (_file ${RGB_TEXTURES})
-   set (FLIPPED_TEXTURE "${CMAKE_CURRENT_BINARY_DIR}/${_file}")
-   add_custom_command (
-      OUTPUT ${FLIPPED_TEXTURE}
-      COMMAND ${IMAGEMAGICK_CONVERT_EXECUTABLE} -flip "${CMAKE_CURRENT_SOURCE_DIR}/${_file}" "${FLIPPED_TEXTURE}"
-      DEPENDS ${_file}
-   )
 
-   # s3tc compression
-   string (REPLACE ".png" ".dds" OUT_NAME ${_file})
-   set (OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/s3tc")
-   file (MAKE_DIRECTORY "${OUT_DIR}")
-   set (OUT_PATH "${OUT_DIR}/${OUT_NAME}")
-   add_custom_command (
-      OUTPUT ${OUT_PATH}
-      COMMAND nvcompress -color -bc3 "${FLIPPED_TEXTURE}" "${OUT_PATH}" >/dev/null
-      DEPENDS ${FLIPPED_TEXTURE} ${OUT_DIR}
-   )
-   list (APPEND COMPRESSED_TEXTURES ${OUT_PATH})
+compress_textures (
+   "${RGB_TEXTURES}"
+   "-color;-bc3"
+   "-fPVRTC2;-m;-yflip0;-silent"
+   ""
+   "-fETC;-m;-yflip0;-silent"
+)
 
-   # pvrtc compression
-   string (REPLACE ".png" ".pvr" OUT_NAME ${_file})
-   set (OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/pvrtc")
-   file (MAKE_DIRECTORY "${OUT_DIR}")
-   set (OUT_PATH "${OUT_DIR}/${OUT_NAME}")
-   add_custom_command (
-      OUTPUT ${OUT_PATH}
-      COMMAND ${PROJECT_SOURCE_DIR}/../tools/PVRTexTool -fPVRTC2 -m -yflip0 -silent -i "${FLIPPED_TEXTURE}" -o "${OUT_PATH}" >/dev/null
-      DEPENDS ${FLIPPED_TEXTURE} ${OUT_DIR}
-   )
-   list (APPEND COMPRESSED_TEXTURES ${OUT_PATH})
-
-   # etc compression
-   string (REPLACE ".png" ".pvr" OUT_NAME ${_file})
-   set (OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/etc")
-   file (MAKE_DIRECTORY "${OUT_DIR}")
-   set (OUT_PATH "${OUT_DIR}/${OUT_NAME}")
-   add_custom_command (
-      OUTPUT ${OUT_PATH}
-      COMMAND ${PROJECT_SOURCE_DIR}/../tools/PVRTexTool -fETC -m -yflip0 -silent -i "${FLIPPED_TEXTURE}" -o "${OUT_PATH}" >/dev/null
-      DEPENDS ${FLIPPED_TEXTURE} ${OUT_DIR}
-   )
-   list (APPEND COMPRESSED_TEXTURES ${OUT_PATH})
-endforeach ()
+compress_textures (
+   "${RGBA_TEXTURES}"
+   "-alpha;-bc3"
+   "-fPVRTC4;-m;-yflip0;-silent"
+   ""
+   ""
+)
 
 set (CONVERTED_TEXTURES)
 foreach (_file ${COMPRESSED_TEXTURES})
@@ -79,5 +110,5 @@ add_custom_target (textures
    DEPENDS ${CONVERTED_TEXTURES}
 )
 
-install (FILES ${RGB_TEXTURES} DESTINATION data/textures)
+install (FILES ${RGB_TEXTURES} ${RGBA_TEXTURES} DESTINATION data/textures)
 
