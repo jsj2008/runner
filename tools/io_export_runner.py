@@ -1,4 +1,5 @@
 import os
+import sys
 import struct
 import bpy
 import math
@@ -608,4 +609,10 @@ def unregister():
 
 if __name__ == "__main__":
    register()
+
+   argv = sys.argv
+   argv = argv[argv.index("--") + 1:]  # get all args after "--"
+   out_path = argv[0]
+
+   bpy.ops.export.runner(filepath=out_path)
 

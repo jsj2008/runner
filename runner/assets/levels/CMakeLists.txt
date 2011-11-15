@@ -10,7 +10,7 @@ foreach (_file ${LEVELS})
    set (PROCESSED_LEVEL "${CMAKE_CURRENT_BINARY_DIR}/${PROCESSED_LEVEL_NAME}")
    add_custom_command (
       OUTPUT ${PROCESSED_LEVEL}
-      COMMAND blender "${CMAKE_CURRENT_SOURCE_DIR}/${_file}" --background --python "${PROJECT_SOURCE_DIR}/../tools/export_level.py" -- "${PROCESSED_LEVEL}" >/dev/null
+      COMMAND blender "${CMAKE_CURRENT_SOURCE_DIR}/${_file}" --background --python "${PROJECT_SOURCE_DIR}/../tools/io_export_runner.py" -- "${PROCESSED_LEVEL}" ${MAKE_SILENT}
       DEPENDS ${_file}
    )
    list (APPEND PROCESSED_LEVELS ${PROCESSED_LEVEL})

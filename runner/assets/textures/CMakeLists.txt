@@ -18,13 +18,11 @@ if (UNIX)
    set (S3TC_COMPRESSOR "nvcompress")
    set (PVRTC_COMPRESSOR "${PROJECT_SOURCE_DIR}/../tools/PVRTexTool")
    set (ETC_COMPRESSOR "${PROJECT_SOURCE_DIR}/../tools/PVRTexTool")
-   set (MAKE_SILENT ">/dev/null")
 elseif (WIN32)
    set (ATC_COMPRESSOR "${PROJECT_SOURCE_DIR}/../tools/TheCompressonator.exe")
    set (S3TC_COMPRESSOR "${PROJECT_SOURCE_DIR}/../tools/nvcompress.exe")
    set (PVRTC_COMPRESSOR "${PROJECT_SOURCE_DIR}/../tools/PVRTexTool.exe")
    set (ETC_COMPRESSOR "${PROJECT_SOURCE_DIR}/../tools/PVRTexTool.exe")
-   set (MAKE_SILENT ">nul")
 endif()
 
 function (compress_texture
