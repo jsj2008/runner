@@ -110,7 +110,7 @@ set (COMPRESSED_TEXTURES)
 
 compress_textures (
    "${RGB_TEXTURES}"
-   "\"@IN_PATH@\" \"@OUT_PATH@\""
+   "-convert -mipmaps \"@IN_PATH@\" \"@OUT_PATH@\" +fourCC \"ATC \""
    "-color -bc3 \"@IN_PATH@\" \"@OUT_PATH@\""
    "-fPVRTC2 -m -yflip0 -silent -i \"@IN_PATH@\" -o \"@OUT_PATH@\""
    "-fETC -m -yflip0 -silent -i \"@IN_PATH@\" -o \"@OUT_PATH@\""
@@ -118,7 +118,7 @@ compress_textures (
 
 compress_textures (
    "${RGBA_TEXTURES}"
-   "\"@IN_PATH@\" \"@OUT_PATH@\""
+   "-convert -mipmaps \"@IN_PATH@\" \"@OUT_PATH@\" +fourCC \"ATCI\""
    "-alpha -bc3 \"@IN_PATH@\" \"@OUT_PATH@\""
    "-fPVRTC4 -m -yflip0 -silent -i \"@IN_PATH@\" -o \"@OUT_PATH@\""
    ""
