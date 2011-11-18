@@ -4,6 +4,7 @@
 #include <image.h>
 #include "converters/dds.h"
 #include "converters/pvr.h"
+#include "converters/shader.h"
 
 int main(int argc, char** argv)
 {
@@ -72,6 +73,10 @@ int main(int argc, char** argv)
    else if (strcasecmp(ext, ".pvr") == 0)
    {
       image_load_from_pvr(&img, fin);
+   }
+   else if (strcasecmp(ext, ".shader") == 0)
+   {
+      shader_optimize(fin, fout);
    }
    else
    {

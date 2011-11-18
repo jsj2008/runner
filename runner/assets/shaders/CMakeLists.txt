@@ -1,23 +1,21 @@
 cmake_minimum_required (VERSION 2.6)
 
 set (SHADERS
-   bbox
-   button
-   crate
-   level
-   physics
-   skybox
+   bbox.shader
+   button.shader
+   crate.shader
+   level.shader
+   physics.shader
+   skybox.shader
 )
 
 set (PROCESSED_SHADERS)
-foreach (_file ${SHADERS})
-   set (VERTEX_SHADER "${_file}.vs")
-   set (PIXEL_SHADER "${_file}.ps")
-   set (PROCESSED_SHADER_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_file}.shader")
+foreach (SHADER ${SHADERS})
+   set (PROCESSED_SHADER_PATH "${CMAKE_CURRENT_BINARY_DIR}/${SHADER}")
    add_custom_command (
       OUTPUT ${PROCESSED_SHADER_PATH}
-      COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/${VERTEX_SHADER}" "${PROCESSED_SHADER_PATH}" VERBATIM
-      DEPENDS ${VERTEX_SHADER} ${PIXEL_SHADER}
+      COMMAND converter -i "${CMAKE_CURRENT_SOURCE_DIR}/${SHADER}" -o "${PROCESSED_SHADER_PATH}" ${MAKE_SILENT}
+      DEPENDS ${SHADER} converter
    )
    list (APPEND PROCESSED_SHADERS ${PROCESSED_SHADER_PATH})
 endforeach ()

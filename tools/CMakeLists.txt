@@ -7,6 +7,7 @@ add_executable (converter
    converter.c
    converters/dds.c
    converters/pvr.c
+   converters/shader.c
 )
 
 add_executable (texture_dump
