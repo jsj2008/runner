@@ -62,21 +62,6 @@ static GLuint load_shader_from_string(GLenum type, const char* src)
    return shader;
 }
 
-static GLuint load_shader_from_file(GLenum type, const char* fname)
-{
-   long size = 0;
-   char* buf = (char*)stream_read_file(fname, &size);
-   if (buf == NULL)
-   {
-      return 0;
-   }
-
-   GLuint res = load_shader_from_string(type, buf);
-   free(buf);
-
-   return res;
-}
-
 static const shader_var_t* find_var(const shader_t* shader, const char* name)
 {
    long i = 0;
@@ -129,27 +114,55 @@ static const shader_var_t* get_uniform_var(shader_t* shader, const char* name)
 
 int shader_load(shader_t** pshader, const char* name)
 {
-   char vs_name[256];
-   strcpy(vs_name, name);
-   strcat(vs_name, ".vs");
-   LOGI("loading vertex shader");
-   GLuint vs = load_shader_from_file(GL_VERTEX_SHADER, vs_name);
+   long size = 0;
+   char* buf = (char*)stream_read_file(name, &size);
+   if (buf == NULL)
+   {
+      return -1;
+   }
+
+   char* shaders[3] = {0};
+   char* begin = buf;
+   int i = 0;
+   while (begin != NULL && *begin != '\0' && i < 3)
+   {
+      shaders[i++] = begin;
+      char* end = strstr(begin, "\n\n");
+      if (end != NULL)
+      {
+         *end = '\0';
+         begin = end + 2;
+      }
+      else
+      {
+         begin = NULL;
+      }
+      LOGI(" shader #%d: %s", i-1, shaders[i-1]);
+   }
+
+   GLuint vs = load_shader_from_string(GL_VERTEX_SHADER, shaders[0]);
    if (vs == 0)
    {
       return -1;
    }
 
-   char ps_name[256];
-   strcpy(ps_name, name);
-   strcat(ps_name, ".ps");
-   LOGI("loading pixel shader");
-   GLuint ps = load_shader_from_file(GL_FRAGMENT_SHADER, ps_name);
+   GLuint ps = load_shader_from_string(GL_FRAGMENT_SHADER, shaders[1]);
    if (ps == 0)
    {
       glDeleteShader(vs);
       checkGLError("glDeleteShader");
       return -1;
    }
+
+   /*GLuint gs = load_shader_from_string(GL_GEOMETRY_SHADER, shaders[2]);
+   if (gs == 0)
+   {
+      glDeleteShader(vs);
+      checkGLError("glDeleteShader");
+      glDeleteShader(ps);
+      checkGLError("glDeleteShader");
+      return -1;
+   }*/
 
    LOGI("creating shader program");
    GLuint program = glCreateProgram();

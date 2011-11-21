@@ -35,6 +35,14 @@ phys_t = struct.Struct("<L8f12s12s24s")
 scene_t = struct.Struct("<64s64s12s2L")
 world_t = struct.Struct("<64s12L")
 
+def convert_path (path):
+   root = os.path.dirname(os.path.join(bpy.data.filepath))
+   assets_root = os.path.join(root, bpy.data.scenes[0]['assets_root'])
+   filepath = os.path.relpath(os.path.join(root, "./" + path), assets_root)
+   print ("FILEPATH: " + filepath)
+   return filepath
+
+
 def pack_uv(uv):
    return texcoord_t.pack(uv[0], uv[1])
 
@@ -322,12 +330,13 @@ def pack_color_scaled(color, scale):
 
 def pack_material(material):
    print("Material: " + material.name)
-   shader = material['shader']
-   texture = material.texture_slots[0].texture
+   shader = convert_path(material['shader'])
+   texture_slot = material.texture_slots[0]
+   texturename = texture_slot.texture.name if texture_slot != None else ""
    return material_t.pack(
          material.name.encode('utf-8'),
          shader.encode('utf-8'),
-         texture.name.encode('utf-8'),
+         texturename.encode('utf-8'),
          pack_color_scaled(material.diffuse_color, material.diffuse_intensity),
          pack_color_scaled(material.specular_color, material.specular_intensity),
          material.specular_hardness)
@@ -381,7 +390,7 @@ def pack_texture(texture):
 
    return texture_t.pack(
          texture.name.encode('utf-8'),
-         texture.image.filepath.encode('utf-8'),
+         convert_path(texture.image.filepath).encode('utf-8'),
          min_filter, mag_filter,
          wrap_s, wrap_t)
 
