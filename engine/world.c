@@ -381,7 +381,11 @@ void diamond_render(float size, const vec3f_t* color, shader_t* shader)
 
 void world_render_lamp(const world_t* world, const camera_t* camera, const lamp_t* lamp, const mat4f_t* transform)
 {
-   shader_t* shader = resman_get_shader(game->resman, "shaders/physics");
+   material_t* material = resman_get_material(game->resman, "LampsMaterial");
+   if (material == NULL)
+      return;
+
+   shader_t* shader = resman_get_shader(game->resman, material->shader);
    if (shader == NULL)
       return;
 
