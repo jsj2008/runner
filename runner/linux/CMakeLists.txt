@@ -13,6 +13,9 @@ include_directories ("../shared")
 
 target_link_libraries (runner shared ${GLUT_glut_LIBRARY})
 
+configure_file ("config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config/config.h")
+include_directories ("${CMAKE_CURRENT_BINARY_DIR}/config")
+
 install (TARGETS runner DESTINATION bin)
 
 if (MINGW)

@@ -3,6 +3,7 @@
 #include <runner.h>
 #include <common.h>
 #include "crash_handler.h"
+#include <config.h>
 
 static int _width = 800;
 static int _height = 600;
@@ -48,6 +49,8 @@ int main(int argc, char** argv)
 {
    crash_handler_init();
 
+   LOGI("Runner v%d.%02d", VERSION_MAJOR, VERSION_MINOR);
+
    glutInit(&argc, argv);
    glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
    glutInitWindowSize(_width, _height);
@@ -67,7 +70,7 @@ int main(int argc, char** argv)
       return -1;
    }
 
-   if (init("./data/") == 0)
+   if (init(ASSETS_ROOT) == 0)
    {
       glutDisplayFunc(display);
       glutReshapeFunc(reshape);

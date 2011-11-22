@@ -2,6 +2,10 @@ cmake_minimum_required (VERSION 2.6)
 
 project (runner)
 
+set (VERSION_MAJOR 0)
+set (VERSION_MINOR 1)
+set (ASSETS_ROOT "data")
+
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/../3rdparty/cmake")
 
 if (MINGW)

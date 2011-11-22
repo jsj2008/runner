@@ -24,5 +24,5 @@ add_custom_target (levels
    DEPENDS ${PROCESSED_LEVELS}
 )
 
-install (FILES ${PROCESSED_LEVELS} DESTINATION data/levels)
+install (FILES ${PROCESSED_LEVELS} DESTINATION ${ASSETS_ROOT}/levels)
 

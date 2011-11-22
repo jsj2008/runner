@@ -24,5 +24,5 @@ add_custom_target (shaders
    DEPENDS ${PROCESSED_SHADERS}
 )
 
-install (FILES ${PROCESSED_SHADERS} DESTINATION data/shaders)
+install (FILES ${PROCESSED_SHADERS} DESTINATION ${ASSETS_ROOT}/shaders)
 

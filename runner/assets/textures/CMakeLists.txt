@@ -137,7 +137,7 @@ foreach (_file ${COMPRESSED_TEXTURES})
 
    get_filename_component (FILE_PATH ${CONVERTED_TEXTURE} PATH)
    get_filename_component (DIR_NAME ${FILE_PATH} NAME)
-   install (FILES ${CONVERTED_TEXTURE} DESTINATION data/textures/${DIR_NAME})
+   install (FILES ${CONVERTED_TEXTURE} DESTINATION ${ASSETS_ROOT}/textures/${DIR_NAME})
 endforeach()
 
 add_custom_target (textures
@@ -145,5 +145,5 @@ add_custom_target (textures
    SOURCES ${RGB_TEXTURES} ${RGBA_TEXTURES}
 )
 
-install (FILES ${RGB_TEXTURES} ${RGBA_TEXTURES} DESTINATION data/textures)
+install (FILES ${RGB_TEXTURES} ${RGBA_TEXTURES} DESTINATION ${ASSETS_ROOT}/textures)
 
