@@ -60,7 +60,11 @@ void dd_draw_line(const vec3f_t* from, const vec3f_t* to, const vec3f_t* color)
 
 void game_render_physics(const struct game_t* game, const struct physics_world_t* world, const struct camera_t* camera)
 {
-   shader_t* shader = resman_get_shader(game->resman, "shaders/physics");
+   material_t* material = resman_get_material(game->resman, "PhysicsMaterial");
+   if (material == NULL)
+      return;
+
+   shader_t* shader = resman_get_shader(game->resman, material->shader);
    if (shader == NULL)
       return;
 
