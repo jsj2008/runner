@@ -201,7 +201,7 @@ int init(void* iodata)
       return -1;
    }
 
-   if (game_init(&game, "w01d01.runner") != 0)
+   if (game_init(&game, "levels/w01d01.runner") != 0)
       return -1;
 
    gui_add_handler(&game->gui, on_gui_action, ACTION_DOWN | ACTION_UP | ACTION_ENTER | ACTION_LEAVE, NULL);
