@@ -9,6 +9,7 @@
 #include <game.h>
 #include <world.h>
 #include <material.h>
+#include <timestamp.h>
 
 static GLfloat skybox_vertices[] =
 {
@@ -63,8 +64,8 @@ quat_t* quat(float x, float y, float z, float w)
 
 long frames = 0;
 long total_frames = 0;
-struct timeval prev_time;
-struct timeval fps_time;
+timestamp_t prev_time = {0};
+timestamp_t fps_time = {0};
 
 void update_control_state(int option, gui_t* gui, control_t* control)
 {
@@ -143,10 +144,8 @@ void timers_init()
 {
    frames = 0;
    total_frames = 0;
-
-   struct timezone tz;
-   gettimeofday(&fps_time, &tz);
-   prev_time = fps_time;
+   timestamp_set(&prev_time);
+   timestamp_set(&fps_time);
 }
 
 float timers_update()
@@ -154,23 +153,16 @@ float timers_update()
    ++total_frames;
    ++frames;
 
-   struct timeval cur_time;
-   struct timezone tz;
-   gettimeofday(&cur_time, &tz);
-   float dt = (cur_time.tv_sec - prev_time.tv_sec) + (cur_time.tv_usec - prev_time.tv_usec) / 1000000.0f;
-   prev_time = cur_time;
-
-   if (fps_time.tv_sec + 5 <= cur_time.tv_sec)
+   long diff = timestamp_diff(&prev_time, &fps_time);
+   if (diff >= 5000)
    {
-      long diffs = cur_time.tv_sec - fps_time.tv_sec;
-      long diffms = (cur_time.tv_usec - fps_time.tv_usec)/1000;
-      long diff = diffs * 1000 + diffms;
+      timestamp_set(&fps_time);
 
       LOGI("Total: %4ld Frames: %4ld Diff: %ld FPS: %.2f", total_frames, frames, diff, (float)frames * 1000.0f / (float)diff);
-      fps_time = cur_time;
       frames = 0;
    }
-   return dt;
+   long elapsed = timestamp_update(&prev_time);
+   return (float)elapsed / 1000.0f;
 }
 
 int init(void* iodata)

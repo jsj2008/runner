@@ -19,6 +19,7 @@ add_library (engine
    frustum.c
    bbox.c
    common.c
+   timestamp.c
 )
 
 include_directories (.)
