@@ -7,8 +7,17 @@
 JNIEXPORT jint JNICALL Java_ua_org_asqz_runner_Wrapper_init (JNIEnv* env, jclass wrapper, jobject assetManager)
 {
    AAssetManager* manager = AAssetManager_fromJava(env, assetManager);
-   int res = init(manager);
-   return res;
+   return init(manager);
+}
+
+JNIEXPORT jint JNICALL Java_ua_org_asqz_runner_Wrapper_restore (JNIEnv* env, jclass wrapper)
+{
+   return restore();
+}
+
+JNIEXPORT int JNICALL Java_ua_org_asqz_runner_Wrapper_update (JNIEnv* env, jclass wrapper)
+{
+   return update();
 }
 
 JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_shutdown (JNIEnv* env, jclass wrapper)
@@ -21,14 +30,14 @@ JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_resize (JNIEnv* env, jcla
    resize(width, height);
 }
 
-JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_update (JNIEnv* env, jclass wrapper)
+JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_activated (JNIEnv* env, jclass wrapper)
 {
-   update();
+   activated();
 }
 
-JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_scroll (JNIEnv* env, jclass wrapper, jlong dt, jfloat dx1, jfloat dy1, jfloat dx2, jfloat dy2)
+JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_deactivated (JNIEnv* env, jclass wrapper)
 {
-   scroll(dt, dx1, dy1, dx2, dy2);
+   deactivated();
 }
 
 JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_pointer_1down (JNIEnv* env, jclass wrapper, jint pointerId, jfloat x, jfloat y)
@@ -44,5 +53,15 @@ JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_pointer_1up (JNIEnv* env,
 JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_pointer_1move (JNIEnv* env, jclass wrapper, jint pointerId, jfloat x, jfloat y)
 {
    pointer_move(pointerId, x, y);
+}
+
+JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_key_1down (JNIEnv* env, jclass wrapper, jint key)
+{
+   key_down(key);
+}
+
+JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_key_1up (JNIEnv* env, jclass wrapper, jint key)
+{
+   key_up(key);
 }
 

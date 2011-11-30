@@ -18,6 +18,7 @@ class RunnerSurfaceView extends GLSurfaceView {
 
    public interface Handler {
       public void handleError(String error);
+      public void handleExit();
    }
 
    public RunnerSurfaceView(Context ctx) {
@@ -38,22 +39,6 @@ class RunnerSurfaceView extends GLSurfaceView {
       int actionCode = action & MotionEvent.ACTION_MASK;
 
       if (actionCode == MotionEvent.ACTION_MOVE) {
-         long dt = event.getEventTime() - mPrevEventTime;
-         if (dt > 0) {
-            float dx1 = event.getX(0) - mPrevPositions[0];
-            float dy1 = event.getY(0) - mPrevPositions[1];
-            float dx2 = 0.0f;
-            float dy2 = 0.0f;
-
-            if (event.getPointerCount() > 1) {
-               dx2 = event.getX(1) - mPrevPositions[2];
-               dy2 = event.getY(1) - mPrevPositions[3];
-            }
-
-            Wrapper.scroll(dt, dx1, dy1, dx2, dy2);
-            Log.i(TAG, "Pointer moved on [" + dx1 + "," + dy1 + "] [" + dx2 + "," + dy2 +  "] in " + dt + "ms");
-         }
-
          float x = event.getX(pointerIndex) / getWidth();
          float y = event.getY(pointerIndex) / getHeight();
          Wrapper.pointer_move(event.getPointerId(pointerIndex), x, y);
@@ -69,17 +54,6 @@ class RunnerSurfaceView extends GLSurfaceView {
          Wrapper.pointer_up(event.getPointerId(pointerIndex), x, y);
       }
 
-      mPrevPositions[0] = event.getX(0);
-      mPrevPositions[1] = event.getY(0);
-      if (event.getPointerCount() > 1) {
-         mPrevPositions[2] = event.getX(1);
-         mPrevPositions[3] = event.getY(1);
-      }
-      else {
-         mPrevPositions[2] = 0.0f;
-         mPrevPositions[3] = 0.0f;
-      }
-      mPrevEventTime = event.getEventTime();
       return true;
    }
 
@@ -97,17 +71,11 @@ class RunnerSurfaceView extends GLSurfaceView {
       }
    };
 
-   @Override
-   public void surfaceDestroyed(SurfaceHolder holder) {
-      Wrapper.shutdown();
-      super.surfaceDestroyed(holder);
-   }
-
    private GLSurfaceView.Renderer mRenderer = new GLSurfaceView.Renderer() {
       public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-         mInitialized = (Wrapper.init(getContext().getAssets()) == 0);
+         mInitialized = (Wrapper.restore() == 0);
          if (!mInitialized) {
-            mHandler.handleError("Unable to initialize");
+            mHandler.handleError("Unable to restore");
          }
       }
 
@@ -119,7 +87,10 @@ class RunnerSurfaceView extends GLSurfaceView {
 
       public void onDrawFrame(GL10 gl) {
          if (mInitialized) {
-            Wrapper.update();
+            if (Wrapper.update() != 0) {
+               mInitialized = false;
+               mHandler.handleExit();
+            }
          }
       }
 
@@ -127,7 +98,5 @@ class RunnerSurfaceView extends GLSurfaceView {
    };
 
    private Handler mHandler;
-   private float[] mPrevPositions = new float[4];
-   private long mPrevEventTime = 0;
 }
 

@@ -112,7 +112,10 @@ int shader_optimize(const char* fname_in, const char* fname_out)
          }
          else if (current_shader != -1)
          {
-            strcat(shaders[current_shader], str);
+            if (strstr(str, "precision") != str)
+            {
+               strcat(shaders[current_shader], str);
+            }
          }
       }
 

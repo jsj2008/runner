@@ -77,7 +77,7 @@ static const shader_var_t* find_var(const shader_t* shader, const char* name)
 
 static shader_var_t* add_var(shader_t* shader, const char* name, GLuint location, int type)
 {
-   LOGI("Adding var %s[%d] location %d program %ld", name, type, location, shader->program);
+   LOGD("Adding var %s[%d] location %d program %ld", name, type, location, shader->program);
 
    shader_var_t* var = &shader->vars[shader->nvars];
    ++shader->nvars;
@@ -114,6 +114,8 @@ static const shader_var_t* get_uniform_var(shader_t* shader, const char* name)
 
 int shader_load(shader_t** pshader, const char* name)
 {
+   LOGI("Loading shader %s", name);
+
    long size = 0;
    char* buf = (char*)stream_read_file(name, &size);
    if (buf == NULL)
@@ -137,7 +139,7 @@ int shader_load(shader_t** pshader, const char* name)
       {
          begin = NULL;
       }
-      LOGI(" shader #%d: %s", i-1, shaders[i-1]);
+      LOGD(" shader #%d: %s", i-1, shaders[i-1]);
    }
 
    GLuint vs = load_shader_from_string(GL_VERTEX_SHADER, shaders[0]);
@@ -164,7 +166,6 @@ int shader_load(shader_t** pshader, const char* name)
       return -1;
    }*/
 
-   LOGI("creating shader program");
    GLuint program = glCreateProgram();
    if (program == 0)
    {
@@ -172,19 +173,15 @@ int shader_load(shader_t** pshader, const char* name)
       return -1;
    }
 
-   LOGI("attaching vertex shader");
    glAttachShader(program, vs);
    checkGLError("glAttachShader");
 
-   LOGI("attaching pixel shader");
    glAttachShader(program, ps);
    checkGLError("glAttachShader");
 
-   LOGI("linking shader program");
    glLinkProgram(program);
    checkGLError("glLinkProgram");
 
-   LOGI("deleting no longer needed shaders");
    glDeleteShader(vs);
    checkGLError("glDeleteShader");
 

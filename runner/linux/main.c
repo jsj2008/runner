@@ -45,6 +45,16 @@ void idle()
    glutPostRedisplay();
 }
 
+void window_status(int state)
+{
+   LOGI("Window status: %d", state);
+}
+
+void entry(int state)
+{
+   LOGI("Entry: %d", state);
+}
+
 int main(int argc, char** argv)
 {
    crash_handler_init();
@@ -78,6 +88,10 @@ int main(int argc, char** argv)
       glutMotionFunc(motion);
       glutPassiveMotionFunc(motion);
       glutIdleFunc(idle);
+      glutWindowStatusFunc(window_status);
+      glutEntryFunc(entry);
+      restore();
+      //glutFullScreen();
       glutMainLoop();
    }
    shutdown();

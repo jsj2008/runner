@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.KeyEvent;
 
 public class MainActivity extends Activity {
    private static final String TAG = "MainActivity";
@@ -15,6 +16,12 @@ public class MainActivity extends Activity {
    @Override
    public void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
+
+      if (Wrapper.init(getAssets()) != 0) {
+         mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_ERROR, "Unable to initialize"));
+         return;
+      }
+
       mView = new RunnerSurfaceView(this);
       setContentView(mView);
 
@@ -23,19 +30,47 @@ public class MainActivity extends Activity {
             Log.i(TAG, "ERROR: " + error);
             mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_ERROR, error));
          }
+         public void handleExit() {
+            Log.i(TAG, "EXIT");
+            mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_QUIT));
+         }
       });
+   }
+
+   @Override
+   public void onDestroy() {
+      super.onDestroy();
+      Wrapper.shutdown();
+   }
+
+   @Override
+   public boolean onKeyDown(int keyCode, KeyEvent event) {
+      Wrapper.key_down(Key.map(keyCode));
+      return super.onKeyDown(keyCode, event);
+   }
+
+   @Override
+   public boolean onKeyUp(int keyCode, KeyEvent event) {
+      Wrapper.key_up(Key.map(keyCode));
+      return super.onKeyUp(keyCode, event);
    }
 
    @Override
    public void onResume() {
       super.onResume();
       mView.onResume();
+      Wrapper.activated();
    }
 
    @Override
    public void onPause() {
       super.onPause();
       mView.onPause();
+      Wrapper.deactivated();
+   }
+
+   @Override
+   public void onBackPressed() {
    }
 
    @Override

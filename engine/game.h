@@ -33,7 +33,8 @@ typedef struct game_t
 } game_t;
 
 int game_init(game_t** pgame, const char* fname);
-void game_free();
+void game_free(game_t* game);
+int game_restore(game_t* game);
 void game_update(game_t* game, float dt);
 void game_render(const game_t* game);
 void game_render_scene(const struct game_t* game, const struct scene_t* scene, const struct camera_t* camera);

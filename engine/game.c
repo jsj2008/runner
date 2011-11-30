@@ -4,6 +4,7 @@
 #include "common.h"
 #include "resman.h"
 #include <physics.h>
+#include <timestamp.h>
 
 camera_t* setup_camera(const struct game_t* game, const struct scene_t* scene, const char* camera_name)
 {
@@ -35,9 +36,14 @@ void game_update(struct game_t* game, float dt)
 {
    if (game_is_option_set(game, GAME_UPDATE_PHYSICS))
    {
+      timestamp_t delta;
+      timestamp_set(&delta);
+
       float interval = 1.0f / 60.0f;
       int maxSteps = (int)((dt / interval) + 1.0f);
       physics_world_step(game->phys, dt, maxSteps, interval);
+
+      LOGD("Physics update time: %ld ms", timestamp_elapsed(&delta));
    }
 }
 
@@ -87,6 +93,9 @@ void game_render_physics(const struct game_t* game, const struct physics_world_t
 
 void game_render(const struct game_t* game)
 {
+   timestamp_t delta;
+   timestamp_set(&delta);
+
    game_render_scene(game, game->scene, game->camera);
 
    if (game_is_option_set(game, GAME_DRAW_PHYSICS))
@@ -101,6 +110,8 @@ void game_render(const struct game_t* game)
    game_render_scene(game, game->gui.scene, gui_camera);
 
    glDisable(GL_BLEND);
+
+   LOGD("Render time: %ld ms", timestamp_elapsed(&delta));
 }
 
 void game_render_scene(const struct game_t* game, const struct scene_t* scene, const struct camera_t* camera)
@@ -160,12 +171,6 @@ int game_init(game_t** pgame, const char* fname)
    game_set_scene(game, /*world->scenes[0].name*/"w01d01s01");
    game_set_option(game, GAME_DRAW_MESHES | GAME_DRAW_LAMPS | GAME_UPDATE_PHYSICS);
 
-   if (resman_init(&game->resman, game->world) != 0)
-   {
-      game_free(game);
-      return -1;
-   }
-
    (*pgame) = game;
    return 0;
 }
@@ -207,6 +212,17 @@ void game_free(game_t* game)
 
    world_free(game->world);
    free(game);
+}
+
+int game_restore(game_t* game)
+{
+   LOGI("Restoring game resources");
+
+   if (game->resman != NULL)
+   {
+      resman_free(game->resman);
+   }
+   return resman_init(&game->resman, game->world);
 }
 
 void node_transform_setter(const struct physics_rigid_body_t* b, const mat4f_t* transform, void* user_data)

@@ -163,7 +163,7 @@ int image_load(image_t** pimage, const char* fname)
       return -1;
    }
 
-   LOGI("Header [offset: %ld size: %ld]", header.data_offset, header.data_size);
+   LOGD("Header [offset: %ld size: %ld]", header.data_offset, header.data_size);
 
    stream_seek(f, header.data_offset, SEEK_SET);
    char* data = malloc(header.data_size);
@@ -173,20 +173,14 @@ int image_load(image_t** pimage, const char* fname)
    image_t* image = (image_t*)data;
    image->mipmaps = (mipmap_t*)(data + (long)image->mipmaps);
 
-   LOGI("Image '%s' [bpp %ld] format %d has %ld mipmaps", fname, image->bpp, image->format, image->nmipmaps);
+   LOGD("Image '%s' [bpp %ld] format %d has %ld mipmaps", fname, image->bpp, image->format, image->nmipmaps);
 
    long l = 0;
    mipmap_t* mipmap = &image->mipmaps[0];
    for (l = 0; l < image->nmipmaps; ++l, ++mipmap)
    {
-      LOGI("\tMipmap [%ldx%ld] %ld bytes [offset %ld next %ld]", mipmap->width, mipmap->height, mipmap->size, (long)mipmap->data, mipmap->size + (long)mipmap->data);
+      LOGD("\tMipmap [%ldx%ld] %ld bytes [offset %ld next %ld]", mipmap->width, mipmap->height, mipmap->size, (long)mipmap->data, mipmap->size + (long)mipmap->data);
       mipmap->data = (void*)(data + (long)mipmap->data);
-
-      /*char name[1024];
-      sprintf(name, "./mipmap_%ld_%ld.pkm", mipmap->width, mipmap->height);
-      FILE* f = fopen(name, "wb");
-      fwrite(mipmap->data, 1, mipmap->size, f);
-      fclose(f);*/
    }
    (*pimage) = image;
 

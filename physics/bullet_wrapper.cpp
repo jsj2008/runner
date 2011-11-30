@@ -243,6 +243,9 @@ int physics_rigid_body_create(struct physics_rigid_body_t** pbody, const struct 
    LOGI("MASS: %.2f INERTIA FACTOR: %.2f", mass, props->inertia_factor);
    LOGI("SLEEPING THRESHOLDS: %.2f %.2f", props->linear_sleeping_threshold, props->angular_sleeping_threshold);
    LOGI("FRICTION: %.2f RESTITUTION: %.2f", props->friction, props->restitution);
+   LOGI("FACTORS: %.2f %.2f", props->linear_factor, props->angular_factor);
+   LOGI("DAMPING: %.2f %.2f", props->linear_damping, props->angular_damping);
+   LOGI("MARGIN: %.2f", sp->margin);
 
    btVector3 localInertia(0, 0, 0);
    if (mass)
@@ -252,7 +255,7 @@ int physics_rigid_body_create(struct physics_rigid_body_t** pbody, const struct 
 
    void* mem = btAlignedAlloc(sizeof(btRigidBody) + sizeof(MotionStateProxy), 16);
    MotionStateProxy* ms = new ((char*)mem + sizeof(btRigidBody)) MotionStateProxy(setter, getter, user_data);
-   btRigidBody::btRigidBodyConstructionInfo rbci(mass, ms, (btCollisionShape*)s, localInertia/* * inertia_factor*/);
+   btRigidBody::btRigidBodyConstructionInfo rbci(mass, ms, (btCollisionShape*)s, localInertia/* * props->inertia_factor*/);
    btRigidBody* body = new (mem)btRigidBody(rbci);
    body->setUserPointer(user_data);
    ms->mBody = (physics_rigid_body_t*)body;

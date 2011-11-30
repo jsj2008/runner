@@ -1,4 +1,5 @@
-#include "game.h"
+#include "runner.h"
+#include <game.h>
 #include <common.h>
 #include <math.h>
 #include <stream.h>
@@ -10,6 +11,7 @@
 #include <world.h>
 #include <material.h>
 #include <timestamp.h>
+#include <keys.h>
 
 static GLfloat skybox_vertices[] =
 {
@@ -62,10 +64,11 @@ quat_t* quat(float x, float y, float z, float w)
    return &tmp;
 }
 
-long frames = 0;
-long total_frames = 0;
-timestamp_t prev_time = {0};
-timestamp_t fps_time = {0};
+static long frames = 0;
+static long total_frames = 0;
+static timestamp_t prev_time = {0};
+static timestamp_t fps_time = {0};
+static int done = 0;
 
 void update_control_state(int option, gui_t* gui, control_t* control)
 {
@@ -169,23 +172,7 @@ int init(void* iodata)
 {
    LOGI("init");
 
-   outGLString("Version", GL_VERSION);
-   outGLString("Vendor", GL_VENDOR);
-   outGLString("Renderer", GL_RENDERER);
-   outGLString("Extensions", GL_EXTENSIONS);
-
-   glClearColor(1.0f, 0.1f, 0.1f, 1.0f);
-   glEnable(GL_DEPTH_TEST);
-   checkGLError("glEnable GL_DEPTH_TEST");
-
-   glEnable(GL_CULL_FACE);
-   checkGLError("glEnable GL_CULL_FACE");
-
-   glCullFace(GL_BACK);
-   checkGLError("glCullFace");
-
-   glFrontFace(GL_CCW);
-   checkGLError("glFrontFace");
+   done = 0;
 
    if (stream_init(iodata) != 0)
    {
@@ -205,6 +192,31 @@ int init(void* iodata)
    timers_init();
 
    return 0;
+}
+
+int restore()
+{
+   LOGI("restore");
+
+   outGLString("Version", GL_VERSION);
+   outGLString("Vendor", GL_VENDOR);
+   outGLString("Renderer", GL_RENDERER);
+   outGLString("Extensions", GL_EXTENSIONS);
+
+   glClearColor(1.0f, 0.1f, 0.1f, 1.0f);
+   glEnable(GL_DEPTH_TEST);
+   checkGLError("glEnable GL_DEPTH_TEST");
+
+   glEnable(GL_CULL_FACE);
+   checkGLError("glEnable GL_CULL_FACE");
+
+   glCullFace(GL_BACK);
+   checkGLError("glCullFace");
+
+   glFrontFace(GL_CCW);
+   checkGLError("glFrontFace");
+
+   return game_restore(game);
 }
 
 void shutdown()
@@ -230,6 +242,16 @@ void resize(int width, int height)
    checkGLError("glDepthRange");
 }
 
+void activated()
+{
+   LOGI("activated");
+}
+
+void deactivated()
+{
+   LOGI("deactivated");
+}
+
 void skybox_render()
 {
    material_t* mtl = resman_get_material(game->resman, "SkyboxMaterial");
@@ -252,8 +274,13 @@ void skybox_render()
    material_unbind(mtl);
 }
 
-void update()
+int update()
 {
+   if (done)
+   {
+      return 1;
+   }
+
    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
    float dt = timers_update();
@@ -263,36 +290,13 @@ void update()
    game_render(game);
 
    glFinish();
-}
 
-void scroll(long dt, float dx1, float dy1, float dx2, float dy2)
-{
-   float coef = 0.025;//interval * speed;
-
-   if (dx2 == 0.0f && dy2 == 0.0f)
-   {
-      // single finger sliding - strafe
-      game->camera->view.m14 += dx1 * coef;
-      game->camera->view.m24 -= dy1 * coef;
-
-      int i = 0;
-      for (i = 0; i < 4; ++i)
-      {
-         skybox_tex_coords[i*2] += coef * dx1 * 0.0025;
-         skybox_tex_coords[i*2+1] -= coef * dy1 * 0.0025;
-      }
-   }
-   else
-   {
-      // two finger sliding - move forward
-      float v = coef * dy1;
-      game->camera->view.m34 += v;
-   }
+   return 0;
 }
 
 void pointer_down(int pointerId, float x, float y)
 {
-   LOGI("pointer #%d down: %.2f %.2f", pointerId, x, y);
+   LOGD("pointer #%d down: %.2f %.2f", pointerId, x, y);
 
    vec2f_t point =
    {
@@ -305,7 +309,7 @@ void pointer_down(int pointerId, float x, float y)
 
 void pointer_up(int pointerId, float x, float y)
 {
-   LOGI("pointer #%d up: %.2f %.2f", pointerId, x, y);
+   LOGD("pointer #%d up: %.2f %.2f", pointerId, x, y);
    vec2f_t point =
    {
       .x = x * 2.0f - 1.0f,
@@ -316,12 +320,27 @@ void pointer_up(int pointerId, float x, float y)
 
 void pointer_move(int pointerId, float x, float y)
 {
-   LOGI("pointer #%d move: %.2f %.2f", pointerId, x, y);
+   LOGD("pointer #%d move: %.2f %.2f", pointerId, x, y);
    vec2f_t point =
    {
       .x = x * 2.0f - 1.0f,
       .y = 1.0f - y * 2.0f,
    };
    gui_dispatch_pointer_move(&game->gui, pointerId, &point);
+}
+
+void key_up(int key)
+{
+   LOGI("Key up: %d", key);
+
+   if (key == KEY_BACK)
+   {
+      done = 1;
+   }
+}
+
+void key_down(int key)
+{
+   LOGI("Key down: %d", key);
 }
 

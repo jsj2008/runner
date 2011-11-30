@@ -17,6 +17,22 @@ JNIEXPORT jint JNICALL Java_ua_org_asqz_runner_Wrapper_init
 
 /*
  * Class:     ua_org_asqz_runner_Wrapper
+ * Method:    restore
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_ua_org_asqz_runner_Wrapper_restore
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     ua_org_asqz_runner_Wrapper
+ * Method:    update
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_ua_org_asqz_runner_Wrapper_update
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     ua_org_asqz_runner_Wrapper
  * Method:    shutdown
  * Signature: ()V
  */
@@ -33,19 +49,19 @@ JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_resize
 
 /*
  * Class:     ua_org_asqz_runner_Wrapper
- * Method:    update
+ * Method:    activated
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_update
+JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_activated
   (JNIEnv *, jclass);
 
 /*
  * Class:     ua_org_asqz_runner_Wrapper
- * Method:    scroll
- * Signature: (JFFFF)V
+ * Method:    deactivated
+ * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_scroll
-  (JNIEnv *, jclass, jlong, jfloat, jfloat, jfloat, jfloat);
+JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_deactivated
+  (JNIEnv *, jclass);
 
 /*
  * Class:     ua_org_asqz_runner_Wrapper
@@ -70,6 +86,22 @@ JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_pointer_1up
  */
 JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_pointer_1move
   (JNIEnv *, jclass, jint, jfloat, jfloat);
+
+/*
+ * Class:     ua_org_asqz_runner_Wrapper
+ * Method:    key_down
+ * Signature: (I)V
+ */
+JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_key_1down
+  (JNIEnv *, jclass, jint);
+
+/*
+ * Class:     ua_org_asqz_runner_Wrapper
+ * Method:    key_up
+ * Signature: (I)V
+ */
+JNIEXPORT void JNICALL Java_ua_org_asqz_runner_Wrapper_key_1up
+  (JNIEnv *, jclass, jint);
 
 #ifdef __cplusplus
 }
