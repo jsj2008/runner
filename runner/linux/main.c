@@ -3,6 +3,7 @@
 #include <runner.h>
 #include <common.h>
 #include "crash_handler.h"
+#include <keys.h>
 #include <config.h>
 
 static int _width = 800;
@@ -10,7 +11,10 @@ static int _height = 600;
 
 void display()
 {
-   update();
+   if (update() != 0)
+   {
+      glutLeaveMainLoop();
+   }
    glutSwapBuffers();
 }
 
@@ -21,23 +25,28 @@ void reshape(int width, int height)
    resize(width, height);
 }
 
+static int _pressed_button = 0;
+
 void mouse(int button, int state, int x, int y)
 {
+   ++button;
    switch (state)
    {
       case GLUT_DOWN:
-         pointer_down(0, (float)x/(float)_width, (float)y/(float)_height);
+         pointer_down(button, (float)x/(float)_width, (float)y/(float)_height);
+         _pressed_button = button;
          break;
 
       case GLUT_UP:
-         pointer_up(0, (float)x/(float)_width, (float)y/(float)_height);
+         pointer_up(button, (float)x/(float)_width, (float)y/(float)_height);
+         _pressed_button = 0;
          break;
    }
 }
 
 void motion(int x, int y)
 {
-   pointer_move(0, (float)x/(float)_width, (float)y/(float)_height);
+   pointer_move(_pressed_button, (float)x/(float)_width, (float)y/(float)_height);
 }
 
 void idle()
@@ -53,6 +62,59 @@ void window_status(int state)
 void entry(int state)
 {
    LOGI("Entry: %d", state);
+}
+
+int map_key(unsigned char key)
+{
+   switch (key)
+   {
+      case 27:
+         return KEY_BACK;
+
+      default:
+         return KEY_NONE;
+   }
+}
+
+int map_special_key(int key)
+{
+   switch (key)
+   {
+      case GLUT_KEY_LEFT:
+         return KEY_LEFT;
+
+      case GLUT_KEY_RIGHT:
+         return KEY_RIGHT;
+
+      case GLUT_KEY_UP:
+         return KEY_UP;
+
+      case GLUT_KEY_DOWN:
+         return KEY_DOWN;
+
+      default:
+         return KEY_NONE;
+   }
+}
+
+void keyboard_down(unsigned char key, int x, int y)
+{
+   key_down(map_key(key));
+}
+
+void keyboard_up(unsigned char key, int x, int y)
+{
+   key_up(map_key(key));
+}
+
+void special_key_down(int key, int x, int y)
+{
+   key_down(map_special_key(key));
+}
+
+void special_key_up(int key, int x, int y)
+{
+   key_up(map_special_key(key));
 }
 
 int main(int argc, char** argv)
@@ -90,6 +152,10 @@ int main(int argc, char** argv)
       glutIdleFunc(idle);
       glutWindowStatusFunc(window_status);
       glutEntryFunc(entry);
+      glutKeyboardFunc(keyboard_down);
+      glutKeyboardUpFunc(keyboard_up);
+      glutSpecialFunc(special_key_down);
+      glutSpecialUpFunc(special_key_up);
       restore();
       //glutFullScreen();
       glutMainLoop();
