@@ -46,6 +46,7 @@ vec3f_t* vec3_add(vec3f_t* r, const vec3f_t* a, const vec3f_t* b);
 vec3f_t* vec3_sub(vec3f_t* r, const vec3f_t* a, const vec3f_t* b);
 vec3f_t* vec3_cross(vec3f_t* r, const vec3f_t* a, const vec3f_t* b);
 vec3f_t* vec3_scale(vec3f_t* r, const vec3f_t* a, float scale);
+float vec3_dot(const vec3f_t* a, const vec3f_t* b);
 
 void mat4_set_zero(mat4f_t* m);
 void mat4_set_identity(mat4f_t* m);

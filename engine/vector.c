@@ -45,3 +45,8 @@ vec3f_t* vec3_scale(vec3f_t* r, const vec3f_t* a, float scale)
    return r;
 }
 
+float vec3_dot(const vec3f_t* a, const vec3f_t* b)
+{
+   return a->x * b->x + a->y * b->y + a->z * b->z;
+}
+
