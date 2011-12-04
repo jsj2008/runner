@@ -294,9 +294,39 @@ int update()
    return 0;
 }
 
+typedef struct pointer_info_t
+{
+   enum
+   {
+      POINTER_INFO_UP = 0,
+      POINTER_INFO_DOWN,
+   } state;
+
+   float x;
+   float y;
+   float last_update;
+} pointer_info_t;
+
+#define MAX_POINTERS 16
+
+static pointer_info_t pointers[MAX_POINTERS] = {0};
+
+static float get_current_time()
+{
+   struct timeval cur_time = { 0 };
+   gettimeofday(&cur_time, NULL);
+   return (float)cur_time.tv_sec + (float)cur_time.tv_usec / 1000000.0f;
+}
+
 void pointer_down(int pointerId, float x, float y)
 {
    LOGD("pointer #%d down: %.2f %.2f", pointerId, x, y);
+
+   pointer_info_t* pointer = &pointers[pointerId];
+   pointer->last_update = get_current_time();
+   pointer->state = POINTER_INFO_DOWN;
+   pointer->x = x;
+   pointer->y = y;
 
    vec2f_t point =
    {
@@ -310,6 +340,13 @@ void pointer_down(int pointerId, float x, float y)
 void pointer_up(int pointerId, float x, float y)
 {
    LOGD("pointer #%d up: %.2f %.2f", pointerId, x, y);
+
+   pointer_info_t* pointer = &pointers[pointerId];
+   pointer->last_update = get_current_time();
+   pointer->state = POINTER_INFO_UP;
+   pointer->x = x;
+   pointer->y = y;
+
    vec2f_t point =
    {
       .x = x * 2.0f - 1.0f,
@@ -321,6 +358,66 @@ void pointer_up(int pointerId, float x, float y)
 void pointer_move(int pointerId, float x, float y)
 {
    LOGD("pointer #%d move: %.2f %.2f", pointerId, x, y);
+
+   float current_time = get_current_time();
+   pointer_info_t* pointer = &pointers[pointerId];
+   if (pointer->state == POINTER_INFO_DOWN)
+   {
+      vec4f_t from =
+      {
+         .x = pointer->x * 2.0f - 1.0f,
+         .y = 1.0f - pointer->y * 2.0f,
+         .z = 0.99f,
+         .w = 1.0f,
+      };
+
+      vec4f_t to =
+      {
+         .x = x * 2.0f - 1.0f,
+         .y = 1.0f - y * 2.0f,
+         .z = 0.99f,
+         .w = 1.0f,
+      };
+
+      camera_t* camera = game->camera;
+
+      mat4f_t transform = {0};
+      mat4_mult(&transform, &camera->proj, &camera->view);
+      mat4_invert(&transform);
+
+      vec4f_t from_scene = {0};
+      vec4f_t to_scene = {0};
+      mat4_mult_vec4(&from_scene, &transform, &from);
+      mat4_mult_vec4(&to_scene, &transform, &to);
+
+      from_scene.w = 1.0f / from_scene.w;
+      from_scene.x *= from_scene.w;
+      from_scene.y *= from_scene.w;
+      from_scene.z *= from_scene.w;
+
+      to_scene.w = 1.0f / to_scene.w;
+      to_scene.x *= to_scene.w;
+      to_scene.y *= to_scene.w;
+      to_scene.z *= to_scene.w;
+
+      vec3f_t diff = { to_scene.x - from_scene.x, to_scene.y - from_scene.y, to_scene.z - from_scene.z };
+
+      mat4f_t rotation = camera->view;
+      rotation.m14 = 0.0f;
+      rotation.m24 = 0.0f;
+      rotation.m34 = 0.0f;
+
+      vec3f_t diff2;
+      mat4_mult_vec3(&diff2, &rotation, &diff);
+
+      camera->view.m14 += diff2.x;
+      camera->view.m24 += diff2.y;
+      camera->view.m34 += diff2.z;
+   }
+   pointer->last_update = current_time;
+   pointer->x = x;
+   pointer->y = y;
+
    vec2f_t point =
    {
       .x = x * 2.0f - 1.0f,
