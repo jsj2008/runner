@@ -1,6 +1,6 @@
 #include "physics.h"
 #include <world.h>
-#include <common.h>
+#include <logging.h>
 #include <btBulletDynamicsCommon.h>
 
 static inline btVector3 vc(const vec3f_t* v)

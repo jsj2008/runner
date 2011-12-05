@@ -5,9 +5,10 @@
 #include <string.h>
 #include <sys/time.h>
 
+#include <logging.h>
+
 #ifdef ANDROID
 #include <jni.h>
-#include <android/log.h>
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 #define GL_COMPRESSED_RGB_S3TC_DXT1_EXT   0x83F0
@@ -30,17 +31,6 @@
 #define GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG  0x8C02
 #define GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG  0x8C03
 
-#endif
-
-#ifdef ANDROID
-#define TAG "RUNNER"
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__);
-#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__);
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__);
-#else
-#define LOGI(...) { printf(__VA_ARGS__); putchar('\n'); }
-#define LOGD(...) { /*printf(__VA_ARGS__); putchar('\n');*/ }
-#define LOGE(...) { printf(__VA_ARGS__); putchar('\n'); }
 #endif
 
 void outGLString(const char* name, GLenum e);
