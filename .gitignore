@@ -34,3 +34,6 @@ local.properties
 *.lai
 *.la
 *.a
+
+# blender temporary files
+*.blend[0-9]
