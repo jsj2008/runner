@@ -305,26 +305,19 @@ typedef struct pointer_info_t
 
    float x;
    float y;
-   float last_update;
+   timestamp_t last_update;
 } pointer_info_t;
 
 #define MAX_POINTERS 16
 
 static pointer_info_t pointers[MAX_POINTERS] = {0};
 
-static float get_current_time()
-{
-   struct timeval cur_time = { 0 };
-   gettimeofday(&cur_time, NULL);
-   return (float)cur_time.tv_sec + (float)cur_time.tv_usec / 1000000.0f;
-}
-
 void pointer_down(int pointerId, float x, float y)
 {
    LOGD("pointer #%d down: %.2f %.2f", pointerId, x, y);
 
    pointer_info_t* pointer = &pointers[pointerId];
-   pointer->last_update = get_current_time();
+   timestamp_set(&pointer->last_update);
    pointer->state = POINTER_INFO_DOWN;
    pointer->x = x;
    pointer->y = y;
@@ -343,7 +336,7 @@ void pointer_up(int pointerId, float x, float y)
    LOGD("pointer #%d up: %.2f %.2f", pointerId, x, y);
 
    pointer_info_t* pointer = &pointers[pointerId];
-   pointer->last_update = get_current_time();
+   timestamp_set(&pointer->last_update);
    pointer->state = POINTER_INFO_UP;
    pointer->x = x;
    pointer->y = y;
@@ -360,8 +353,8 @@ void pointer_move(int pointerId, float x, float y)
 {
    LOGD("pointer #%d move: %.2f %.2f", pointerId, x, y);
 
-   float current_time = get_current_time();
    pointer_info_t* pointer = &pointers[pointerId];
+   long elapsed = timestamp_update(&pointer->last_update);
    if (pointer->state == POINTER_INFO_DOWN)
    {
       vec4f_t from =
@@ -415,7 +408,6 @@ void pointer_move(int pointerId, float x, float y)
       camera->view.m24 += diff2.y;
       camera->view.m34 += diff2.z;
    }
-   pointer->last_update = current_time;
    pointer->x = x;
    pointer->y = y;
 

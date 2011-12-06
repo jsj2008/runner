@@ -1,6 +1,6 @@
 #pragma once
 
-#include <common.h>
+#include <sys/time.h>
 
 typedef struct timestamp_t
 {

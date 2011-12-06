@@ -1,4 +1,5 @@
 #include "timestamp.h"
+#include "common.h"
 
 void timestamp_set(timestamp_t* timestamp)
 {
