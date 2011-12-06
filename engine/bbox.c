@@ -4,6 +4,7 @@
 #include "camera.h"
 #include "resman.h"
 #include "game.h"
+#include "gl_defs.h"
 
 void bbox_reset(bbox_t* b)
 {

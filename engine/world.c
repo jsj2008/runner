@@ -5,6 +5,7 @@
 #include "resman.h"
 #include "bbox.h"
 #include "game.h"
+#include "gl_defs.h"
 
 struct file_header_t
 {

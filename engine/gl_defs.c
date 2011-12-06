@@ -1,3 +1,4 @@
+#include "gl_defs.h"
 #include "common.h"
 
 void outGLString(const char* name, GLenum e)

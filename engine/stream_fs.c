@@ -1,4 +1,5 @@
 #include "stream.h"
+#include "common.h"
 
 struct stream_t
 {

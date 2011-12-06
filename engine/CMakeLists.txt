@@ -18,7 +18,7 @@ add_library (engine
    gui.c
    frustum.c
    bbox.c
-   common.c
+   gl_defs.c
    timestamp.c
 )
 

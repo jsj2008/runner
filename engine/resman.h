@@ -1,7 +1,5 @@
 #pragma once
 
-#include "common.h"
-
 struct world_t;
 struct shader_t;
 struct tex2d_t;

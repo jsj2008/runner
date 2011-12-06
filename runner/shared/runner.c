@@ -12,6 +12,7 @@
 #include <material.h>
 #include <timestamp.h>
 #include <keys.h>
+#include <gl_defs.h>
 
 static GLfloat skybox_vertices[] =
 {

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <image.h>
 #include <stream.h>
+#include <common.h>
 
 #define TAG_PVR               0x21525650
 

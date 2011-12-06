@@ -1,4 +1,5 @@
 #include "stream.h"
+#include "common.h"
 #include <android/asset_manager.h>
 
 struct stream_t

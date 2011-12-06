@@ -3,6 +3,7 @@
 #include "tex2d.h"
 #include "world.h"
 #include "image.h"
+#include "common.h"
 
 typedef struct entry_t
 {

@@ -3,6 +3,7 @@
 #include "shader.h"
 #include "common.h"
 #include "resman.h"
+#include "gl_defs.h"
 #include <physics.h>
 #include <timestamp.h>
 

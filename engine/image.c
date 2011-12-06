@@ -1,5 +1,6 @@
 #include "image.h"
 #include "stream.h"
+#include "common.h"
 #include <png.h>
 
 typedef struct png_read_data_t

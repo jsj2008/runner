@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <image.h>
 #include <stream.h>
+#include <common.h>
 
 #define DDS_MAGIC                   0x20534444
 

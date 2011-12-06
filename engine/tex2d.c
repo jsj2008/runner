@@ -1,6 +1,7 @@
 #include "tex2d.h"
 #include "image.h"
 #include "common.h"
+#include "gl_defs.h"
 
 void load_compressed_image(const struct image_t* image, int internalFormat)
 {
