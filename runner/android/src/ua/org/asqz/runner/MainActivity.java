@@ -59,14 +59,26 @@ public class MainActivity extends Activity {
    public void onResume() {
       super.onResume();
       mView.onResume();
-      Wrapper.activated();
+
+      if (!mActivated) {
+         if (mHasFocus) {
+            Wrapper.activated();
+            mActivated = true;
+         }
+         else {
+            mActivationPending = true;
+         }
+      }
    }
 
    @Override
    public void onPause() {
       super.onPause();
       mView.onPause();
-      Wrapper.deactivated();
+      if (mActivated) {
+         Wrapper.deactivated();
+         mActivated = false;
+      }
    }
 
    @Override
@@ -76,6 +88,17 @@ public class MainActivity extends Activity {
    @Override
    public boolean onSearchRequested() {
       return false;
+   }
+
+   @Override
+   public void onWindowFocusChanged(boolean hasFocus) {
+      mHasFocus = hasFocus;
+
+      if (mHasFocus && mActivationPending) {
+         Wrapper.activated();
+         mActivated = true;
+         mActivationPending = false;
+      }
    }
 
    private Handler mHandler = new Handler() {
@@ -97,5 +120,8 @@ public class MainActivity extends Activity {
    };
 
    private RunnerSurfaceView mView = null;
+   private boolean mHasFocus = false;
+   private boolean mActivated = false;
+   private boolean mActivationPending = false;
 }
 
