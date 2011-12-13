@@ -133,7 +133,7 @@ void bbox_draw(const bbox_t* b, const camera_t* camera)
       vertices[i + 2] = b->min.z * (1.0f - vertices[i + 2]) + b->max.z * vertices[i + 2];
    }
 
-   shader_t* shader = resman_get_shader(game->resman, "shaders/bbox");
+   shader_t* shader = resman_get_shader(game->resman, "shaders/bbox.shader");
    if (shader == NULL)
       return;
 
