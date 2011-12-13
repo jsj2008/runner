@@ -128,6 +128,7 @@ int main(int argc, char** argv)
    glutInitWindowSize(_width, _height);
    glutInitWindowPosition(0, 0);
    glutCreateWindow("runner");
+   glutIgnoreKeyRepeat(1);
 
    GLenum res = glewInit();
    if (res != GLEW_OK)

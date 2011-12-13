@@ -14,6 +14,36 @@
 #include <keys.h>
 #include <gl_defs.h>
 
+typedef struct pointer_info_t
+{
+   enum
+   {
+      POINTER_INFO_UP = 0,
+      POINTER_INFO_DOWN,
+   } state;
+
+   float x;
+   float y;
+   timestamp_t last_update;
+} pointer_info_t;
+
+typedef struct key_info_t
+{
+   enum
+   {
+      KEY_INFO_UP = 0,
+      KEY_INFO_DOWN,
+   } state;
+
+   timestamp_t last_update;
+} key_info_t;
+
+#define MAX_POINTERS 16
+#define MAX_KEYS 256
+
+static pointer_info_t pointers[MAX_POINTERS] = {0};
+static key_info_t keys[MAX_KEYS] = {0};
+
 static GLfloat skybox_vertices[] =
 {
    -1.0f, -1.0f, 1.0f,
@@ -282,6 +312,44 @@ int update()
       return 1;
    }
 
+   const float speed = 1.0f;
+   camera_t* camera = game->camera;
+   mat4f_t view = camera->view;
+
+   vec3f_t right = { view.m11, view.m12, view.m13 };
+   vec3f_t up = { view.m21, view.m22, view.m23 };
+   vec3f_t forward = { view.m31, view.m32, view.m33 };
+   vec3f_t origin_enc = { view.m14, view.m24, view.m34 };
+   vec3_normalize(&right);
+   vec3_normalize(&up);
+   vec3_normalize(&forward);
+
+   vec3f_t movement = {0};
+   if (keys[KEY_UP].state == KEY_INFO_DOWN)
+   {
+      vec3_add(&movement, &movement, &forward);
+   }
+   if (keys[KEY_DOWN].state == KEY_INFO_DOWN)
+   {
+      vec3_sub(&movement, &movement, &forward);
+   }
+   if (keys[KEY_RIGHT].state == KEY_INFO_DOWN)
+   {
+      vec3_sub(&movement, &movement, &right);
+   }
+   if (keys[KEY_LEFT].state == KEY_INFO_DOWN)
+   {
+      vec3_add(&movement, &movement, &right);
+   }
+
+   mat4f_t translation = {0};
+   mat4_set_identity(&translation);
+   translation.m14 = movement.x;
+   translation.m24 = movement.y;
+   translation.m34 = movement.z;
+
+   mat4_mult(&camera->view, &view, &translation);
+
    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
    float dt = timers_update();
@@ -294,23 +362,6 @@ int update()
 
    return 0;
 }
-
-typedef struct pointer_info_t
-{
-   enum
-   {
-      POINTER_INFO_UP = 0,
-      POINTER_INFO_DOWN,
-   } state;
-
-   float x;
-   float y;
-   timestamp_t last_update;
-} pointer_info_t;
-
-#define MAX_POINTERS 16
-
-static pointer_info_t pointers[MAX_POINTERS] = {0};
 
 void pointer_down(int pointerId, float x, float y)
 {
@@ -357,11 +408,26 @@ void pointer_move(int pointerId, float x, float y)
    long elapsed = timestamp_update(&pointer->last_update);
    if (pointer->state == POINTER_INFO_DOWN)
    {
+      camera_t* camera = game->camera;
+
+      mat4f_t transform = {0};
+      mat4_mult(&transform, &camera->proj, &camera->view);
+
+      vec4f_t origin = { 0.0f, 0.0f, 0.0f, 1.0f };
+      vec4f_t origin_screen = {0};
+      mat4_mult_vec4(&origin_screen, &transform, &origin);
+      origin_screen.w = 1.0f / origin_screen.w;
+      origin_screen.x *= origin_screen.w;
+      origin_screen.y *= origin_screen.w;
+      origin_screen.z *= origin_screen.w;
+
+      //LOGI("origin: [%.2f %.2f %.2f %.2f]", origin_screen.x, origin_screen.y, origin_screen.z, origin_screen.w);
+
       vec4f_t from =
       {
          .x = pointer->x * 2.0f - 1.0f,
          .y = 1.0f - pointer->y * 2.0f,
-         .z = 0.99f,
+         .z = origin_screen.z,
          .w = 1.0f,
       };
 
@@ -369,18 +435,14 @@ void pointer_move(int pointerId, float x, float y)
       {
          .x = x * 2.0f - 1.0f,
          .y = 1.0f - y * 2.0f,
-         .z = 0.99f,
+         .z = origin_screen.z,
          .w = 1.0f,
       };
 
-      camera_t* camera = game->camera;
-
-      mat4f_t transform = {0};
-      mat4_mult(&transform, &camera->proj, &camera->view);
-      mat4_invert(&transform);
-
       vec4f_t from_scene = {0};
       vec4f_t to_scene = {0};
+
+      mat4_invert(&transform);
       mat4_mult_vec4(&from_scene, &transform, &from);
       mat4_mult_vec4(&to_scene, &transform, &to);
 
@@ -394,19 +456,14 @@ void pointer_move(int pointerId, float x, float y)
       to_scene.y *= to_scene.w;
       to_scene.z *= to_scene.w;
 
-      vec3f_t diff = { to_scene.x - from_scene.x, to_scene.y - from_scene.y, to_scene.z - from_scene.z };
+      mat4f_t translation = {0};
+      mat4_set_identity(&translation);
+      translation.m14 = to_scene.x - from_scene.x;
+      translation.m24 = to_scene.y - from_scene.y;
+      translation.m34 = to_scene.z - from_scene.z;
 
-      mat4f_t rotation = camera->view;
-      rotation.m14 = 0.0f;
-      rotation.m24 = 0.0f;
-      rotation.m34 = 0.0f;
-
-      vec3f_t diff2;
-      mat4_mult_vec3(&diff2, &rotation, &diff);
-
-      camera->view.m14 += diff2.x;
-      camera->view.m24 += diff2.y;
-      camera->view.m34 += diff2.z;
+      mat4f_t view = camera->view;
+      mat4_mult(&camera->view, &view, &translation);
    }
    pointer->x = x;
    pointer->y = y;
@@ -419,18 +476,26 @@ void pointer_move(int pointerId, float x, float y)
    gui_dispatch_pointer_move(&game->gui, pointerId, &point);
 }
 
-void key_up(int key)
+void key_up(int key_code)
 {
-   LOGI("Key up: %d", key);
+   LOGI("Key up: %d", key_code);
 
-   if (key == KEY_BACK)
+   key_info_t* key = &keys[key_code];
+   timestamp_set(&key->last_update);
+   key->state = KEY_INFO_UP;
+
+   if (key_code == KEY_BACK)
    {
       done = 1;
    }
 }
 
-void key_down(int key)
+void key_down(int key_code)
 {
-   LOGI("Key down: %d", key);
+   LOGI("Key down: %d", key_code);
+
+   key_info_t* key = &keys[key_code];
+   timestamp_set(&key->last_update);
+   key->state = KEY_INFO_DOWN;
 }
 
