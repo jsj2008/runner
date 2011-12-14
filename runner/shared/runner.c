@@ -312,7 +312,9 @@ int update()
       return 1;
    }
 
-   const float speed = 1.0f;
+   float dt = timers_update();
+
+   const float speed = 15.0f;
    camera_t* camera = game->camera;
    mat4f_t view = camera->view;
 
@@ -342,6 +344,8 @@ int update()
       vec3_add(&movement, &movement, &right);
    }
 
+   vec3_scale(&movement, &movement, speed * dt);
+
    mat4f_t translation = {0};
    mat4_set_identity(&translation);
    translation.m14 = movement.x;
@@ -352,7 +356,6 @@ int update()
 
    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-   float dt = timers_update();
    game_update(game, dt);
 
    skybox_render();
