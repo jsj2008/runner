@@ -71,6 +71,7 @@ void mat4_set_lookat(mat4f_t* m, const vec3f_t* eye, const vec3f_t* at, const ve
 const float* mat4_data(const mat4f_t* m);
 void mat4_from_quaternion(mat4f_t* m, const quat_t* q);
 
+quat_t* quat_from_matrix(quat_t* r, const mat4f_t* m);
 quat_t* quat_from_angles(quat_t* r, const vec3f_t* a);
 vec3f_t* quat_to_angles(vec3f_t* r, const quat_t* q);
 void quat_mult(quat_t* r, const quat_t* a, const quat_t* b);
@@ -79,4 +80,4 @@ void quat_inv(quat_t* r, const quat_t* a);
 void quat_conjugate(quat_t* r, const quat_t* a);
 void quat_scale(quat_t* r, const quat_t* a, float scale);
 void quat_add(quat_t* r, const quat_t* a, const quat_t* b);
-
+void quat_show(const quat_t* q);

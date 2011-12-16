@@ -1,4 +1,5 @@
 #include "mathlib.h"
+#include "common.h"
 
 quat_t* quat_from_angles(quat_t* r, const vec3f_t* a)
 {
@@ -127,3 +128,48 @@ void quat_add(quat_t* r, const quat_t* a, const quat_t* b)
    r->w = a->w + b->w;
 }
 
+quat_t* quat_from_matrix(quat_t* r, const mat4f_t* m)
+{
+   float trace = m->m11 + m->m22 + m->m33;
+   if (trace > 0.0f)
+   {
+      float s = 0.5f / sqrtf(trace + 1.0f);
+      r->w = 0.25f / s;
+      r->x = (m->m32 - m->m23) * s;
+      r->y = (m->m13 - m->m31) * s;
+      r->z = (m->m21 - m->m12) * s;
+   }
+   else
+   {
+      if (m->m11 > m->m22 && m->m11 > m->m33)
+      {
+         float s = 2.0f * sqrtf(1.0f + m->m11 - m->m22 - m->m33);
+         r->w = (m->m32 - m->m23) / s;
+         r->x = 0.25f * s;
+         r->y = (m->m12 + m->m21) / s;
+         r->z = (m->m13 + m->m31) / s;
+      }
+      else if (m->m22 > m->m33)
+      {
+         float s = 2.0f * sqrtf(1.0f + m->m22 - m->m11 - m->m33);
+         r->w = (m->m13 - m->m31) / s;
+         r->x = (m->m12 + m->m21) / s;
+         r->y = 0.25f * s;
+         r->z = (m->m23 + m->m32) / s;
+      }
+      else
+      {
+         float s = 2.0f * sqrtf(1.0f + m->m33 - m->m11 - m->m22);
+         r->w = (m->m21 - m->m12) / s;
+         r->x = (m->m13 + m->m31) / s;
+         r->y = (m->m23 + m->m32) / s;
+         r->z = 0.25f * s;
+      }
+   }
+   return r;
+}
+
+void quat_show(const quat_t* q)
+{
+   LOGI("[%.2f, %.2f, %.2f, %.2f]", q->x, q->y, q->z, q->w);
+}
